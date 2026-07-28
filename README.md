@@ -92,8 +92,8 @@ Paste loosely formatted question text (e.g. copied from a Word doc or PDF) and c
 
 - Set a default **Subject** and **Category** to apply to all parsed questions.
 - Formatting rules:
-  - Number each question (`1.`, `2.`, ...).
-  - **Multiple choice**: label choices with letters `a.`–`e.`; prefix the correct choice with `=` (or `*`).
+  - Number each question (`1. `, `2. `, ...). A question can only be recognized if it has a number, period, and space before the question itself. Numbers can be repeated; they also do not need to be arranged numerically.
+  - **Multiple choice**: label choices with letters `a. `–`e. `. A choice can only be recognized if it has a letter, period, and space before the choice itself. Similar to the question format, letter choices can be repeated and do not need to be arranged. MCQ only accepts four to five choices. Prefix the correct choice with `=` or `*`. An error would appear if no choice has been marked correct.
   - **True/False**: put `=True` or `=False` on the line below the question.
   - **Matching**: consecutive premise/answer pairs (premise line, then `=Answer` line) are grouped into one matching question automatically.
 - Click **Convert**, review the JSON output, set a filename, and **Download JSON**.
