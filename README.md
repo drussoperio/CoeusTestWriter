@@ -59,7 +59,7 @@ Builds randomized, versioned tests from a loaded JSON bank.
 
 - **Input** — Load a JSON bank (drag-and-drop or browse). A warning appears if any questions are missing a `correct` field.
 - **Generate Test**
-  - Per-category inputs let you choose how many MCQ and True/False questions to pull from each category (**Select All Available** fills these in automatically; **Clear All** resets them).
+  - Per-category inputs let you choose how many MCQ, True/False, Matching questions to pull from each category (**Select All Available** fills these in automatically; **Clear All** resets them).
   - **Randomize Questions and Answers** shuffles question order and choice order.
   - **Answer Distribution Tolerance** — how evenly the correct-answer letters/T-F values are balanced (0 = exact, up to ±15).
   - **Max Consecutive MC Answers** / **Max Consecutive T/F Answers** — caps how many times the same answer can repeat in a row (1 = strict alternation). Very tight settings combined with skewed distributions can trigger a feasibility warning.
