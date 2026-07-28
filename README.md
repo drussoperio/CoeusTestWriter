@@ -7,17 +7,17 @@ A single-file, browser-based toolkit for creating, managing, and exporting exam 
 The app is organized into tabs:
 
 - **Question Manager** — Load, edit, add, and organize a bank of questions stored as JSON.
-- **Test Generator** — Build randomized/versioned tests from a question bank and export them (e.g. PDF/DOCX).
+- **Test Generator** — Build randomized/versioned tests from a question bank and export them (e.g. TXT, PDF, DOCX, JSON).
 - **TXT → JSON** — Convert tab-delimited `.txt` question files into the app's JSON format.
-- **JSON → TXT** — Export a JSON question bank back to plain/tab-delimited text.
+- **JSON → TXT** — Export a Coeus JSON question bank back to plain/tab-delimited text.
 - **Plain Text → JSON** — Paste loosely formatted question text (numbered questions, lettered choices, `=`/`*` for correct answers, True/False, or matching pairs) and convert it into structured JSON.
 - **Text → GIFT** — Convert plain text or JSON questions into [Moodle GIFT format](https://docs.moodle.org/en/GIFT_format), including multiple choice, true/false, and matching questions.
-- **JSON Merger** — Combine multiple JSON question banks into one file.
+- **JSON Merger** — Combine multiple Coeus JSON question banks into one file.
 
 ## Getting Started
 
-1. Download `Test_Generator.html` and `main.js` and keep them in the same folder.
-2. Open `Test_Generator.html` in a modern browser (Chrome, Firefox, Edge).
+1. Download `Coeus_Question_Writer.html` and `main.js` and keep them in the same folder.
+2. Open `Coeus_Question_Writer.html` in any browser (Chrome, Firefox, Edge).
 3. Use the tabs at the top to switch between tools.
 
 No server, build step, or internet connection is required after the initial page load (aside from any CDN-hosted libraries the page references).
