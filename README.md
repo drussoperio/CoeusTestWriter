@@ -1,6 +1,6 @@
 # Coeus Test Writer
 
-A single-file, browser-based toolkit for creating, managing, and exporting exam questions. No installation, backend, or account required — open the HTML file and it runs entirely client-side.
+A single-file, browser-based toolkit for writing, organizing, and creating exam questions. No installation, backend, or account required — open the HTML file and it runs entirely client-side.
 
 ## Getting Started
 
