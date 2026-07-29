@@ -1,5 +1,5 @@
 /*
- * Test Generator & Question Manager
+ * Coeus Test Writer
  * Copyright (C) 2026 [Your Name]
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,12 @@
 
 let testBank = [];
 let questionBank = [];
+let __qbUidCounter = 1;
+function assignQuestionUids(arr) {
+    (arr || []).forEach(q => { if (q && q.__uid == null) q.__uid = __qbUidCounter++; });
+    return arr;
+}
+let addedQuestions = []; // references to questions added via "Add Question to Bank" form
 let lastGeneratedQuestions = [];
 let lastUnusedQuestions = [];
 let lastSelectedCategories = {};
@@ -44,6 +50,8 @@ let mergedQuestions = [];
 let mergerFileStats = [];
 let lastDeletedBank = null;
 let undoTimeoutId = null;
+let lastBankEditorSnapshot = null;
+let bankEditorUndoTimeoutId = null;
 
 // ========================================
 // MAIN INITIALIZATION
@@ -126,10 +134,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const tabConfig = {
         'questionManagerTab':  'questionManagerContent',
         'testGeneratorTab':    'testGeneratorContent',
-        'txtToJsonTab':        'txtToJsonContent',
-        'jsonToTxtTab':        'jsonToTxtContent',
-        'bulkQ2JsonTab':       'bulkQ2JsonContent',
-        'textToGiftTab':       'textToGiftContent',
+        'convJsonTab':         'convJsonContent',
+        'convCsvTab':          'convCsvContent',
+        'convGiftTab':         'convGiftContent',
+        'convTextTab':         'convTextContent',
         'jsonMergerTab':       'jsonMergerContent'
     };
 
@@ -217,13 +225,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const testPreview = document.getElementById('testPreview');
     const answerKeyPreview = document.getElementById('answerKeyPreview');
     const exportTxtButton = document.getElementById('exportTxt');
-    const exportPdfButton = document.getElementById('exportPdf');
     const exportDocxButton = document.getElementById('exportDocx');
     const questionForm = document.getElementById('questionForm');
     const typeSelect = document.getElementById('type');
     const choicesSection = document.getElementById('choicesSection');
     const trueFalseSection = document.getElementById('trueFalseSection');
     const exportJsonButton = document.getElementById('exportJson');
+    const exportGiftButton = document.getElementById('exportGiftBtn');
+    const exportCsvButton = document.getElementById('exportCsvBtn');
 
     // ── Form event listeners ───────────────────────────────────
     function setupFormListeners() {
@@ -315,9 +324,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Export buttons ─────────────────────────────────────────
     function setupExportButtons() {
         if (exportTxtButton) exportTxtButton.addEventListener('click', () => exportTestAsTxt());
-        if (exportPdfButton) exportPdfButton.addEventListener('click', () => exportTestAsPdf());
         if (exportDocxButton) exportDocxButton.addEventListener('click', () => exportTestAsDocx());
         if (exportJsonButton) exportJsonButton.addEventListener('click', () => exportTestAsJson());
+        if (exportGiftButton) exportGiftButton.addEventListener('click', () => exportTestAsGift());
+        if (exportCsvButton) exportCsvButton.addEventListener('click', () => exportTestAsCsv());
     }
 
     // ── Collapsible answer key ─────────────────────────────────
@@ -426,6 +436,39 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ── Generic output jump buttons (Top/Bottom) ─────────────────
+    function setupJumpButtonsFor(topId, bottomId, containerId) {
+        const jumpToTop = document.getElementById(topId);
+        const jumpToBottom = document.getElementById(bottomId);
+        const container = document.getElementById(containerId);
+
+        if (jumpToTop && container) {
+            jumpToTop.addEventListener('click', () => { container.scrollTop = 0; });
+        }
+        if (jumpToBottom && container) {
+            jumpToBottom.addEventListener('click', () => { container.scrollTop = container.scrollHeight; });
+        }
+    }
+
+    // ── JSON Merger output jump buttons ─────────────────────────
+    function setupMergerJumpButtons() {
+        const jumpToTop = document.getElementById('mergerJumpToTop');
+        const jumpToBottom = document.getElementById('mergerJumpToBottom');
+        const container = document.getElementById('mergerOutputContainer');
+
+        if (jumpToTop && container) {
+            jumpToTop.addEventListener('click', () => {
+                container.scrollTop = 0;
+            });
+        }
+
+        if (jumpToBottom && container) {
+            jumpToBottom.addEventListener('click', () => {
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+    }
+
     // ── JSON to TXT conversion ─────────────────────────────────
     function setupJsonToTxtConversion() {
         const btn = document.getElementById('convertJsonToTxtButton');
@@ -457,17 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     const jsonData = JSON.parse(event.target.result);
                     renderMissingCorrectWarning('jsonToTxtMissingCorrectWarning', jsonData);
-                    let txtData = 'Question\tCategory\tType\tCorrect\tOption 1\tOption 2\tOption 3\tOption 4\n';
-                    jsonData.forEach(item => {
-                        let choices = item.choices || [];
-                        // For T/F questions, pad with null instead of empty strings
-                        if (item.type === 'true_false' || item.type === 'matching') {
-                            while (choices.length < 4) choices.push('null');
-                        } else {
-                            while (choices.length < 4) choices.push('');
-                        }
-                        txtData += `${item.question||''}\t${item.category||''}\t${item.type||''}\t${item.correct||''}\t${choices[0]}\t${choices[1]}\t${choices[2]}\t${choices[3]}\n`;
-                    });
+                    const txtData = convertJsonToCsv(jsonData);
                     lastConvertedTxt = txtData;
                     output.textContent = txtData;
                     showToast('✅ Conversion complete', 'success');
@@ -485,13 +518,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 const customFilename = filenameInput?.value.trim() || lastFileName || 'questions';
-                const blob = new Blob([lastConvertedTxt], { type: 'text/plain' });
+                const blob = new Blob([lastConvertedTxt], { type: 'text/csv' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = customFilename + '.txt';
+                link.download = customFilename + '.csv';
                 link.click();
                 URL.revokeObjectURL(link.href);
-                showToast('✅ TXT downloaded', 'success');
+                showToast('✅ CSV downloaded', 'success');
             });
         }
 
@@ -515,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         textDisplay.textContent = 'Drag & drop file or click to browse';
                     }
                 }
-                showToast('🔄 Cleared', 'success');
+                showToast('🗑️ Cleared', 'success');
             });
         }
     }
@@ -559,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('giftPlainInput').value = '';
                 document.getElementById('giftOutput').textContent = '';
                 giftResults = '';
-                showToast('🔄 Cleared', 'success');
+                showToast('🗑️ Cleared', 'success');
             });
         }
         
@@ -570,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 const filenameInput = document.getElementById('giftFilename');
-                const filename = (filenameInput?.value.trim() || 'questions') + '.gift.txt';
+                const filename = (filenameInput?.value.trim() || 'questions') + '_gift.txt';
                 const blob = new Blob([giftResults], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -603,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('bulkCategory').value = '';
                 bulkInput.value = '';
                 bulkOutput.textContent = '';
-                showToast('🔄 Cleared', 'success');
+                showToast('🗑️ Cleared', 'success');
             });
         }
     }
@@ -634,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 reader.onload = function(event) {
                     const text = event.target.result;
                     try {
-                        const json = convertTabDelimitedTxtToJson(text);
+                        const json = convertCsvToJson(text);
                         lastConvertedJson = json;
                         renderMissingCorrectWarning('txtToJsonMissingCorrectWarning', json);
 
@@ -695,12 +728,171 @@ document.addEventListener('DOMContentLoaded', function () {
                         textDisplay.textContent = 'Drag & drop file or click to browse';
                     }
                 }
-                showToast('🔄 Cleared', 'success');
+                showToast('🗑️ Cleared', 'success');
             });
         }
     }
 
     // ── Merger buttons ────────────────────────────────────────
+    // ── Generic "Convert to X" tab setup ─────────────────────────
+    // opts: { prefix, hasSubTabs, inputFormats, outputFormat, downloadExt }
+    function setupConverterTab(opts) {
+        const { prefix, hasSubTabs, inputFormats, outputFormat, downloadExt } = opts;
+        const fileInput = document.getElementById(prefix + 'FileInput');
+        const pasteInput = hasSubTabs ? document.getElementById(prefix + 'PasteInput') : null;
+        const pasteSubject = hasSubTabs ? document.getElementById(prefix + 'PasteSubject') : null;
+        const pasteCategory = hasSubTabs ? document.getElementById(prefix + 'PasteCategory') : null;
+        const convertBtn = document.getElementById(prefix + 'ConvertBtn');
+        const clearBtn = document.getElementById(prefix + 'ClearBtn');
+        const downloadBtn = document.getElementById(prefix + 'DownloadBtn');
+        const filenameInput = document.getElementById(prefix + 'Filename');
+        const output = document.getElementById(prefix + 'Output');
+        const warningId = prefix + 'MissingCorrectWarning';
+        let lastResult = '';
+        let lastFileName = '';
+
+        setupJumpButtonsFor(prefix + 'JumpToTop', prefix + 'JumpToBottom', prefix + 'OutputContainer');
+
+        // Sub-tab switching (Upload File / Paste Text)
+        if (hasSubTabs) {
+            const uploadSubTab = document.getElementById(prefix + 'UploadSubTab');
+            const pasteSubTab = document.getElementById(prefix + 'PasteSubTab');
+            const uploadPanel = document.getElementById(prefix + 'UploadPanel');
+            const pastePanel = document.getElementById(prefix + 'PastePanel');
+            if (uploadSubTab && pasteSubTab && uploadPanel && pastePanel) {
+                uploadSubTab.addEventListener('click', () => {
+                    uploadPanel.classList.remove('hidden');
+                    uploadPanel.classList.add('flex');
+                    pastePanel.classList.add('hidden');
+                    pastePanel.classList.remove('flex');
+                    uploadSubTab.classList.add('bg-blue-500', 'text-white');
+                    uploadSubTab.classList.remove('bg-gray-200', 'text-gray-700');
+                    pasteSubTab.classList.remove('bg-blue-500', 'text-white');
+                    pasteSubTab.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                pasteSubTab.addEventListener('click', () => {
+                    pastePanel.classList.remove('hidden');
+                    pastePanel.classList.add('flex');
+                    uploadPanel.classList.add('hidden');
+                    uploadPanel.classList.remove('flex');
+                    pasteSubTab.classList.add('bg-blue-500', 'text-white');
+                    pasteSubTab.classList.remove('bg-gray-200', 'text-gray-700');
+                    uploadSubTab.classList.remove('bg-blue-500', 'text-white');
+                    uploadSubTab.classList.add('bg-gray-200', 'text-gray-700');
+                });
+            }
+        }
+
+        function formatResult(questions) {
+            if (outputFormat === 'json') return JSON.stringify(questions, null, 2);
+            if (outputFormat === 'csv') return convertJsonToCsv(questions);
+            if (outputFormat === 'gift') return questionsToGift(questions);
+            if (outputFormat === 'text') return questionsToPlainText(questions);
+            return '';
+        }
+
+        function runConvert() {
+            let text = '';
+            let format = null;
+
+            const pasteVisible = hasSubTabs && !document.getElementById(prefix + 'PastePanel').classList.contains('hidden');
+
+            try {
+                if (pasteVisible) {
+                    text = (pasteInput?.value || '').trim();
+                    if (!text) { showToast('⚠️ Please paste some text first.', 'warning'); return; }
+                } else {
+                    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                        showToast('⚠️ Please select a file.', 'warning');
+                        return;
+                    }
+                    const file = fileInput.files[0];
+                    lastFileName = file.name.replace(/\.[^/.]+$/, '');
+                    if (filenameInput) filenameInput.value = lastFileName;
+                    format = formatFromFileName(file.name);
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        try {
+                            const questions = parseQuestionsByFormat(event.target.result, format);
+                            finishConvert(questions);
+                        } catch (error) {
+                            output.textContent = 'Error: ' + error.message;
+                            showToast('❌ Error: ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                    return;
+                }
+
+                let questions;
+                if (inputFormats.includes('text') && looksLikePlainText(text)) {
+                    const subject = (pasteSubject?.value || '').trim();
+                    const category = (pasteCategory?.value || '').trim();
+                    if (!category) { showToast('⚠️ Please enter a category.', 'warning'); return; }
+                    questions = parsePlainTextToJson(text, subject, category);
+                } else {
+                    ({ questions } = autoParseQuestions(text, inputFormats.filter(f => f !== 'text')));
+                }
+                finishConvert(questions);
+            } catch (error) {
+                output.textContent = 'Error: ' + error.message;
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function finishConvert(questions) {
+            renderMissingCorrectWarning(warningId, questions);
+            const resultStr = formatResult(questions);
+            lastResult = resultStr;
+            output.textContent = resultStr;
+            if (window.Prism && outputFormat === 'json') Prism.highlightElement(output);
+            showToast('✅ Conversion complete', 'success');
+        }
+
+        if (convertBtn) convertBtn.addEventListener('click', runConvert);
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (fileInput) fileInput.value = '';
+                if (pasteInput) pasteInput.value = '';
+                if (pasteSubject) pasteSubject.value = '';
+                if (pasteCategory) pasteCategory.value = '';
+                const dz = fileInput ? fileInput.closest('.drop-zone') : null;
+                if (dz) {
+                    const p = dz.querySelector('p');
+                    if (p) {
+                        p.className = 'text-sm text-gray-600';
+                        p.textContent = 'Drag & drop file or click to browse';
+                    }
+                }
+                output.textContent = '';
+                lastResult = '';
+                const warnEl = document.getElementById(warningId);
+                if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
+                showToast('🗑️ Cleared', 'success');
+            });
+        }
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                if (!lastResult) {
+                    showToast('⚠️ Please convert first.', 'warning');
+                    return;
+                }
+                const customFilename = filenameInput?.value.trim() || lastFileName || 'questions';
+                const mimeType = outputFormat === 'json' ? 'application/json' : 'text/plain';
+                const blob = new Blob([lastResult], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = customFilename + downloadExt;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('✅ File downloaded', 'success');
+            });
+        }
+    }
+
     function setupMerger() {
         const addBtn = document.getElementById('addMergerFilesBtn');
         const clearBtn = document.getElementById('clearMergerBtn');
@@ -736,14 +928,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (clearBtn) clearBtn.addEventListener('click', clearAllCategoryInputs);
         if (selectBtn) selectBtn.addEventListener('click', selectAllAvailableQuestions);
+
+        const balanceBtn = document.getElementById('balancePickBtn');
+        if (balanceBtn) balanceBtn.addEventListener('click', balancedPickAcrossCategories);
     }
 
     // ── Initialize all drop zones ──────────────────────────────
     const dropZones = [
         { dropZone: document.querySelector('#questionManagerContent .drop-zone'), fileInput: document.getElementById('loadQuestionBank') },
         { dropZone: document.querySelector('#testGeneratorContent .drop-zone'), fileInput: document.getElementById('loadTestBank') },
-        { dropZone: document.querySelector('#txtToJsonContent .drop-zone'), fileInput: document.getElementById('txtFileInput') },
-        { dropZone: document.querySelector('#jsonToTxtContent .drop-zone'), fileInput: document.getElementById('jsonFileInput') },
+        { dropZone: document.querySelector('#convJsonUploadPanel .drop-zone'), fileInput: document.getElementById('convJsonFileInput') },
+        { dropZone: document.querySelector('#convCsvUploadPanel .drop-zone'), fileInput: document.getElementById('convCsvFileInput') },
+        { dropZone: document.querySelector('#convGiftUploadPanel .drop-zone'), fileInput: document.getElementById('convGiftFileInput') },
+        { dropZone: document.querySelector('#convTextContent .drop-zone'), fileInput: document.getElementById('convTextFileInput') },
         { dropZone: document.querySelector('#jsonMergerContent .drop-zone'), fileInput: document.getElementById('mergerFileInput') }
     ];
     
@@ -772,17 +969,30 @@ document.addEventListener('DOMContentLoaded', function () {
     setupAnswerKeyToggle();
     setupDocxInfoToggle();
     setupJumpButtons();
-    setupJsonToTxtConversion();
     setupGiftConverter();
     setupBulkConverter();
-    setupTxtToJsonConverter();
     setupMerger();
     setupUnusedQuestions();
     setupExclusions();
     setupCategoryButtons();
-    setupTxtToJsonJumpButtons();
-    setupBulkJumpButtons();
     setupGiftJumpButtons();
+    setupConverterTab({
+        prefix: 'convJson', hasSubTabs: true, inputFormats: ['text', 'gift', 'csv'],
+        outputFormat: 'json', downloadExt: '.json'
+    });
+    setupConverterTab({
+        prefix: 'convCsv', hasSubTabs: true, inputFormats: ['text', 'json', 'gift'],
+        outputFormat: 'csv', downloadExt: '.csv'
+    });
+    setupConverterTab({
+        prefix: 'convGift', hasSubTabs: true, inputFormats: ['text', 'json', 'csv'],
+        outputFormat: 'gift', downloadExt: '_gift.txt'
+    });
+    setupConverterTab({
+        prefix: 'convText', hasSubTabs: false, inputFormats: ['json', 'csv', 'gift', 'text'],
+        outputFormat: 'text', downloadExt: '.txt'
+    });
+    setupMergerJumpButtons();
     
     // Initialize Question Manager
     initializeQuestionManager();
@@ -838,17 +1048,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
             }
-            lastDeletedBank = {
-                type: 'questionBank',
-                data: [...questionBank]
-            };
             questionBank = [];
+            addedQuestions = [];
             localStorage.removeItem('coeus-question-bank');
+            localStorage.removeItem('coeus-added-questions');
             clearQuestionManagerState();
-            if (undoTimeoutId) clearTimeout(undoTimeoutId);
-            undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
-            const undoHtml = '<span>⚠️ Cleared question bank. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
-            showToast(undoHtml, 'warning', 5000);
+            showToast('🗑️ Cleared', 'success');
             const qmFileInput = document.getElementById('loadQuestionBank');
             if (qmFileInput) qmFileInput.value = '';
             const qmDropZone = qmFileInput ? qmFileInput.closest('.drop-zone') : null;
@@ -859,6 +1064,31 @@ document.addEventListener('DOMContentLoaded', function () {
                     p.textContent = 'Drag & drop file or click to browse';
                 }
             }
+            renderQuestionManagerList();
+        });
+    }
+
+    const clearSavedQuestionsBtn = document.getElementById('clearSavedTestBank');
+    if (clearSavedQuestionsBtn) {
+        clearSavedQuestionsBtn.addEventListener('click', () => {
+            if (addedQuestions.length === 0) {
+                showToast('⚠️ Nothing to clear', 'warning');
+                return;
+            }
+            lastDeletedBank = {
+                type: 'addedQuestions',
+                data: [...addedQuestions]
+            };
+            const toRemove = new Set(addedQuestions);
+            questionBank = questionBank.filter(q => !toRemove.has(q));
+            addedQuestions = [];
+            saveQBankToStorage();
+            saveAddedQuestionsToStorage();
+            clearQuestionManagerState();
+            if (undoTimeoutId) clearTimeout(undoTimeoutId);
+            undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
+            const undoHtml = '<span>🗑️ Cleared added questions. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
+            showToast(undoHtml, 'warning', 5000);
             renderQuestionManagerList();
         });
     }
@@ -878,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('coeus-test-bank');
             if (undoTimeoutId) clearTimeout(undoTimeoutId);
             undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
-            const undoHtml = '<span>⚠️ Cleared test bank. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
+            const undoHtml = '<span>🗑️ Cleared. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
             showToast(undoHtml, 'warning', 5000);
             const tgFileInput = document.getElementById('loadTestBank');
             if (tgFileInput) tgFileInput.value = '';
@@ -890,15 +1120,28 @@ document.addEventListener('DOMContentLoaded', function () {
                     p.textContent = 'Drag & drop file or click to browse';
                 }
             }
+            const bankStatus = document.getElementById('bankStatus');
+            if (bankStatus) bankStatus.innerHTML = '';
+            const summaryEl = document.getElementById('testSummary');
+            if (summaryEl) summaryEl.textContent = 'Total questions to generate: 0';
+            const testPreviewEl = document.getElementById('testPreview');
+            if (testPreviewEl) testPreviewEl.innerHTML = '';
+            const reportDiv = document.getElementById('generationReport');
+            if (reportDiv) reportDiv.innerHTML = '';
             updateCategoryInputs();
             renderSidebarQuestions();
         });
     }
 
     document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && lastDeletedBank) {
-            e.preventDefault();
-            undoClear();
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            if (lastDeletedBank) {
+                e.preventDefault();
+                undoClear();
+            } else if (lastBankEditorSnapshot) {
+                e.preventDefault();
+                undoBankEditorChange();
+            }
         }
     });
 
@@ -923,8 +1166,13 @@ function renderQuestionManagerList() {
     // Step 1: Apply search filter
     let filtered = questionBank.filter(q => {
         const searchLower = questionManagerState.searchText.toLowerCase();
-        return (q.question || '').toLowerCase().includes(searchLower) ||
-               (q.category || '').toLowerCase().includes(searchLower);
+        if ((q.question || '').toLowerCase().includes(searchLower) ||
+            (q.category || '').toLowerCase().includes(searchLower)) {
+            return true;
+        }
+        if ((q.correct || '').toLowerCase().includes(searchLower)) return true;
+        if ((q.choices || []).some(c => (c || '').toLowerCase().includes(searchLower))) return true;
+        return false;
     });
 
     // Step 2: Apply category/type filter
@@ -977,6 +1225,8 @@ function renderQuestionManagerList() {
                 </svg>
                 <p>${questionManagerState.searchText ? 'No matching questions.' : 'No questions loaded yet.'}</p>
             </div>`;
+        updateDeleteButtonState();
+        updateChangeCategoryButtonState();
         return;
     }
 
@@ -1001,7 +1251,7 @@ function renderQuestionManagerList() {
         `;
 
         questions.forEach(({ question: q, filteredIdx }) => {
-            const isSelected = questionManagerState.selectedQuestions.has(JSON.stringify(q));
+            const isSelected = questionManagerState.selectedQuestions.has(q.__uid);
             const isEditing = questionManagerState.editingIndex === filteredIdx;
 
             if (!isEditing) {
@@ -1017,9 +1267,9 @@ function renderQuestionManagerList() {
                 }
 
                 html += `
-                    <div class="q-card ${isSelected ? 'ring-2 ring-blue-500' : ''}" style="cursor: pointer; margin-left: 12px;">
+                    <div class="q-card ${isSelected ? 'ring-2 ring-blue-500' : ''}" style="cursor: pointer; margin-left: 12px; margin-right: 12px;">
                         <div class="flex items-start gap-2">
-                            <input type="checkbox" class="qm-checkbox mt-1" data-question="${JSON.stringify(q).replace(/"/g, '&quot;')}" ${isSelected ? 'checked' : ''} style="cursor: pointer;">
+                            <input type="checkbox" class="qm-checkbox mt-1" data-uid="${q.__uid}" ${isSelected ? 'checked' : ''} style="cursor: pointer;">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1 flex-wrap">
                                     <span class="text-xs px-2 py-0.5 rounded" style="background-color: ${typeColor}40; color: ${typeColor}; font-weight: 600;">${typeLabel}</span>
@@ -1042,7 +1292,7 @@ function renderQuestionManagerList() {
                 };
 
                 html += `
-                    <div class="q-card border-2 border-blue-500 p-4 bg-blue-50" style="margin-left: 12px;">
+                    <div class="q-card border-2 border-blue-500 p-4 bg-blue-50" style="margin-left: 12px; margin-right: 12px;">
                         <h4 class="font-semibold mb-3" style="color: var(--text);">Edit Question</h4>
                         
                         <div class="space-y-3">
@@ -1146,6 +1396,8 @@ function renderQuestionManagerList() {
     attachCategoryHeaderEvents();
 	attachSelectCategoryButtons();
 	attachSelectVisibleButton();
+    updateDeleteButtonState();
+    updateChangeCategoryButtonState();
 }
 
 // Attach events to category headers for collapse/expand
@@ -1160,11 +1412,11 @@ function attachCategoryHeaderEvents() {
             body.classList.toggle('hidden', !isHidden);
             chevron.classList.toggle('collapsed', isHidden);
             
-            // Store state
+            // Store state (new state after toggle)
             if (!questionManagerState.collapsedCategories) {
                 questionManagerState.collapsedCategories = {};
             }
-            questionManagerState.collapsedCategories[category] = isHidden;
+            questionManagerState.collapsedCategories[category] = !isHidden;
         });
     });
 }
@@ -1185,16 +1437,16 @@ function attachSelectCategoryButtons() {
             }
 
             // Check if all questions in this category are already selected
-            const allSelected = categoryQuestions.every(q => questionManagerState.selectedQuestions.has(JSON.stringify(q)));
+            const allSelected = categoryQuestions.every(q => questionManagerState.selectedQuestions.has(q.__uid));
 
             if (allSelected) {
                 categoryQuestions.forEach(q => {
-                    questionManagerState.selectedQuestions.delete(JSON.stringify(q));
+                    questionManagerState.selectedQuestions.delete(q.__uid);
                 });
                 showToast(`❌ Deselected ${categoryQuestions.length} question(s)`, 'success');
             } else {
                 categoryQuestions.forEach(q => {
-                    questionManagerState.selectedQuestions.add(JSON.stringify(q));
+                    questionManagerState.selectedQuestions.add(q.__uid);
                 });
                 showToast(`✅ Selected ${categoryQuestions.length} question(s)`, 'success');
             }
@@ -1234,19 +1486,19 @@ function selectAllVisibleQuestions() {
     }
 
     // Step 3: Check if all visible questions are already selected
-    const allSelected = filtered.every(q => questionManagerState.selectedQuestions.has(JSON.stringify(q)));
+    const allSelected = filtered.every(q => questionManagerState.selectedQuestions.has(q.__uid));
 
     // Step 4: Select or deselect all visible questions
     if (allSelected) {
         // Deselect all visible questions
         filtered.forEach(q => {
-            questionManagerState.selectedQuestions.delete(JSON.stringify(q));
+            questionManagerState.selectedQuestions.delete(q.__uid);
         });
         showToast(`❌ Deselected ${filtered.length} question(s)`, 'success');
     } else {
         // Select all visible questions
         filtered.forEach(q => {
-            questionManagerState.selectedQuestions.add(JSON.stringify(q));
+            questionManagerState.selectedQuestions.add(q.__uid);
         });
         showToast(`✅ Selected ${filtered.length} question(s)`, 'success');
     }
@@ -1277,13 +1529,11 @@ function attachQuestionManagerEventListeners(filtered) {
     // Checkboxes
     document.querySelectorAll('.qm-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', (e) => {
-            const questionJson = e.target.dataset.question;
-            const question = JSON.parse(questionJson);
-            const questionStr = JSON.stringify(question);
+            const uid = parseInt(e.target.dataset.uid, 10);
             if (e.target.checked) {
-                questionManagerState.selectedQuestions.add(questionStr);
+                questionManagerState.selectedQuestions.add(uid);
             } else {
-                questionManagerState.selectedQuestions.delete(questionStr);
+                questionManagerState.selectedQuestions.delete(uid);
             }
             updateDeleteButtonState();
             updateChangeCategoryButtonState();
@@ -1414,22 +1664,26 @@ function deleteSelectedQuestions() {
     }
 
     const count = questionManagerState.selectedQuestions.size;
-    if (!confirm(`Delete ${count} question(s)? This cannot be undone.`)) {
+    if (!confirm(`Delete ${count} question(s)?`)) {
         return;
     }
 
-    // Convert selected question strings back to objects
-    const questionsToDelete = Array.from(questionManagerState.selectedQuestions).map(qStr => JSON.parse(qStr));
-    
+    const selectedUids = questionManagerState.selectedQuestions;
+
+    lastBankEditorSnapshot = [...questionBank];
+
     // Remove them from questionBank
-    const newBank = questionBank.filter(q => !questionsToDelete.some(del => JSON.stringify(del) === JSON.stringify(q)));
+    const newBank = questionBank.filter(q => !selectedUids.has(q.__uid));
 
     questionBank = newBank;
     saveQBankToStorage();
     questionManagerState.selectedQuestions.clear();
     renderQuestionManagerList();
     updateDeleteButtonState();
-    showToast(`✅ Deleted ${count} question(s)`, 'success');
+    if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
+    bankEditorUndoTimeoutId = setTimeout(() => { lastBankEditorSnapshot = null; }, 5000);
+    const undoHtml = `<span>🗑️ Deleted ${count} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
+    showToast(undoHtml, 'success', 5000);
 }
 
 function changeSelectedQuestionsCategory() {
@@ -1444,20 +1698,24 @@ function changeSelectedQuestionsCategory() {
         return;
     }
 
-    // Convert selected question strings back to objects and update them
-    const selectedQuestions = Array.from(questionManagerState.selectedQuestions).map(qStr => JSON.parse(qStr));
-    
-    selectedQuestions.forEach(selectedQ => {
-        const q = questionBank.find(bankQ => JSON.stringify(bankQ) === JSON.stringify(selectedQ));
-        if (q) {
+    lastBankEditorSnapshot = [...questionBank];
+
+    const selectedUids = questionManagerState.selectedQuestions;
+    let changedCount = 0;
+    questionBank.forEach(q => {
+        if (selectedUids.has(q.__uid)) {
             q.category = newCat;
+            changedCount++;
         }
     });
 
     saveQBankToStorage();
     questionManagerState.selectedQuestions.clear();
     renderQuestionManagerList();
-    showToast(`✅ Changed category to "${newCat}" for ${selectedQuestions.length} question(s)`, 'success');
+    if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
+    bankEditorUndoTimeoutId = setTimeout(() => { lastBankEditorSnapshot = null; }, 5000);
+    const undoHtml = `<span>✅ Changed category to "${newCat}" for ${changedCount} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
+    showToast(undoHtml, 'success', 5000);
 }
 
 function updateQuestionManagerCategories() {
@@ -1594,7 +1852,7 @@ function initializeQuestionManager() {
 // Export dropdown functionality
 function initializeExportDropdown() {
     const exportJsonBtn = document.getElementById('exportQuestionsJsonBtn');
-    const exportTxtBtn = document.getElementById('exportQuestionsTxtBtn');
+    const exportTxtBtn = document.getElementById('exportQuestionsCsvBtn');
     const exportPlainBtn = document.getElementById('exportQuestionsPlainBtn');
 
     if (exportJsonBtn) {
@@ -1605,7 +1863,7 @@ function initializeExportDropdown() {
 
     if (exportTxtBtn) {
         exportTxtBtn.addEventListener('click', () => {
-            exportQuestionsAsTxt();
+            exportQuestionsAsCsv();
         });
     }
 
@@ -1633,20 +1891,15 @@ function exportQuestionsAsJson() {
     showToast(`📄 Questions exported as ${fileName}`, 'success');
 }
 
-// Export as tab-delimited TXT
-function exportQuestionsAsTxt() {
+// Export as CSV
+function exportQuestionsAsCsv() {
     if (questionBank.length === 0) {
         showToast('⚠️ No questions to export.', 'warning');
         return;
     }
-    let txtData = 'Question\tCategory\tType\tCorrect\tOption 1\tOption 2\tOption 3\tOption 4\n';
-    questionBank.forEach(q => {
-        const choices = q.choices || [];
-        while (choices.length < 4) choices.push('');
-        txtData += `${q.question || ''}\t${q.category || ''}\t${q.type || ''}\t${q.correct || ''}\t${choices[0]}\t${choices[1]}\t${choices[2]}\t${choices[3]}\n`;
-    });
-    const fileName = (document.getElementById('questionBankFilename')?.value.trim() || 'questionBank') + '.txt';
-    const blob = new Blob([txtData], { type: 'text/plain' });
+    const csvData = convertJsonToCsv(questionBank);
+    const fileName = (document.getElementById('questionBankFilename')?.value.trim() || 'questionBank') + '.csv';
+    const blob = new Blob([csvData], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1663,39 +1916,7 @@ function exportQuestionsAsPlainText() {
         return;
     }
 
-    let plainText = `QUESTION BANK EXPORT\n`;
-    plainText += `Generated: ${new Date().toLocaleString()}\n`;
-    plainText += `Total Questions: ${questionBank.length}\n`;
-    plainText += `${'='.repeat(80)}\n\n`;
-
-    // Group by category
-    const grouped = {};
-    questionBank.forEach(q => {
-        const cat = q.category || 'Uncategorized';
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(q);
-    });
-
-    Object.keys(grouped).sort().forEach(category => {
-        plainText += `\n## ${category}\n`;
-        plainText += `${'-'.repeat(40)}\n\n`;
-
-        grouped[category].forEach((q, idx) => {
-            const num = idx + 1;
-            plainText += `${num}. ${q.question || '(untitled)'}\n`;
-            
-            if (q.type === 'multiple_choice') {
-                (q.choices || []).forEach((choice, i) => {
-                    const marker = choice === q.correct ? '[✓] ' : '    ';
-                    plainText += `${marker}${String.fromCharCode(97 + i)}) ${choice}\n`;
-                });
-            } else if (q.type === 'true_false') {
-                plainText += `${q.correct === 'True' ? '[✓] ' : '    '}a) True\n`;
-                plainText += `${q.correct === 'False' ? '[✓] ' : '    '}b) False\n`;
-            }
-            plainText += `\n`;
-        });
-    });
+    const plainText = questionsToPlainText(questionBank);
 
     const fileName = (document.getElementById('outputFilename')?.value.trim() || 'questionBank') + '.txt';
     const blob = new Blob([plainText], { type: 'text/plain' });
@@ -1763,6 +1984,10 @@ function saveQBankToStorage() {
     localStorage.setItem('coeus-question-bank', JSON.stringify(questionBank));
 }
 
+function saveAddedQuestionsToStorage() {
+    localStorage.setItem('coeus-added-questions', JSON.stringify(addedQuestions));
+}
+
 function saveTestBankToStorage() {
     localStorage.setItem('coeus-test-bank', JSON.stringify(testBank));
 }
@@ -1770,14 +1995,35 @@ function saveTestBankToStorage() {
 function restoreBanksFromStorage() {
     const savedQBank = localStorage.getItem('coeus-question-bank');
     const savedTBank = localStorage.getItem('coeus-test-bank');
+    const savedAdded = localStorage.getItem('coeus-added-questions');
     let restored = false;
     
     if (savedQBank) {
         try {
             questionBank = JSON.parse(savedQBank);
+            assignQuestionUids(questionBank);
             restored = true;
         } catch (e) {
             console.error('Failed to parse saved question bank:', e);
+        }
+    }
+
+    if (savedAdded) {
+        try {
+            const savedAddedList = JSON.parse(savedAdded);
+            // Re-link saved "added" records to their actual object references
+            // in the restored question bank (matched by content, each claimed once).
+            const used = new Set();
+            addedQuestions = savedAddedList.map(saved => {
+                const idx = questionBank.findIndex((q, i) => !used.has(i) && JSON.stringify(q) === JSON.stringify(saved));
+                if (idx !== -1) {
+                    used.add(idx);
+                    return questionBank[idx];
+                }
+                return null;
+            }).filter(Boolean);
+        } catch (e) {
+            console.error('Failed to parse saved added-questions list:', e);
         }
     }
     
@@ -1797,8 +2043,17 @@ function restoreBanksFromStorage() {
         if (testBank.length > 0) {
             updateCategoryInputs();
         }
-        showToast('✅ Restored saved banks from last session', 'success', 3000);
     }
+}
+
+function undoBankEditorChange() {
+    if (!lastBankEditorSnapshot) return;
+    questionBank = [...lastBankEditorSnapshot];
+    saveQBankToStorage();
+    renderQuestionManagerList();
+    showToast('✅ Change undone', 'success');
+    lastBankEditorSnapshot = null;
+    if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
 }
 
 function undoClear() {
@@ -1809,6 +2064,13 @@ function undoClear() {
         saveQBankToStorage();
         renderQuestionManagerList();
         showToast('✅ Question bank restored', 'success');
+    } else if (lastDeletedBank.type === 'addedQuestions') {
+        questionBank = [...questionBank, ...lastDeletedBank.data];
+        addedQuestions = [...addedQuestions, ...lastDeletedBank.data];
+        saveQBankToStorage();
+        saveAddedQuestionsToStorage();
+        renderQuestionManagerList();
+        showToast('✅ Added questions restored', 'success');
     } else if (lastDeletedBank.type === 'testBank') {
         testBank = [...lastDeletedBank.data];
         saveTestBankToStorage();
@@ -2067,11 +2329,16 @@ function loadFile(fileInput, isTxt, bankType) {
                 }
                 renderMissingCorrectWarning('testBankMissingCorrectWarning', testBank);
                 updateStatusBank(file.name.replace(/\.[^/.]+$/, ''), testBank.length);
+                const outputFilenameInput = document.getElementById('outputFilename');
+                if (outputFilenameInput) outputFilenameInput.value = file.name.replace(/\.[^/.]+$/, '');
                 renderSidebarQuestions();
                 showToast(`✅ Loaded ${testBank.length} questions from "${file.name}"`, 'success');
             } else {
                 questionBank = normalizedData;
+                assignQuestionUids(questionBank);
+                addedQuestions = [];
                 saveQBankToStorage();
+                saveAddedQuestionsToStorage();
                 clearQuestionManagerState();
                 updateQuestionManagerCategories();
                 renderQuestionManagerList();
@@ -2228,10 +2495,13 @@ function addQuestion() {
                 correct: columnBItems[idx],
                 choices: [null, null, null, null]
             };
+            assignQuestionUids([newQuestion]);
             questionBank.push(newQuestion);
+            addedQuestions.push(newQuestion);
         });
         
         saveQBankToStorage();
+        saveAddedQuestionsToStorage();
         showToast(`✅ Matching question set (${columnAItems.length} items) added to the bank`, 'success');
         
         // Clear the form
@@ -2254,8 +2524,11 @@ function addQuestion() {
         correct: correct
     };
 
+    assignQuestionUids([newQuestion]);
     questionBank.push(newQuestion);
+    addedQuestions.push(newQuestion);
     saveQBankToStorage();
+    saveAddedQuestionsToStorage();
     showToast('✅ Question added to the bank', 'success');
     
     // Clear the form
@@ -2732,6 +3005,14 @@ function generateTest() {
     
     // Update lastGeneratedQuestions to the final version
     lastGeneratedQuestions = final;
+
+    const totalShortfall = Object.values(generationStats).reduce((sum, stat) =>
+        sum + (stat.mcShortfall || 0) + (stat.tfShortfall || 0) + (stat.mtShortfall || 0), 0);
+    if (totalShortfall > 0) {
+        showToast(`⚠️ Test generated with a shortfall of ${totalShortfall} question(s). See Generation Report.`, 'warning');
+    } else {
+        showToast(`✅ Test generated with ${final.length} question(s).`, 'success');
+    }
 }
 
 // Display test and answer key
@@ -2750,8 +3031,19 @@ function displayTest(questions) {
     const versionLabel = VERSION_LABELS[(testVersionIndex - 1) % VERSION_LABELS.length];
 
     // ── Test preview — DM Sans, answer-key spacing ────────────────────────
+    const ROMANS = ['I', 'II', 'III'];
+    const mcqCount = questions.filter(q => q.type === 'multiple_choice').length;
+    const tfCount = questions.filter(q => q.type === 'true_false').length;
+    const mtCount = questions.filter(q => q.type === 'matching').length;
+    let sectionIdx = 0;
+    const mcqRoman = mcqCount > 0 ? ROMANS[sectionIdx++] : null;
+    const tfRoman = tfCount > 0 ? ROMANS[sectionIdx++] : null;
+    const mtRoman = mtCount > 0 ? ROMANS[sectionIdx++] : null;
+
     let testHtml = `<div>`;
-    testHtml += `<p style="font-weight:600;margin-bottom:0.5rem;">I. Multiple Choice Questions. Choose the letter of the best answer.</p>`;
+    if (mcqRoman) {
+        testHtml += `<p style="font-weight:600;margin-bottom:0.5rem;">${mcqRoman}. Multiple Choice Questions. Choose the letter of the best answer.</p>`;
+    }
 
     let answerKeyHtml = '<h3 class="text-lg font-semibold mb-4">Answer Key</h3>';
 
@@ -2777,7 +3069,9 @@ function displayTest(questions) {
         questionNumber++;
     });
 
-    testHtml += `<p style="font-weight:600;margin-top:0.75rem;margin-bottom:0.5rem;">II. True or False. Shade A if the statement is True. Shade B if the statement is False.</p>`;
+    if (tfRoman) {
+        testHtml += `<p style="font-weight:600;margin-top:0.75rem;margin-bottom:0.5rem;">${tfRoman}. True or False. Shade A if the statement is True. Shade B if the statement is False.</p>`;
+    }
 
     const tfs = questions.filter(q => q.type === 'true_false');
     tfs.forEach(q => {
@@ -2790,7 +3084,7 @@ function displayTest(questions) {
 
     const matching = questions.filter(q => q.type === 'matching');
     if (matching.length > 0) {
-        testHtml += `<p style="font-weight:600;margin-top:0.75rem;margin-bottom:0.5rem;">III. Matching Type. Match Column A with Column B.</p>`;
+        testHtml += `<p style="font-weight:600;margin-top:0.75rem;margin-bottom:0.5rem;">${mtRoman}. Matching Type. Match Column A with Column B.</p>`;
 
         // Get all answers and randomly assign them letters
         const allAnswers = matching.map(q => q.correct);
@@ -3284,7 +3578,7 @@ function displayGenerationReport() {
                     <li>Open your excluded questions file</li>
                     <li>Manually select <strong>${totalShortfall} question(s)</strong> following the shortfall breakdown above</li>
                     <li>Add them to your exported test file</li>
-                    <li>Or use the Question Manager to combine them</li>
+                    <li>Or use Manage a Bank to combine them</li>
                 </ol>
             </div>
         `;
@@ -3356,6 +3650,99 @@ function selectAllAvailableQuestions() {
     showToast('✅ Selected all available questions', 'success');
 }
 
+// Evenly distribute `target` items across categories, respecting each category's cap.
+function distributeEvenly(target, caps) {
+    // caps: [{ key, cap }]
+    const alloc = {};
+    caps.forEach(c => { alloc[c.key] = 0; });
+    let remaining = target;
+    let active = caps.filter(c => c.cap > 0).map(c => c.key);
+    while (remaining > 0 && active.length > 0) {
+        let progressed = false;
+        for (const key of active.slice()) {
+            if (remaining <= 0) break;
+            const cap = caps.find(c => c.key === key).cap;
+            if (alloc[key] < cap) {
+                alloc[key]++;
+                remaining--;
+                progressed = true;
+            } else {
+                active = active.filter(k => k !== key);
+            }
+        }
+        if (!progressed) break;
+    }
+    return { alloc, shortfall: remaining };
+}
+
+// Balanced Pick Across Categories - Test Generator tab
+function balancedPickAcrossCategories() {
+    if (!testBank || testBank.length === 0) {
+        showToast('⚠️ No questions loaded.', 'warning');
+        return;
+    }
+
+    const targetMC = parseInt(document.getElementById('balanceTargetMC')?.value, 10) || 0;
+    const targetTF = parseInt(document.getElementById('balanceTargetTF')?.value, 10) || 0;
+    const targetMT = parseInt(document.getElementById('balanceTargetMT')?.value, 10) || 0;
+
+    if (targetMC + targetTF + targetMT <= 0) {
+        showToast('⚠️ Enter at least one target total (MCQ, T/F, or Matching).', 'warning');
+        return;
+    }
+
+    const categories = [...new Set(testBank.map(q => q.category))];
+    if (categories.length === 0) {
+        showToast('⚠️ No categories found in bank.', 'warning');
+        return;
+    }
+
+    const availFor = (cat, type) =>
+        Math.max(0,
+            testBank.filter(q => q.category === cat && q.type === type).length -
+            excludedQuestions.filter(q => q.category === cat && q.type === type).length
+        );
+
+    const mcCaps = categories.map(cat => ({ key: cat, cap: availFor(cat, 'multiple_choice') }));
+    const tfCaps = categories.map(cat => ({ key: cat, cap: availFor(cat, 'true_false') }));
+    const mtCaps = categories.map(cat => ({ key: cat, cap: availFor(cat, 'matching') }));
+
+    const mcResult = distributeEvenly(targetMC, mcCaps);
+    const tfResult = distributeEvenly(targetTF, tfCaps);
+    const mtResult = distributeEvenly(targetMT, mtCaps);
+
+    categories.forEach(cat => {
+        const safeCat = safeIdFromCategory(cat);
+        const mcInput = document.getElementById(`cat_${safeCat}_mc`);
+        const tfInput = document.getElementById(`cat_${safeCat}_tf`);
+        const mtInput = document.getElementById(`cat_${safeCat}_mt`);
+
+        if (mcInput) {
+            mcInput.value = mcResult.alloc[cat] || 0;
+            mcInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (tfInput) {
+            tfInput.value = tfResult.alloc[cat] || 0;
+            tfInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (mtInput) {
+            mtInput.value = mtResult.alloc[cat] || 0;
+            mtInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    const totalShortfall = mcResult.shortfall + tfResult.shortfall + mtResult.shortfall;
+    if (totalShortfall > 0) {
+        const parts = [];
+        if (mcResult.shortfall > 0) parts.push(`MCQ short by ${mcResult.shortfall}`);
+        if (tfResult.shortfall > 0) parts.push(`T/F short by ${tfResult.shortfall}`);
+        if (mtResult.shortfall > 0) parts.push(`Matching short by ${mtResult.shortfall}`);
+        showToast(`⚠️ Balanced pick applied, but ${parts.join(', ')} due to limited availability.`, 'warning');
+    } else {
+        showToast(`✅ Balanced pick applied across ${categories.length} categories.`, 'success');
+    }
+}
+
 // ========================================
 // EXPORT TESTS
 // ========================================
@@ -3371,8 +3758,12 @@ function getFilename(ext) {
 function exportTestAsTxt() {
     const testPreview = document.getElementById('testPreview');
     const answerKeyPreview = document.getElementById('answerKeyPreview');
-    const testContent = testPreview.innerText;
-    const answerKeyContent = answerKeyPreview.innerText;
+    const stripEmptyLines = (text) => text.split('\n').filter(line => line.trim() !== '').join('\n');
+    const testContent = stripEmptyLines(testPreview.innerText);
+    const akEntries = Array.from(answerKeyPreview.querySelectorAll('.mb-1')).map(el => el.innerText.trim());
+    const distDiv = answerKeyPreview.querySelector('.mt-6');
+    let answerKeyContent = 'Answer Key\n' + akEntries.join('\n');
+    if (distDiv) answerKeyContent += '\n\n' + stripEmptyLines(distDiv.innerText);
     const output = `${testContent}\n\n${answerKeyContent}`;
 
     const blob = new Blob([output], { type: 'text/plain' });
@@ -3385,70 +3776,6 @@ function exportTestAsTxt() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast(`📄 TXT exported as ${getFilename('txt')}`, 'success');
-}
-
-// Export test as PDF
-function exportTestAsPdf() {
-    const testPreview = document.getElementById('testPreview');
-    const answerKeyPreview = document.getElementById('answerKeyPreview');
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 10;
-    const maxLineWidth = pageWidth - margin * 2;
-
-    const testContent = testPreview.innerText;
-    const answerKeyContent = answerKeyPreview.innerText;
-
-    const testLines = testContent.split('\n');
-    let y = 10;
-
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text('TEST QUESTIONS', margin, y);
-    doc.setFont(undefined, 'normal');
-    y += 10;
-
-    testLines.forEach(line => {
-        const isQuestionStart = /^\d+\./.test(line);
-        doc.setFont(undefined, isQuestionStart ? 'bold' : 'normal');
-        if (isQuestionStart) y += 5;
-
-        const wrappedLines = doc.splitTextToSize(line, maxLineWidth);
-        wrappedLines.forEach(wrappedLine => {
-            if (y > 280) {
-                doc.addPage();
-                y = 10;
-            }
-            doc.text(wrappedLine, margin, y);
-            y += 7;
-        });
-    });
-
-    doc.addPage();
-    y = 10;
-    doc.setFont(undefined, 'bold');
-    doc.text('ANSWER KEY', margin, y);
-    doc.setFont(undefined, 'normal');
-    y += 10;
-
-    const answerLines = answerKeyContent.split('\n');
-    answerLines.forEach(line => {
-        const wrappedLines = doc.splitTextToSize(line, maxLineWidth);
-        wrappedLines.forEach(wrappedLine => {
-            if (y > 280) {
-                doc.addPage();
-                y = 10;
-            }
-            doc.text(wrappedLine, margin, y);
-            y += 7;
-        });
-    });
-
-    const fileName = getFilename('pdf').replace('.pdf','');
-    doc.save(fileName + ".pdf");
-    showToast(`📄 PDF exported as ${getFilename('pdf')}`, 'success');
 }
 
 // Export test as DOCX
@@ -3572,10 +3899,17 @@ function exportTestAsDocx() {
 
     const mcqs = lastGeneratedQuestions.filter(q => q.type === 'multiple_choice');
     const tfs  = lastGeneratedQuestions.filter(q => q.type === 'true_false');
+    const matchingCount = lastGeneratedQuestions.filter(q => q.type === 'matching').length;
+
+    const DOCX_ROMANS = ['I', 'II', 'III'];
+    let docxSectionIdx = 0;
+    const mcqRomanDocx = mcqs.length > 0 ? DOCX_ROMANS[docxSectionIdx++] : null;
+    const tfRomanDocx  = tfs.length > 0 ? DOCX_ROMANS[docxSectionIdx++] : null;
+    const mtRomanDocx  = matchingCount > 0 ? DOCX_ROMANS[docxSectionIdx++] : null;
 
     if (mcqs.length > 0) {
         allChildren.push(headerPara(
-            'I. Multiple Choice Questions. Choose the letter of the best answer.'
+            `${mcqRomanDocx}. Multiple Choice Questions. Choose the letter of the best answer.`
         ));
         let qNum = 1;
         mcqs.forEach(q => {
@@ -3589,7 +3923,7 @@ function exportTestAsDocx() {
     if (tfs.length > 0) {
         allChildren.push(new Paragraph({ children: [run('')], spacing: sp }));
         allChildren.push(headerPara(
-            'II. True or False. Shade A if the statement is True. Shade B if the statement is False.'
+            `${tfRomanDocx}. True or False. Shade A if the statement is True. Shade B if the statement is False.`
         ));
         tfs.forEach(q => allChildren.push(qPara(q.question || '')));
     }
@@ -3605,18 +3939,16 @@ function exportTestAsDocx() {
     if (matching.length > 0) {
         allChildren.push(new Paragraph({ children: [run('')], spacing: sp }));
         allChildren.push(headerPara(
-            'III. Matching Type. Match Column A with Column B.'
+            `${mtRomanDocx}. Matching Type. Match Column A with Column B.`
         ));
 
-        // Get all answers with letters (cycling through ABCDE)
-        const allAnswers = matching.map((q, idx) => ({
-            text: q.correct,
+        // Get all answers and randomly assign them letters (cycling A-E by row position)
+        const allAnswerTexts = matching.map(q => q.correct);
+        const shuffledAnswerTexts = shuffleArray([...allAnswerTexts]);
+        const sortedAnswers = shuffledAnswerTexts.map((text, idx) => ({
+            text,
             letter: String.fromCharCode(65 + (idx % 5))
         }));
-        
-        // Shuffle answers but keep letters in alphabetical order
-        const shuffledAnswers = [...allAnswers].sort(() => Math.random() - 0.5);
-        const sortedAnswers = shuffledAnswers.sort((a, b) => a.letter.charCodeAt(0) - b.letter.charCodeAt(0));
         
         // Build table with two columns
         const tableRows = [];
@@ -3739,6 +4071,72 @@ function exportTestAsJson() {
     showToast(`📄 JSON exported as ${jsonFilename}`, 'success');
 }
 
+function getTestExportData() {
+    return lastGeneratedQuestions.map(q => {
+        if (q.type === 'multiple_choice') {
+            return {
+                question: q.question,
+                category: q.category,
+                type: q.type,
+                correct: q.displayCorrectText || q.correct,
+                choices: q.displayChoices || q.choices
+            };
+        } else if (q.type === 'true_false') {
+            return {
+                question: q.question,
+                category: q.category,
+                type: q.type,
+                correct: q.displayCorrectText || q.correct,
+                choices: null
+            };
+        } else {
+            return {
+                question: q.question || '',
+                category: q.category || '',
+                type: q.type || '',
+                correct: q.correct || '',
+                choices: q.choices || null
+            };
+        }
+    });
+}
+
+function exportTestAsGift() {
+    if (!lastGeneratedQuestions || lastGeneratedQuestions.length === 0) {
+        showToast('⚠️ Please generate a test first.', 'warning');
+        return;
+    }
+    const giftFilename = getFilename('txt').replace(/\.txt$/, '_gift.txt');
+    const blob = new Blob([questionsToGift(getTestExportData())], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = giftFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`📄 GIFT exported as ${giftFilename}`, 'success');
+}
+
+function exportTestAsCsv() {
+    if (!lastGeneratedQuestions || lastGeneratedQuestions.length === 0) {
+        showToast('⚠️ Please generate a test first.', 'warning');
+        return;
+    }
+    const csvFilename = getFilename('csv');
+    const blob = new Blob([convertJsonToCsv(getTestExportData())], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = csvFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`📄 CSV exported as ${csvFilename}`, 'success');
+}
+
 // ========================================
 // TXT/JSON CONVERSION
 // ========================================
@@ -3771,27 +4169,70 @@ function parseTxtToJSON(txtData) {
     });
 }
 
-function convertTabDelimitedTxtToJson(text) {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    if (lines.length < 2) {
+// Parse a CSV string into an array of rows (arrays of field strings), honoring quoted fields
+function parseCsvRows(text) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (text[i + 1] === '"') { field += '"'; i++; }
+                else { inQuotes = false; }
+            } else {
+                field += c;
+            }
+        } else {
+            if (c === '"') {
+                inQuotes = true;
+            } else if (c === ',') {
+                row.push(field); field = '';
+            } else if (c === '\r') {
+                // skip
+            } else if (c === '\n') {
+                row.push(field); field = '';
+                rows.push(row); row = [];
+            } else {
+                field += c;
+            }
+        }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows.filter(r => !(r.length === 1 && r[0] === ''));
+}
+
+// Escape a single CSV field
+function csvEscape(value) {
+    const str = (value === undefined || value === null) ? '' : String(value);
+    if (/[",\n\r]/.test(str)) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+}
+
+function convertCsvToJson(text) {
+    const rows = parseCsvRows(text);
+    if (rows.length < 2) {
         throw new Error("The file must contain at least one question plus headers.");
     }
 
-    const headers = lines[0].split('\t');
+    const headers = rows[0];
     if (headers.length !== 8 || headers[0] !== "Question") {
         throw new Error("Invalid format. Ensure the first row contains: Question, Category, Type, Correct, Option 1, Option 2, Option 3, Option 4");
     }
 
     const questions = [];
 
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split('\t');
+    for (let i = 1; i < rows.length; i++) {
+        const values = rows[i];
         if (values.length !== 8) {
             throw new Error(`Invalid row format at line ${i + 1}. Each row must have 8 columns.`);
         }
 
         const [question, category, type, correct, option1, option2, option3, option4] = values;
-        
+
         // Build choices array, converting "null" strings to null
         let choices = [option1, option2, option3, option4].map(opt => {
             const trimmed = opt.trim();
@@ -3812,6 +4253,21 @@ function convertTabDelimitedTxtToJson(text) {
     }
 
     return questions;
+}
+
+function convertJsonToCsv(jsonData) {
+    let csv = 'Question,Category,Type,Correct,Option 1,Option 2,Option 3,Option 4\n';
+    jsonData.forEach(item => {
+        let choices = item.choices || [];
+        if (item.type === 'true_false' || item.type === 'matching') {
+            while (choices.length < 4) choices.push('null');
+        } else {
+            while (choices.length < 4) choices.push('');
+        }
+        const row = [item.question || '', item.category || '', item.type || '', item.correct || '', choices[0], choices[1], choices[2], choices[3]];
+        csv += row.map(csvEscape).join(',') + '\n';
+    });
+    return csv;
 }
 
 // ========================================
@@ -4144,7 +4600,7 @@ function clearMerger() {
     }
     
     updateMergerDisplay();
-    showToast('🔄 Cleared', 'success');
+    showToast('🗑️ Cleared', 'success');
 }
 
 // Download merged JSON
@@ -4154,7 +4610,7 @@ function downloadMergedJSON() {
         return;
     }
 
-    const mergedFilename = (document.getElementById('outputFilename')?.value.trim() || 'merged') + '_merged.json';
+    const mergedFilename = (document.getElementById('mergerOutputFilename')?.value.trim() || 'merged') + '.json';
     const blob = new Blob([JSON.stringify(mergedQuestions, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -4260,6 +4716,217 @@ function questionsToGift(questions) {
     }
 
     return blocks.join('\n\n');
+}
+
+function questionsToPlainText(questions) {
+    return questions.map((q, idx) => {
+        const num = idx + 1;
+        let block = `${num}. ${q.question || ''}\n`;
+
+        if (q.type === 'multiple_choice') {
+            (q.choices || []).forEach((choice, i) => {
+                const letter = String.fromCharCode(97 + i);
+                const isCorrect = choice === q.correct;
+                block += `${isCorrect ? '=' : ''}${letter}. ${choice}\n`;
+            });
+        } else if (q.type === 'true_false') {
+            block += `=${q.correct === 'True' ? 'True' : 'False'}\n`;
+        } else if (q.type === 'matching') {
+            block += `=${q.correct || ''}\n`;
+        }
+
+        return block;
+    }).join('\n');
+}
+
+function parsePlainTextToJson(text, subject, category) {
+    function cleanText(str) {
+        return str
+            .replace(/\n(?!\d+[.)]\s|[a-e][.)]\s|=?\s*(true|false)\s*$)/gi, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+    }
+
+    const blocks = text.trim().split(/\n(?=\d+[.)]\s)/).map(b => b.trim()).filter(b => b);
+    const questions = [];
+
+    blocks.forEach(block => {
+        const lines = block.split('\n');
+        if (!lines || lines.length === 0) return;
+
+        const tfLineIndex = lines.findIndex(line => line.trim().match(/^=?\s*(true|false)\s*$/i));
+        if (tfLineIndex !== -1) {
+            const tfQuestionLines = [];
+            for (let i = 0; i < tfLineIndex; i++) {
+                tfQuestionLines.push(lines[i].trim().replace(/^\d+[.)]\s*/, ''));
+            }
+            const tfQuestion = cleanText(tfQuestionLines.join('\n'));
+            const tfMatch = lines[tfLineIndex].trim().match(/^=?\s*(true|false)\s*$/i);
+            const tfCorrect = tfMatch[1].toLowerCase() === 'true' ? 'True' : 'False';
+            questions.push({ subject, question: tfQuestion, category, type: 'true_false', correct: tfCorrect, choices: [null, null, null, null] });
+            return;
+        }
+
+        const matchingLineIndex = lines.findIndex((line, idx) => {
+            if (idx === 0) return false;
+            const trimmed = line.trim();
+            return trimmed.match(/^[=*]\s*(.+)$/) && !trimmed.match(/^[=*]\s*[a-e][.)]\s/i);
+        });
+        if (matchingLineIndex !== -1) {
+            const questionLines = [];
+            for (let i = 0; i < matchingLineIndex; i++) {
+                questionLines.push(lines[i].trim().replace(/^\d+[.)]\s*/, ''));
+            }
+            const premise = cleanText(questionLines.join('\n'));
+            const answerMatch = lines[matchingLineIndex].trim().match(/^[=*]\s*(.+)$/);
+            const answer = answerMatch ? answerMatch[1].trim() : '';
+            questions.push({ subject, question: premise, category, type: 'matching', correct: answer, choices: [null, null, null, null] });
+            return;
+        }
+
+        const questionLines = [];
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.match(/^[*=]?[a-e][.)]\s+/i)) break;
+            questionLines.push(line.replace(/^\d+[.)]\s*/, ''));
+        }
+        const question = cleanText(questionLines.join('\n'));
+        const choices = [];
+        let correct = '';
+        const firstChoiceIdx = lines.findIndex(line => line.trim().match(/^[*=]?[a-e][.)]\s+/i));
+        for (let i = firstChoiceIdx; i !== -1 && i < lines.length; i++) {
+            const line = lines[i].trim();
+            const match = line.match(/^([*=]?)([a-e])[.)]\s+(.*)$/i);
+            if (match) {
+                const isCorrect = match[1] === '*' || match[1] === '=';
+                let choiceText = match[3].trim();
+                let j = i + 1;
+                while (j < lines.length && !lines[j].trim().match(/^[*=]?[a-e][.)]\s+/i)) {
+                    choiceText += ' ' + lines[j].trim();
+                    j++;
+                }
+                i = j - 1;
+                choiceText = cleanText(choiceText);
+                if (isCorrect) correct = choiceText;
+                choices.push(choiceText);
+            }
+        }
+
+        if (!question || choices.length === 0) return;
+        questions.push({ subject, question, category, type: 'multiple_choice', correct, choices });
+    });
+
+    return questions;
+}
+
+function looksLikePlainText(text) {
+    return /^\s*\d+[.)]\s/.test(text.trim());
+}
+
+function unescapeGift(str) {
+    return (str || '').replace(/\\([~=#{}\\])/g, '$1');
+}
+
+// Parse a GIFT-format string back into an array of question objects (JSON format)
+function giftToJson(text) {
+    const blocks = text.split(/\r?\n\s*\r?\n/).map(b => b.trim()).filter(Boolean);
+    const questions = [];
+
+    blocks.forEach(rawBlock => {
+        const block = rawBlock.split('\n').filter(l => !l.trim().startsWith('//')).join('\n').trim();
+        if (!block) return;
+
+        const m = block.match(/^::(.*?)::\s*([\s\S]*?)\{([\s\S]*)\}\s*$/);
+        if (!m) return;
+
+        const title = m[1].trim();
+        const qText = unescapeGift(m[2].trim());
+        const body = m[3].trim();
+        const category = title.replace(/_Q\d+$/, '').split('_').pop() || '';
+
+        // Matching block
+        if (body.split('\n').some(l => /^\s*=.*->/.test(l))) {
+            body.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+                const pm = line.match(/^=(.*?)\s*->\s*(.*)$/);
+                if (pm) {
+                    questions.push({
+                        question: unescapeGift(pm[1].trim()),
+                        category,
+                        type: 'matching',
+                        correct: unescapeGift(pm[2].trim()),
+                        choices: [null, null, null, null]
+                    });
+                }
+            });
+            return;
+        }
+
+        // True/False block
+        if (/^(TRUE|FALSE|T|F)$/i.test(body)) {
+            questions.push({
+                question: qText,
+                category,
+                type: 'true_false',
+                correct: /^(TRUE|T)$/i.test(body) ? 'True' : 'False',
+                choices: []
+            });
+            return;
+        }
+
+        // Multiple choice block
+        const choices = [];
+        let correct = '';
+        body.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+            const cm = line.match(/^([=~])(.*)$/);
+            if (cm) {
+                const cText = unescapeGift(cm[2].trim());
+                choices.push(cText);
+                if (cm[1] === '=') correct = cText;
+            }
+        });
+        questions.push({ question: qText, category, type: 'multiple_choice', correct, choices });
+    });
+
+    return questions;
+}
+
+// Parse text into a questions array given a known source format ('json' | 'csv' | 'gift')
+function parseQuestionsByFormat(text, format) {
+    if (format === 'json') {
+        const q = JSON.parse(text);
+        if (!Array.isArray(q)) throw new Error('JSON must be an array of questions.');
+        return q;
+    }
+    if (format === 'csv') return convertCsvToJson(text);
+    if (format === 'gift') {
+        const gq = giftToJson(text);
+        if (gq.length > 0) return gq;
+        return parsePlainTextToJson(text, '', '');
+    }
+    if (format === 'text') return parsePlainTextToJson(text, '', '');
+    throw new Error('Unknown format: ' + format);
+}
+
+// Try parsing text against a list of candidate formats, returning the first that succeeds
+function autoParseQuestions(text, formats) {
+    let lastError = null;
+    for (const format of formats) {
+        try {
+            const questions = parseQuestionsByFormat(text, format);
+            if (Array.isArray(questions) && questions.length > 0) return { questions, format };
+        } catch (e) {
+            lastError = e;
+        }
+    }
+    throw new Error('Could not parse input as ' + formats.join(' or ') + '.' + (lastError ? ' (' + lastError.message + ')' : ''));
+}
+
+// Detect format from an uploaded file's extension
+function formatFromFileName(name) {
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    if (ext === 'csv') return 'csv';
+    if (ext === 'json') return 'json';
+    return 'gift';
 }
 
 function convertToGift() {

@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<!--
+  Coeus Test Writer
+  Copyright (C) 2026 Druss Operio
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coeus Test Writer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <style>
+        /* ── Fonts ─────────────────────────────────────────────── */
+        body, button, input, select, textarea, label {
+            font-family: 'DM Sans', sans-serif;
+        }
+        .app-title { font-family: 'Cinzel', serif; }
+
+        /* ── Font Scale ────────────────────────────────────────── */
+        body { font-size: 14px; line-height: 1.5; }
+        h1 { font-size: 28px; font-weight: 700; line-height: 1.2; margin: 0; }
+        h2 { font-size: 18px; font-weight: 600; line-height: 1.3; margin: 0; }
+        h3 { font-size: 16px; font-weight: 600; line-height: 1.3; margin: 0; }
+        .text-xs { font-size: 12px; }
+        .text-sm { font-size: 14px; }
+        .text-base { font-size: 16px; }
+        .text-lg { font-size: 18px; }
+        .text-xl { font-size: 20px; }
+        button { font-size: 14px; }
+        input, select, textarea { font-size: 14px; }
+        code, pre { font-size: 13px; }
+
+        /* ── Dark mode tokens ──────────────────────────────────── */
+        :root {
+            --bg:        #f3f4f6;
+            --surface:   #ffffff;
+            --border:    #e5e7eb;
+            --text:      #111827;
+            --text-muted:#6b7280;
+            --tab-bar:   #ffffff;
+            --card-bg:   #ffffff;
+            --input-bg:  #ffffff;
+            --input-border:#d1d5db;
+            --hover:     #eff6ff;
+            --accent:    #1d4ed8;
+        }
+        body.dark {
+            --bg:        #0f172a;
+            --surface:   #1e293b;
+            --border:    #334155;
+            --text:      #f1f5f9;
+            --text-muted:#94a3b8;
+            --tab-bar:   #1e293b;
+            --card-bg:   #1e293b;
+            --input-bg:  #0f172a;
+            --input-border:#475569;
+            --hover:     #1e3a5f;
+            --accent:    #60a5fa;
+        }
+        body          { background-color: var(--bg);      color: var(--text); }
+        .surface      { background-color: var(--surface); border-color: var(--border); }
+        .card-bg      { background-color: var(--card-bg); }
+        input:not([type=file]):not([type=checkbox]):not([type=radio]),
+        select, textarea {
+            background-color: var(--input-bg) !important;
+            border-color:     var(--input-border) !important;
+            color:            var(--text) !important;
+        }
+        .dark .bg-blue-50  { background-color: #1e3a5f !important; }
+        .dark .bg-yellow-50{ background-color: #2d2410 !important; }
+        .dark .bg-gray-50  { background-color: #1e293b !important; }
+        .dark .bg-gray-100 { background-color: #0f172a !important; }
+        .dark .text-gray-700 { color: #cbd5e1 !important; }
+        .dark .text-gray-600 { color: #94a3b8 !important; }
+        .dark .text-gray-500 { color: #64748b !important; }
+        .dark .text-blue-900 { color: #93c5fd !important; }
+        .dark .text-yellow-800 { color: #fcd34d !important; }
+        .dark .border-gray-200 { border-color: #334155 !important; }
+        .dark .border-blue-200 { border-color: #1d4ed8 !important; }
+        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,.5) !important; }
+        .dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,.5) !important; }
+        .dark .bg-white  { background-color: #1e293b !important; }
+
+        /* ── Output containers ─────────────────────────────────── */
+        .output-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1;
+        }
+        .output-pre {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            background-color: var(--input-bg);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .output-pre code {
+            background: none;
+            color: var(--text);
+        }
+
+        /* ── Layout ────────────────────────────────────────────── */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-row {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ── Sidebar ────────────────────────────────────────────── */
+        #sidebar {
+            width: 340px;
+            min-width: 340px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width .25s, min-width .25s, padding .25s;
+            overflow: hidden;
+        }
+        #sidebar.collapsed {
+            width: 36px;
+            min-width: 36px;
+        }
+        #sidebar.collapsed .sidebar-body { display: none; }
+        #sidebar-toggle {
+            width: 36px;
+            min-width: 36px;
+            align-self: flex-start;
+            background: none;
+            border: none;
+            padding: 8px 0;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1;
+            text-align: center;
+        }
+        #sidebar-toggle:hover { color: var(--text); }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 14px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ── Sticky tab bar ─────────────────────────────────────── */
+        #tab-bar-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background-color: var(--tab-bar);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,.06);
+        }
+        .dark #tab-bar-wrapper { box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+
+        /* ── Tab content ────────────────────────────────────────── */
+        .tab-content  { display: none; flex-direction: column; }
+        .active-tab   { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+        .tab-button.active {
+            background-color: #1d4ed8;
+            box-shadow: inset 0 -3px 0 0 #fff;
+        }
+
+        /* ── Status bar ─────────────────────────────────────────── */
+        #status-bar {
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 6px 16px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        #status-bar span { white-space: nowrap; }
+
+        /* ── Drop zones ────────────────────────────────────────── */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            transition: background 0.15s;
+        }
+        .drop-zone.dragover {
+            background: var(--hover);
+            border-color: var(--accent);
+        }
+
+        /* ── Category badges ────────────────────────────────────── */
+        .cat-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* ── Sidebar question cards ─────────────────────────────── */
+        .q-card {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: var(--card-bg);
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+        .q-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+
+        /* ── DOCX info panel ────────────────────────────────────── */
+        #docxInfoPanel { display: none; }
+        #docxInfoPanel.open { display: block; }
+
+        /* ── Collapsible answer key ─────────────────────────────── */
+        #answerKeyBody { display: none; }
+        #answerKeyBody.open { display: block; }
+
+        /* ── Test preview (site font, answer-key spacing) ───────── */
+        #testPreview { font-family: 'DM Sans', sans-serif; font-size: 0.92rem; line-height: 1.6; }
+        #testPreview p { margin: 0; padding: 0; }
+
+        /* ── Empty state ────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+        .empty-state svg { margin: 0 auto 16px; display: block; opacity: .45; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* ── Hover card effect on category rows ─────────────────── */
+        .cat-row {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: var(--card-bg);
+            transition: box-shadow .15s, border-color .15s;
+        }
+        .cat-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); border-color: #6366f1; }
+        .dark .cat-row:hover { border-color: #818cf8; }
+
+        /* ── Toast ──────────────────────────────────────────────── */
+        #toast-stack {
+            position: fixed; top: 16px; right: 16px;
+            z-index: 9999;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            min-width: 240px; max-width: 340px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,.2);
+            pointer-events: auto;
+            animation: slideIn .2s ease;
+        }
+        .toast.success { background: #16a34a; }
+        .toast.error   { background: #dc2626; }
+        .toast.warning { background: #d97706; }
+        .toast.info    { background: #2563eb; }
+        @keyframes slideIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:none; } }
+
+        /* ── Info button & popover ──────────────────────────────── */
+        .info-btn {
+          background: none; border: none; cursor: pointer;
+          color: var(--accent, #3b82f6); font-size: 0.85rem;
+          padding: 0 0.25rem; vertical-align: middle;
+        }
+        .info-popover {
+          position: absolute; z-index: 50; max-width: 280px;
+          font-size: 0.75rem; background: var(--surface, #fff);
+          border: 1px solid var(--border, #e5e7eb);
+          padding: 0.5rem 0.75rem; border-radius: 0.375rem;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+          top: 100%; left: 0;
+        }
+        .hidden { display: none !important; }
+
+        /* ── Question Manager Inner Tabs ────────────────────────── */
+        .qm-inner-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+        .qm-inner-tab-btn {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .2s;
+        }
+        .qm-inner-tab-btn:hover {
+            color: var(--text);
+        }
+        .qm-inner-tab-btn.active {
+            color: #1d4ed8;
+            border-bottom-color: #1d4ed8;
+        }
+        .qm-inner-content {
+            display: none;
+        }
+        .qm-inner-content.active {
+            display: block;
+        }
+
+        /* ── Question Manager Category Sections ──────────────────── */
+        .qm-category-section {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--card-bg);
+        }
+        .qm-category-header {
+            padding: 10px 12px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+            transition: background .2s;
+        }
+        .qm-category-header:hover {
+            background: var(--bg);
+        }
+        .qm-category-chevron {
+            display: inline-block;
+            font-size: 0.8rem;
+            transition: transform .2s;
+        }
+        .qm-category-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+        .qm-category-body {
+            padding: 8px 0;
+            opacity: 1;
+        }
+        .qm-category-body.hidden {
+            display: none;
+            opacity: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body class="app-shell">
+
+<!-- ── Toast stack ──────────────────────────────────────────────────── -->
+<div id="toast-stack"></div>
+
+<!-- ── Header ───────────────────────────────────────────────────────── -->
+<header class="bg-white shadow-sm py-5" style="background-color:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="flex items-center justify-between px-6">
+        <div>
+            <h1 class="app-title text-3xl font-bold tracking-tight" style="color:var(--text);">Coeus Test Writer</h1>
+            <p class="app-title text-sm italic mt-0.5" style="color:var(--text-muted);">Craft smarter assessments — write, organize, and create with precision.</p>
+        </div>
+        <!-- Dark mode toggle -->
+        <button id="darkToggle" title="Toggle dark mode"
+            class="ml-4 p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition"
+            style="border-color:var(--border);color:var(--text);">
+            <svg id="darkIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
+            </svg>
+        </button>
+    </div>
+</header>
+
+<!-- ── Main content ───────────────────────────────────────────────────────── -->
+<div class="flex flex-col flex-1 min-w-0">
+
+        <!-- Sticky tab bar -->
+        <div id="tab-bar-wrapper">
+            <div class="flex flex-wrap gap-2 pb-2">
+                <button id="questionManagerTab" class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Manage a Bank</button>
+                <button id="testGeneratorTab"  class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Design a Test</button>
+                <button id="convJsonTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to JSON</button>
+                <button id="convCsvTab"        class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to CSV</button>
+                <button id="convGiftTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to GIFT</button>
+                <button id="convTextTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to Text</button>
+                <button id="jsonMergerTab"     class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Merge JSONs</button>
+            </div>
+        </div>
+
+        <!-- Tab content area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 overflow-hidden p-6">
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Question Manager                                -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="questionManagerContent" class="tab-content">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Manage a Bank</h2>
+                    <p class="text-sm text-gray-700">Load a question bank, add new questions manually, edit, and export your bank in multiple formats.</p>
+                </div>
+
+                <!-- Import & Export sections -->
+                <section class="mb-6 p-4 border border-gray-200 rounded surface">
+                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                    <div class="mb-8">
+						<label for="loadQuestionBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
+                        <div class="drop-zone">
+                            <input type="file" id="loadQuestionBank" accept=".json" class="hidden">
+                            <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="loadQuestionButton" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm flex-1">Load Bank</button>
+                        <button id="clearQuestionBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm flex-1">Clear Bank</button>
+                    </div>
+                </section>
+
+                <section class="mb-6 p-4 border border-gray-200 rounded surface">
+                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="mb-3 flex items-center gap-2">
+                                <label for="questionBankFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
+                                <input type="text" id="questionBankFilename" placeholder="questionBank" class="flex-1 rounded border text-sm px-2 py-1.5">
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button id="exportQuestionsJsonBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
+                                <button id="exportQuestionsCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
+                                <button id="exportQuestionBankPlainText" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as Plain Text</button>
+                            </div>
+                        </div>
+                        <div class="border-l border-gray-200 pl-4">
+                            <h4 class="text-sm font-semibold mb-3" style="color:var(--text);">Manage Saved Data</h4>
+                            <button id="clearSavedTestBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm">Clear Saved Questions</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Inner tabs: Add Questions vs Question Bank -->
+                <div class="qm-inner-tabs">
+                    <button class="qm-inner-tab-btn active" data-qm-tab="add-questions">Add Questions</button>
+                    <button class="qm-inner-tab-btn" data-qm-tab="bank-editor">Edit Bank</button>
+                </div>
+
+                <!-- Inner Tab 1: Add Questions -->
+                <div id="qm-add-questions" class="qm-inner-content active">
+                    <section class="p-4 border border-gray-200 rounded surface">
+                        <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Add New Question</h2>
+                        <form id="questionForm" class="space-y-3">
+                            <div>
+                                <label for="category" class="block text-sm font-medium" style="color:var(--text);">Category</label>
+                                <input type="text" id="category" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                            </div>
+                            <div>
+                                <label for="type" class="block text-sm font-medium" style="color:var(--text);">Type</label>
+                                <select id="type" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                    <option value="multiple_choice">Multiple Choice</option>
+                                    <option value="true_false">True/False</option>
+                                    <option value="matching">Matching Type</option>
+                                </select>
+                            </div>
+                            <div id="questionSection">
+                                <label for="question" class="block text-sm font-medium" style="color:var(--text);">Question</label>
+                                <textarea id="question" rows="3" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
+                            </div>
+                            <div id="choicesSection">
+                                <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
+                                <div id="choicesContainer" class="space-y-2 mt-1">
+                                    <div class="flex items-center gap-2 choice-input">
+                                        <input type="text" placeholder="Choice A" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
+                                    </div>
+                                    <div class="flex items-center gap-2 choice-input">
+                                        <input type="text" placeholder="Choice B" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
+                                    </div>
+                                    <div class="flex items-center gap-2 choice-input">
+                                        <input type="text" placeholder="Choice C" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
+                                    </div>
+                                    <div class="flex items-center gap-2 choice-input">
+                                        <input type="text" placeholder="Choice D" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="trueFalseSection" class="hidden">
+                                <label class="block text-sm font-medium" style="color:var(--text);">Correct Answer</label>
+                                <div class="space-y-1 mt-1">
+                                    <label class="inline-flex items-center text-sm"><input type="radio" name="tfCorrect" value="True" class="mr-1">True</label><br>
+                                    <label class="inline-flex items-center text-sm"><input type="radio" name="tfCorrect" value="False" class="mr-1">False</label>
+                                </div>
+                            </div>
+                            <div id="matchingSection" class="hidden">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column A (Premises)</label>
+                                        <div id="matchingColumnA" class="space-y-2"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column B (Answers)</label>
+                                        <div id="matchingColumnB" class="space-y-2"></div>
+                                    </div>
+                                </div>
+                                <button type="button" id="addMatchingPair"
+                                    class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium">+ Add Premise & Answer</button>
+                            </div>
+                            <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question to Bank</button>
+                        </form>
+                    </section>
+                </div>
+
+                <!-- Inner Tab 2: Question Bank Editor -->
+                <div id="qm-bank-editor" class="qm-inner-content">
+                    <section class="p-4 border border-gray-200 rounded surface">
+                        <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Edit Bank</h2>
+                        
+                        <!-- Search & Filter toolbar -->
+                        <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+                            <!-- Search -->
+                            <div class="mb-3">
+                                <label for="qm-search-input" class="block text-sm font-medium mb-1" style="color:var(--text);">Search</label>
+                                <input type="text" id="qm-search-input" placeholder="Search by question text, answers or category..."
+                                    class="w-full rounded border px-3 py-1.5 text-sm">
+                            </div>
+
+                            <!-- Sort & Filter Row -->
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label for="qm-sort-select" class="block text-sm font-medium mb-1" style="color:var(--text);">Sort by</label>
+                                    <select id="qm-sort-select" class="w-full rounded border px-2 py-1.5 text-sm">
+                                        <option value="category">Category (A-Z)</option>
+                                        <option value="type">Type (MCQ first)</option>
+                                        <option value="asLoaded">As Loaded</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="qm-filter-select" class="block text-sm font-medium mb-1" style="color:var(--text);">Filter</label>
+                                    <select id="qm-filter-select" class="w-full rounded border px-2 py-1.5 text-sm">
+                                        <option value="all">All Questions</option>
+                                        <option value="mcq">Multiple Choice Only</option>
+                                        <option value="tf">True/False Only</option>
+                                        <option value="matching">Matching Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bulk actions toolbar -->
+                        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                            <!-- Select All Visible button (full width, top row) -->
+                            <div class="mb-3">
+                                <button id="qm-select-visible-btn" class="w-full bg-blue-500 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium">Select All Visible</button>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <!-- Left column: Rename Selected -->
+                                <div>
+                                    <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Rename Selected</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="qm-change-cat-input" placeholder="New category name..."
+                                            class="flex-1 min-w-[120px] rounded border px-2 py-1 text-sm">
+                                        <button id="qm-change-cat-btn" disabled class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium whitespace-nowrap">Rename</button>
+                                    </div>
+                                </div>
+                                <!-- Right column: Delete Selected -->
+                                <div>
+                                    <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Delete Selected</label>
+                                    <button id="qm-delete-selected-btn" disabled class="w-full bg-red-500 hover:bg-red-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium">Delete (0)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category collapsible list -->
+                        <div id="sidebarQuestionList">
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <p>No questions loaded yet.<br>Load a JSON bank or add questions above.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Test Generator                                  -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="testGeneratorContent" class="tab-content">
+
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Design a Test</h2>
+                    <p class="text-sm text-gray-700">
+                        Load a JSON question bank, choose how many questions to pull from each category, then click <strong>Generate Test</strong>.
+                        The engine randomizes question order, shuffles answer choices, and balances
+                        the answer-key distribution. Export the finished test in your chosen format.
+                    </p>
+                </div>
+
+                <!-- Load bank -->
+                <section class="mb-4 p-4 border border-gray-200 rounded surface">
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h2>
+                    <div class="mb-4">
+					<label for="loadTestBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
+                        <div class="drop-zone">
+                            <input type="file" id="loadTestBank" accept=".json" class="hidden">
+                            <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="loadButton" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm flex-1">Load Bank</button>
+                        <button id="clearTestBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm flex-1">Clear Bank</button>
+                    </div>
+                    <div id="bankStatus" class="mt-2 text-sm font-medium text-gray-500"></div>
+                    <div id="testBankMissingCorrectWarning" class="mt-2 text-sm font-medium text-red-600 hidden"></div>
+                </section>
+
+                <!-- Generate -->
+                <section class="mb-4 p-4 border border-gray-200 rounded surface">
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generate Test</h2>
+                    <form id="testForm" class="space-y-4">
+                        <div id="categoryInputs" class="space-y-3"></div>
+                        <div id="testSummary" class="text-sm font-medium text-gray-700"></div>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <label class="flex items-center text-sm gap-2">
+                                <input type="checkbox" id="randomize" checked class="h-4 w-4">
+                                Randomize Questions and Answers
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div>
+                                <label for="answerTolerance" class="block text-sm font-medium mb-1" style="color:var(--text);"><strong>Answer Distribution Tolerance</strong></label>
+                                <select id="answerTolerance" class="rounded border px-2 py-1 text-sm w-full">
+                                    <option value="0">0 (Exact)</option>
+                                    <option value="5" selected>±5 (Default)</option>
+                                    <option value="10">±10</option>
+                                    <option value="15">±15</option>
+                                </select>
+                                <div id="toleranceWarning" class="text-sm text-red-600 mt-1 hidden">
+                                    ⚠️ Exact distribution can occasionally force repeated answers.
+                                </div>
+                            </div>
+                            <div style="position:relative;">
+                              <label for="maxConsecutiveMC" class="block text-sm font-medium mb-1" style="color:var(--text);"><strong>Max Consecutive MC Answers</strong></label>
+                              <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+                                <select id="maxConsecutiveMC" class="rounded border px-2 py-1 text-sm w-full">
+                                  <option value="1">1 — Strict alternation</option>
+                                  <option value="2" selected>2 (Default)</option>
+                                  <option value="3">3</option>
+                                  <option value="4">4</option>
+                                  <option value="5">5</option>
+                                </select>
+                                <button class="info-btn" style="margin-top:0.125rem; flex-shrink:0;">ⓘ</button>
+                              </div>
+                              <div class="info-popover hidden">
+                                Controls how many times the same answer letter can appear consecutively in the MC section.
+                                1 = strict alternation (no two adjacent answers can be the same letter).
+                                Higher values allow that many identical letters in a row before the engine forces a change.
+                                A very tight answer distribution combined with a low value may trigger a feasibility warning.
+                              </div>
+                            </div>
+                            <div style="position:relative;">
+                              <label for="maxConsecutiveTF" class="block text-sm font-medium mb-1" style="color:var(--text);"><strong>Max Consecutive T/F Answers</strong></label>
+                              <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+                                <select id="maxConsecutiveTF" class="rounded border px-2 py-1 text-sm w-full">
+                                  <option value="1">1 — Strict alt.</option>
+                                  <option value="2">2</option>
+                                  <option value="3">3</option>
+                                  <option value="4">4</option>
+                                  <option value="5" selected>5 (Default)</option>
+                                </select>
+                                <button class="info-btn" style="margin-top:0.125rem; flex-shrink:0;">ⓘ</button>
+                              </div>
+                              <div class="info-popover hidden">
+                                Controls how many consecutive True or False answers are allowed in the T/F section.
+                                1 = strict alternation. 5 (default) allows up to five of the same answer in a row.
+                                Unchecking with a heavily skewed T/F ratio may trigger a feasibility warning.
+                              </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-semibold">Generate Test</button>
+                            <button type="button" id="clearAllBtn"  class="bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded text-sm">Clear All</button>
+                            <button type="button" id="selectAllBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Select All Available</button>
+                        </div>
+                        <div class="flex gap-2 flex-wrap items-end mt-3 p-3 rounded border" style="border-color:var(--border);">
+                            <div>
+                                <label for="balanceTargetMC" class="block text-xs font-medium mb-1" style="color:var(--text);">Total MCQ</label>
+                                <input type="number" id="balanceTargetMC" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                            </div>
+                            <div>
+                                <label for="balanceTargetTF" class="block text-xs font-medium mb-1" style="color:var(--text);">Total T/F</label>
+                                <input type="number" id="balanceTargetTF" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                            </div>
+                            <div>
+                                <label for="balanceTargetMT" class="block text-xs font-medium mb-1" style="color:var(--text);">Total Matching</label>
+                                <input type="number" id="balanceTargetMT" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                            </div>
+                            <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">Balanced Pick Across Categories</button>
+                        </div>
+                    </form>
+
+                    <!-- Exclusion -->
+                    <div class="mt-5 p-3 bg-yellow-50 border border-yellow-300 rounded">
+                        <h3 class="text-sm font-semibold mb-2 text-yellow-800">🚫 Exclude Already-Used Questions</h3>
+                        <p class="text-xs text-gray-700 mb-2">Upload a JSON of previously used questions to exclude them.</p>
+                        <div class="flex items-center gap-2 flex-wrap mb-2">
+                            <input type="file" id="loadExclusionFile" accept=".json" class="text-xs">
+                            <button id="loadExclusionBtn"  class="bg-red-500  hover:bg-red-700  text-white px-3 py-1 rounded text-xs">Load Exclusions</button>
+                            <button id="clearExclusionBtn" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs" disabled>Clear Exclusions</button>
+                        </div>
+                        <div id="exclusionStatus" class="text-xs text-gray-600">No exclusions loaded. All questions available.</div>
+                    </div>
+                </section>
+
+                <!-- Output -->
+                <section class="mb-4 p-4 border border-gray-200 rounded surface">
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h2>
+
+                    <!-- Filename + DOCX info -->
+                    <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+                        <div class="flex gap-3 items-center flex-wrap mb-2">
+                            <label class="text-sm font-medium" style="color:var(--text);">Filename:</label>
+                            <input type="text" id="outputFilename" value="test"
+                                class="rounded border px-3 py-1.5 text-sm" style="min-width:200px;"
+                                placeholder="Filename (no extension)">
+                            <span class="text-xs" style="color:var(--text-muted);">Version letter appended automatically (e.g. test_A.docx)</span>
+                        </div>
+                        <button id="docxInfoToggle" class="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                            <span>ℹ DOCX format details</span>
+                            <span id="docxInfoChevron">▼</span>
+                        </button>
+                        <div id="docxInfoPanel" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700 space-y-1">
+                            <p>📄 <strong>Paper:</strong> Philippine long bond (8.5" × 13"), narrow margins (0.5" all sides)</p>
+                            <p>🔤 <strong>Font:</strong> Arial 11pt — larger but tighter than Calibri, better readability at small sizes</p>
+                            <p>📋 <strong>Columns:</strong> Multiple choice answers are set in <strong>two columns</strong> when all choices fit within ~3.25"; otherwise single column.</p>
+                            <p>🔢 <strong>Numbering:</strong> Continuous across MCQ and True/False sections</p>
+                            <div class="mt-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="forceSingleCol" class="rounded">
+                                    <span>Force single column for all choices?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button id="exportDocx" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm" title="Arial 11pt, long bond paper, auto 2-col choices">Export as DOCX</button>
+                        <button id="exportJson" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
+                        <button id="exportGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
+                        <button id="exportCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
+                        <button id="exportTxt"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="testEmptyState" class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        <p>No test generated yet.<br>Load a bank and click <strong>Generate Test</strong>.</p>
+                    </div>
+
+                    <div id="output" class="mt-4 border-t pt-4 hidden">
+                        <!-- Jump to Top/Bottom buttons -->
+                        <div class="flex gap-2 mb-3 sticky top-0 z-10 bg-white dark:bg-slate-900 py-2">
+                            <button id="jumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                            <button id="jumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                        </div>
+                        
+                        <div id="testPreviewContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                            <div id="testPreview" class="mb-6"></div>
+
+                            <!-- Collapsible answer key -->
+                            <div class="border-t pt-4 mt-4">
+                                <button id="answerKeyToggle" class="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 mb-2">
+                                    <span id="answerKeyChevron">▶</span> Show Answer Key
+                                </button>
+                                <div id="answerKeyBody">
+                                    <div id="answerKeyPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                </section>
+
+                <!-- Unused Questions -->
+                <section class="mb-4 p-4 border border-gray-200 rounded surface">
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Unused Questions</h2>
+                    <div id="unusedSummary" class="mb-3 p-3 bg-gray-50 border border-gray-300 rounded text-sm text-gray-600">
+                        Generate a test to see which questions were not selected.
+                    </div>
+                    <div class="flex gap-2 mb-3">
+                        <button id="exportUnusedJson"    class="bg-orange-500 hover:bg-orange-700 text-white px-4 py-1.5 rounded text-sm" disabled>Export Unused as JSON</button>
+                        <button id="toggleUnusedPreview" class="bg-gray-500   hover:bg-gray-700   text-white px-4 py-1.5 rounded text-sm" disabled>Show/Hide Preview</button>
+                    </div>
+                    <div id="unusedPreview" class="hidden">
+                        <pre id="unusedPreviewContent" class="bg-gray-100 p-4 rounded border border-gray-300 max-h-64 overflow-y-auto text-xs"></pre>
+                    </div>
+                </section>
+
+                <!-- Generation Report -->
+                <section class="p-4 border border-gray-200 rounded surface">
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generation Report</h2>
+                    <div id="generationReport" class="p-3 border border-gray-300 rounded text-sm text-gray-600">
+                        Generate a test to see the detailed breakdown.
+                    </div>
+                </section>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Convert to JSON                                 -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="convJsonContent" class="tab-content flex flex-col h-full min-h-0">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to JSON</h2>
+                    <p class="text-sm text-gray-700">
+                        Convert a GIFT <code class="bg-gray-100 px-1 rounded">.txt</code> file, a
+                        <code class="bg-gray-100 px-1 rounded">.csv</code> file, or plain numbered text into the JSON format used by Coeus.
+                        For plain text, number each question (<code class="bg-gray-100 px-1 rounded">1.</code>), label MCQ choices
+                        (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
+                        the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
+                    </p>
+                </div>
+                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
+                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <div class="mb-4 flex gap-2 flex-shrink-0">
+                                <button id="convJsonUploadSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Upload File</button>
+                                <button id="convJsonPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                            </div>
+                            <div id="convJsonUploadPanel" class="flex flex-col flex-1 min-h-0">
+                                <label for="convJsonFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select GIFT TXT or CSV File:</label>
+                                <div class="drop-zone mb-8">
+                                    <input type="file" id="convJsonFileInput" accept=".txt,.csv" class="hidden">
+                                    <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                                </div>
+                            </div>
+                            <div id="convJsonPastePanel" class="hidden flex-col flex-1 min-h-0">
+                                <div class="mb-4">
+                                    <label for="convJsonPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
+                                    <input type="text" id="convJsonPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <div class="mb-4">
+                                    <label for="convJsonPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
+                                    <input type="text" id="convJsonPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <label for="convJsonPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste GIFT, CSV, or plain text here:</label>
+                                <textarea id="convJsonPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-4" placeholder="1. What is the fundamental unit of life?
+a. Gene
+b. Meme
+c. Atom
+=d. Cell
+
+2. What is the capital of France?
+=A. Paris
+B. London
+C. Berlin
+D. Madrid
+
+3. The heart has four chambers.
+=True
+
+4. Mitosis produces genetically identical daughter cells to meiosis.
+=false
+
+5. Study of life
+=Biology
+
+6. Study of behavior of matter
+=Physics"></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="convJsonConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convJsonClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                            <div id="convJsonMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
+                            <div class="mb-2 flex gap-2 items-center">
+                                <label for="convJsonFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
+                                <input type="text" id="convJsonFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <button id="convJsonJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="convJsonJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                            </div>
+                            <div id="convJsonOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                                <pre class="text-xs"><code class="language-json" id="convJsonOutput"></code></pre>
+                            </div>
+                            <button id="convJsonDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download JSON</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Convert to CSV                                  -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="convCsvContent" class="tab-content flex flex-col h-full min-h-0">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to CSV</h2>
+                    <p class="text-sm text-gray-700">
+                        Convert a Coeus <code class="bg-gray-100 px-1 rounded">.json</code> file, a GIFT
+                        <code class="bg-gray-100 px-1 rounded">.txt</code> file, or plain numbered text into a CSV spreadsheet.
+                        For plain text, number each question (<code class="bg-gray-100 px-1 rounded">1.</code>), label MCQ choices
+                        (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
+                        the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
+                    </p>
+                </div>
+                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
+                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <div class="mb-4 flex gap-2 flex-shrink-0">
+                                <button id="convCsvUploadSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Upload File</button>
+                                <button id="convCsvPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                            </div>
+                            <div id="convCsvUploadPanel" class="flex flex-col flex-1 min-h-0">
+                                <label for="convCsvFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON or GIFT TXT File:</label>
+                                <div class="drop-zone mb-8">
+                                    <input type="file" id="convCsvFileInput" accept=".json,.txt" class="hidden">
+                                    <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                                </div>
+                            </div>
+                            <div id="convCsvPastePanel" class="hidden flex-col flex-1 min-h-0">
+                                <div class="mb-4">
+                                    <label for="convCsvPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
+                                    <input type="text" id="convCsvPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <div class="mb-4">
+                                    <label for="convCsvPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
+                                    <input type="text" id="convCsvPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <label for="convCsvPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste JSON, GIFT, or plain text here:</label>
+                                <textarea id="convCsvPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-4" placeholder="1. What is the fundamental unit of life?
+a. Gene
+b. Meme
+c. Atom
+=d. Cell
+
+2. What is the capital of France?
+=A. Paris
+B. London
+C. Berlin
+D. Madrid
+
+3. The heart has four chambers.
+=True
+
+4. Mitosis produces genetically identical daughter cells to meiosis.
+=false
+
+5. Study of life
+=Biology
+
+6. Study of behavior of matter
+=Physics"></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="convCsvConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convCsvClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                            <div id="convCsvMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
+                            <div class="mb-2 flex gap-2 items-center">
+                                <label for="convCsvFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
+                                <input type="text" id="convCsvFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <button id="convCsvJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="convCsvJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                            </div>
+                            <div id="convCsvOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                                <pre class="text-xs"><code id="convCsvOutput"></code></pre>
+                            </div>
+                            <button id="convCsvDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download CSV</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Convert to GIFT                                 -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="convGiftContent" class="tab-content flex flex-col h-full min-h-0">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to GIFT</h2>
+                    <p class="text-sm text-gray-700">
+                        Convert a Coeus <code class="bg-gray-100 px-1 rounded">.json</code> file, a
+                        <code class="bg-gray-100 px-1 rounded">.csv</code> file, or plain numbered text into Moodle's GIFT format.
+                        For plain text, number each question (<code class="bg-gray-100 px-1 rounded">1.</code>), label MCQ choices
+                        (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
+                        the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
+                    </p>
+                </div>
+                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
+                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <div class="mb-4 flex gap-2 flex-shrink-0">
+                                <button id="convGiftUploadSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Upload File</button>
+                                <button id="convGiftPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                            </div>
+                            <div id="convGiftUploadPanel" class="flex flex-col flex-1 min-h-0">
+                                <label for="convGiftFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON or CSV File:</label>
+                                <div class="drop-zone mb-8">
+                                    <input type="file" id="convGiftFileInput" accept=".json,.csv" class="hidden">
+                                    <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                                </div>
+                            </div>
+                            <div id="convGiftPastePanel" class="hidden flex-col flex-1 min-h-0">
+                                <div class="mb-4">
+                                    <label for="convGiftPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
+                                    <input type="text" id="convGiftPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <div class="mb-4">
+                                    <label for="convGiftPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
+                                    <input type="text" id="convGiftPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                </div>
+                                <label for="convGiftPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste JSON, CSV, or plain text here:</label>
+                                <textarea id="convGiftPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-4" placeholder="1. What is the fundamental unit of life?
+a. Gene
+b. Meme
+c. Atom
+=d. Cell
+
+2. What is the capital of France?
+=A. Paris
+B. London
+C. Berlin
+D. Madrid
+
+3. The heart has four chambers.
+=True
+
+4. Mitosis produces genetically identical daughter cells to meiosis.
+=false
+
+5. Study of life
+=Biology
+
+6. Study of behavior of matter
+=Physics"></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="convGiftConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convGiftClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                            <div id="convGiftMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
+                            <div class="mb-2 flex gap-2 items-center">
+                                <label for="convGiftFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
+                                <input type="text" id="convGiftFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <button id="convGiftJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="convGiftJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                            </div>
+                            <div id="convGiftOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                                <pre class="text-xs"><code id="convGiftOutput"></code></pre>
+                            </div>
+                            <button id="convGiftDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download TXT</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Convert to Text                                 -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="convTextContent" class="tab-content flex flex-col h-full min-h-0">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to Text</h2>
+                    <p class="text-sm text-gray-700">
+                        Convert a Coeus <code class="bg-gray-100 px-1 rounded">.json</code> file, a
+                        <code class="bg-gray-100 px-1 rounded">.csv</code> file, or a GIFT
+                        <code class="bg-gray-100 px-1 rounded">.txt</code> file into a human-readable text summary.
+                    </p>
+                </div>
+                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
+                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <label for="convTextFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON, CSV, or GIFT TXT File:</label>
+                            <div class="drop-zone mb-8">
+                                <input type="file" id="convTextFileInput" accept=".json,.csv,.txt" class="hidden">
+                                <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                            </div>
+                            <div class="flex-1"></div>
+                            <div class="flex gap-2">
+                                <button id="convTextConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convTextClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                            <div class="mb-2 flex gap-2 items-center">
+                                <label for="convTextFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
+                                <input type="text" id="convTextFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            </div>
+                            <div class="flex gap-2 mb-2">
+                                <button id="convTextJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="convTextJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                            </div>
+                            <div id="convTextOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                                <pre class="text-xs"><code id="convTextOutput"></code></pre>
+                            </div>
+                            <button id="convTextDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download TXT</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- TAB: Merge JSONs                                     -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <div id="jsonMergerContent" class="tab-content">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Merge JSONs</h2>
+                    <p class="text-sm text-gray-700">
+                        Combine multiple Coeus JSON question files into a single unified bank.
+                        Hold <kbd class="bg-gray-100 border rounded px-1">Ctrl</kbd>/<kbd class="bg-gray-100 border rounded px-1">Cmd</kbd>
+                        to select several files at once.
+                    </p>
+                </div>
+                <section class="mb-8 p-4 border border-gray-200 rounded surface">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <div class="mb-4">
+                                <label for="mergerFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON Files:</label>
+                                <div class="drop-zone">
+                                    <input type="file" id="mergerFileInput" accept=".json" multiple class="hidden">
+                                    <p class="text-sm text-gray-600">Drag & drop files or click to browse (hold Ctrl/Cmd for multiple)</p>
+                                </div>
+                            </div>
+                            <div class="mb-4 flex gap-2">
+                                <button id="addMergerFilesBtn" class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded flex-1">Merge</button>
+                                <button id="clearMergerBtn" class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded flex-1">Clear</button>
+                            </div>
+                            <div id="mergerSummary" class="mb-4 p-4 bg-gray-50 border border-gray-300 rounded">
+                                <h3 class="text-lg font-semibold mb-2">Summary:</h3>
+                                <p class="text-sm text-gray-600">No files loaded yet. Click "Merge" to start.</p>
+                            </div>
+                        </div>
+                        <div class="output-container">
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                            <div class="mb-3 flex items-center gap-2">
+                                <label for="mergerOutputFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
+                                <input type="text" id="mergerOutputFilename" placeholder="merged" class="flex-1 rounded border text-sm px-2 py-1.5">
+                            </div>
+                            <div id="mergerMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
+                            <div class="flex gap-2 mb-2">
+                                <button id="mergerJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="mergerJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                            </div>
+                            <div id="mergerOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                                <pre class="text-xs"><code class="language-json" id="mergerOutput"></code></pre>
+                            </div>
+                            <button id="downloadMergedBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full">Download JSON</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            </div><!-- /inner scroll area -->
+        </div><!-- /outer flex container /tab content area -->
+
+</div><!-- /main content -->
+
+
+<!-- ── Footer ───────────────────────────────────────────────────────── -->
+<footer class="py-5 text-center text-sm" style="background-color:var(--surface);border-top:1px solid var(--border);color:var(--text-muted);">
+    <p class="app-title italic text-base mb-1" style="color:var(--text-muted);">Coeus Test Writer</p>
+    <p>&copy; 2026 <strong>MDVO</strong>. All rights reserved.</p>
+    <p class="text-xs mt-1">Built for educators who demand precision in every question.</p>
+</footer>
+
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
