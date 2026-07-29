@@ -1,6 +1,6 @@
 /*
  * Coeus Test Writer
- * Copyright (C) 2026 [Your Name]
+ * Copyright (C) 2026 Druss Operio
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
