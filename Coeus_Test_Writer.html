@@ -459,7 +459,8 @@
                             <div class="flex items-center gap-2 flex-wrap">
                                 <button id="exportQuestionsJsonBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
                                 <button id="exportQuestionsCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
-                                <button id="exportQuestionBankPlainText" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as Plain Text</button>
+                                <button id="exportQuestionsPlainBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export TXT</button>
+                                <button id="exportQuestionsGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
                             </div>
                         </div>
                         <div class="border-l border-gray-200 pl-4">
@@ -515,7 +516,12 @@
                                         <input type="text" placeholder="Choice D" class="flex-1 rounded border text-sm px-2 py-1.5">
                                         <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
                                     </div>
+                                    <div id="choiceERow" class="flex items-center gap-2 choice-input hidden">
+                                        <input type="text" placeholder="Choice E" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
+                                    </div>
                                 </div>
+                                <button type="button" id="toggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
                             </div>
                             <div id="trueFalseSection" class="hidden">
                                 <label class="block text-sm font-medium" style="color:var(--text);">Correct Answer</label>
@@ -904,7 +910,7 @@ D. Madrid
 =Physics"></textarea>
                             </div>
                             <div class="flex gap-2">
-                                <button id="convJsonConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convJsonConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
                                 <button id="convJsonClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
                             </div>
                         </div>
@@ -992,7 +998,7 @@ D. Madrid
 =Physics"></textarea>
                             </div>
                             <div class="flex gap-2">
-                                <button id="convCsvConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convCsvConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
                                 <button id="convCsvClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
                             </div>
                         </div>
@@ -1080,7 +1086,7 @@ D. Madrid
 =Physics"></textarea>
                             </div>
                             <div class="flex gap-2">
-                                <button id="convGiftConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convGiftConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
                                 <button id="convGiftClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
                             </div>
                         </div>
@@ -1127,7 +1133,7 @@ D. Madrid
                             </div>
                             <div class="flex-1"></div>
                             <div class="flex gap-2">
-                                <button id="convTextConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convTextConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
                                 <button id="convTextClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
                             </div>
                         </div>
@@ -1174,7 +1180,7 @@ D. Madrid
                                 </div>
                             </div>
                             <div class="mb-4 flex gap-2">
-                                <button id="addMergerFilesBtn" class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded flex-1">Merge</button>
+                                <button id="addMergerFilesBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded flex-1">Merge</button>
                                 <button id="clearMergerBtn" class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded flex-1">Clear</button>
                             </div>
                             <div id="mergerSummary" class="mb-4 p-4 bg-gray-50 border border-gray-300 rounded">
@@ -1208,11 +1214,37 @@ D. Madrid
 </div><!-- /main content -->
 
 
+<!-- ── About Modal ───────────────────────────────────────────────────── -->
+<div id="aboutModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.5);">
+    <div class="rounded-xl shadow-2xl w-full max-w-lg mx-4 p-8 relative" style="background:var(--surface);color:var(--text);border:1px solid var(--border);">
+        <button id="closeAboutModal" class="absolute top-4 right-4 text-xl font-bold leading-none" style="color:var(--text-muted);" aria-label="Close">&times;</button>
+        <p class="app-title text-xl font-bold mb-1" style="color:var(--text);">Coeus Test Writer</p>
+        <p class="text-xs mb-6" style="color:var(--text-muted);">v<span class="footer-version"></span></p>
+
+        <h3 class="font-semibold mb-1" style="color:var(--text);">Why Coeus Was Built</h3>
+        <p class="text-sm mb-4" style="color:var(--text-muted);">As a course team leader, I needed to collect and organize exam questions from multiple faculty members — balancing question counts per topic and per contributor. Existing tools weren't enough, so I turned to AI to build what I envisioned. ChatGPT got it started, but Claude brought the full vision to life.</p>
+
+        <h3 class="font-semibold mb-1" style="color:var(--text);">What is Coeus?</h3>
+        <p class="text-sm mb-4" style="color:var(--text-muted);">Coeus is a browser-based exam question manager and test generator built for educators. It runs entirely client-side — no installation, no account, no internet required after load.</p>
+
+        <h3 class="font-semibold mb-1" style="color:var(--text);">Built With</h3>
+        <p class="text-sm mb-4" style="color:var(--text-muted);">Vanilla JavaScript, Tailwind CSS, docx.js, jsPDF, Prism.js</p>
+
+        <h3 class="font-semibold mb-1" style="color:var(--text);">Credits</h3>
+        <p class="text-sm" style="color:var(--text-muted);">Built by <strong style="color:var(--text);">Druss Operio</strong> with the assistance of ChatGPT and Claude (Anthropic).</p>
+    </div>
+</div>
+
 <!-- ── Footer ───────────────────────────────────────────────────────── -->
-<footer class="py-5 text-center text-sm" style="background-color:var(--surface);border-top:1px solid var(--border);color:var(--text-muted);">
-    <p class="app-title italic text-base mb-1" style="color:var(--text-muted);">Coeus Test Writer</p>
-    <p>&copy; 2026 <strong>MDVO</strong>. All rights reserved.</p>
-    <p class="text-xs mt-1">Built for educators who demand precision in every question.</p>
+<footer class="py-4 text-center text-xs" style="background-color:var(--surface);border-top:1px solid var(--border);color:var(--text-muted);">
+    <div class="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-3">
+        <button id="openAboutModal" class="hover:underline" style="color:var(--text-muted);">About</button>
+        <a href="https://github.com/drussoperio/CoeusTestWriter" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">GitHub</a>
+        <a href="https://github.com/drussoperio/CoeusTestWriter/releases/latest" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">⬇ Download Latest</a>
+        <a href="https://github.com/drussoperio/CoeusTestWriter/issues/new" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">🐛 Report a Bug</a>
+        <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">🛡 AGPLv3</a>
+    </div>
+    <p style="color:var(--text-muted);">&copy; 2026 Druss Operio &nbsp;·&nbsp; Coeus Test Writer &nbsp;·&nbsp; v<span class="footer-version"></span></p>
 </footer>
 
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>

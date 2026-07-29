@@ -17,6 +17,11 @@
  */
 
 // ========================================
+// VERSION
+// ========================================
+const APP_VERSION = '2.1.1';
+
+// ========================================
 // GLOBAL VARIABLES
 // ========================================
 
@@ -58,7 +63,27 @@ let bankEditorUndoTimeoutId = null;
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🔧 Initializing Coeus...');
+    console.log(`🔧 Initializing Coeus v${APP_VERSION}...`);
+
+    // ── Version display ─────────────────────────────────────────
+    document.querySelectorAll('.footer-version').forEach(el => el.textContent = APP_VERSION);
+
+    // ── About modal ─────────────────────────────────────────────
+    const aboutModal = document.getElementById('aboutModal');
+    document.getElementById('openAboutModal')?.addEventListener('click', () => {
+        aboutModal.classList.remove('hidden');
+        aboutModal.classList.add('flex');
+    });
+    document.getElementById('closeAboutModal')?.addEventListener('click', () => {
+        aboutModal.classList.add('hidden');
+        aboutModal.classList.remove('flex');
+    });
+    aboutModal?.addEventListener('click', (e) => {
+        if (e.target === aboutModal) {
+            aboutModal.classList.add('hidden');
+            aboutModal.classList.remove('flex');
+        }
+    });
 
     // ── Drop zone initialization helper ────────────────────────
     function initDropZone(dropZoneEl, fileInputEl, callback) {
@@ -1000,8 +1025,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize export dropdown
     initializeExportDropdown();
     
-    // Setup export as plain text with filename
-    const exportPlainTextBtn = document.getElementById('exportQuestionBankPlainText');
+    // Setup export as plain text with filename (button renamed to Export TXT, ID updated)
+    const exportPlainTextBtn = document.getElementById('exportQuestionsPlainBtn');
     if (exportPlainTextBtn) {
         exportPlainTextBtn.addEventListener('click', () => {
             if (questionBank.length === 0) {
@@ -1037,6 +1062,46 @@ document.addEventListener('DOMContentLoaded', function () {
             a.click();
             URL.revokeObjectURL(url);
             showToast('✅ Exported as plain text', 'success');
+        });
+    }
+
+    // Export as GIFT
+    const exportGiftBtn = document.getElementById('exportQuestionsGiftBtn');
+    if (exportGiftBtn) {
+        exportGiftBtn.addEventListener('click', () => {
+            if (questionBank.length === 0) {
+                showToast('⚠️ No questions to export.', 'warning');
+                return;
+            }
+            const filenameInput = document.getElementById('questionBankFilename');
+            let filename = filenameInput ? filenameInput.value.trim() : 'questions';
+            if (!filename) filename = 'questions';
+            filename += '_gift.txt';
+            const blob = new Blob([questionsToGift(questionBank)], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`📄 GIFT exported as ${filename}`, 'success');
+        });
+    }
+
+    // Toggle Choice E in Add Question form
+    const toggleChoiceEBtn = document.getElementById('toggleChoiceEBtn');
+    if (toggleChoiceEBtn) {
+        toggleChoiceEBtn.addEventListener('click', () => {
+            const row = document.getElementById('choiceERow');
+            if (!row) return;
+            const hidden = row.classList.toggle('hidden');
+            toggleChoiceEBtn.textContent = hidden ? '+ Add Choice E' : '− Remove Choice E';
+            if (hidden) {
+                const input = row.querySelector('input[type="text"]');
+                if (input) input.value = '';
+                const radio = row.querySelector('input[type="radio"]');
+                if (radio) radio.checked = false;
+            }
         });
     }
 
@@ -2438,6 +2503,7 @@ function addQuestion() {
 
         let hasEmptyChoice = false;
         choiceInputs.forEach(div => {
+            if (div.classList.contains('hidden')) return;
             const textInput = div.querySelector('input[type="text"]');
             if (textInput.value.trim() === '') {
                 hasEmptyChoice = true;
@@ -2450,6 +2516,7 @@ function addQuestion() {
         }
 
         choiceInputs.forEach(div => {
+            if (div.classList.contains('hidden')) return;
             const textInput = div.querySelector('input[type="text"]');
             const radioInput = div.querySelector('input[type="radio"]');
             choices.push(textInput.value);
@@ -2541,6 +2608,11 @@ function addQuestion() {
         if (textInput) textInput.value = '';
         if (radioInput) radioInput.checked = false;
     });
+    // Hide Choice E row and reset toggle button
+    const choiceERow = document.getElementById('choiceERow');
+    if (choiceERow) choiceERow.classList.add('hidden');
+    const toggleE = document.getElementById('toggleChoiceEBtn');
+    if (toggleE) toggleE.textContent = '+ Add Choice E';
     
     // Re-trigger type change to show correct section after reset
     const typeSelectElem = document.getElementById('type');
@@ -4638,6 +4710,8 @@ function questionsToGift(questions) {
     const blocks = [];
     let i = 0;
     let qNum = 0;
+    const pad = String(questions.length).length;
+    const fmt = n => String(n).padStart(pad > 1 ? pad : 2, '0');
 
     while (i < questions.length) {
         const q = questions[i];
@@ -4655,10 +4729,10 @@ function questionsToGift(questions) {
             const subject  = (group[0].subject  || '').trim();
             const category = (group[0].category || '').trim();
             let title = '';
-            if (subject && category) title = `${subject}_${category}_Q${qNum}`;
-            else if (category)       title = `${category}_Q${qNum}`;
-            else if (subject)        title = `${subject}_Q${qNum}`;
-            else                     title = `Question${qNum}`;
+            if (subject && category) title = `${subject}_${category}_Q${fmt(qNum)}`;
+            else if (category)       title = `${category}_Q${fmt(qNum)}`;
+            else if (subject)        title = `${subject}_Q${fmt(qNum)}`;
+            else                     title = `Question${fmt(qNum)}`;
 
             const pairLines = group.map(g => {
                 const term = escapeGift((g.question || '').trim());
@@ -4676,10 +4750,10 @@ function questionsToGift(questions) {
         const subject  = (q.subject  || '').trim();
         const category = (q.category || '').trim();
         let title = '';
-        if (subject && category) title = `${subject}_${category}_Q${qNum}`;
-        else if (category)       title = `${category}_Q${qNum}`;
-        else if (subject)        title = `${subject}_Q${qNum}`;
-        else                     title = `Question${qNum}`;
+        if (subject && category) title = `${subject}_${category}_Q${fmt(qNum)}`;
+        else if (category)       title = `${category}_Q${fmt(qNum)}`;
+        else if (subject)        title = `${subject}_Q${fmt(qNum)}`;
+        else                     title = `Question${fmt(qNum)}`;
 
         const qText   = escapeGift((q.question || '').trim());
         const correct = (q.correct  || '').trim();
