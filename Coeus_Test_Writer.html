@@ -290,19 +290,24 @@
         @keyframes slideIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:none; } }
 
         /* ── Info button & popover ──────────────────────────────── */
-        .info-btn {
-          background: none; border: none; cursor: pointer;
-          color: var(--accent, #3b82f6); font-size: 0.85rem;
-          padding: 0 0.25rem; vertical-align: middle;
+        .tooltip-wrap { position: relative; display: inline-flex; align-items: center; gap: 0.25rem; }
+        .tooltip-icon {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 1rem; height: 1rem; border-radius: 50%;
+          background: var(--accent, #3b82f6); color: #fff;
+          font-size: 0.6rem; font-weight: bold; cursor: default;
+          flex-shrink: 0; line-height: 1;
         }
-        .info-popover {
-          position: absolute; z-index: 50; max-width: 280px;
-          font-size: 0.75rem; background: var(--surface, #fff);
+        .tooltip-box {
+          display: none; position: absolute; z-index: 100; max-width: 280px;
+          font-size: 0.72rem; background: var(--surface, #fff);
           border: 1px solid var(--border, #e5e7eb);
           padding: 0.5rem 0.75rem; border-radius: 0.375rem;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-          top: 100%; left: 0;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          top: 50%; left: calc(100% + 0.5rem); transform: translateY(-50%);
+          white-space: normal; line-height: 1.4;
         }
+        .tooltip-wrap:hover .tooltip-box { display: block; }
         .hidden { display: none !important; }
 
         /* ── Question Manager Inner Tabs ────────────────────────── */
@@ -410,13 +415,11 @@
         <div id="tab-bar-wrapper">
             <div class="flex flex-wrap gap-2 pb-2 items-center justify-between">
                 <div class="flex flex-wrap gap-2">
+                    <button id="writeQuestionsTab"  class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Write Questions</button>
                     <button id="questionManagerTab" class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Manage a Bank</button>
-                    <button id="testGeneratorTab"  class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Design a Test</button>
-                    <button id="convJsonTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to JSON</button>
-                    <button id="convCsvTab"        class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to CSV</button>
-                    <button id="convGiftTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to GIFT</button>
-                    <button id="convTextTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to Text</button>
-                    <button id="jsonMergerTab"     class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Merge JSONs</button>
+                    <button id="testGeneratorTab"   class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Design a Test</button>
+                    <button id="convertFileTab"     class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert a File</button>
+                    <button id="jsonMergerTab"      class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Merge JSONs</button>
                 </div>
                 <button id="showTipsToggle" title="Toggle Tips" class="text-xs px-3 py-1.5 rounded border" style="color:var(--text-muted);border-color:var(--border);">❓ Show Tips</button>
             </div>
@@ -434,34 +437,33 @@
                     <h2 class="text-lg font-semibold text-blue-900 mb-1">Manage a Bank</h2>
                     <p class="text-sm text-gray-700">Load a question bank, add new questions manually, edit, and export your bank in multiple formats.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ Load a <strong>.json</strong> bank file via drag-and-drop or the file picker.</p>
-                        <p>▸ Use <strong>Add Questions</strong> to build your bank one question at a time.</p>
-                        <p>▸ Use <strong>Bank Editor</strong> to search, filter, sort, bulk-rename, or delete questions.</p>
-                        <p>▸ Export your bank as JSON (for reloading), CSV (for spreadsheet editing), plain TXT, or GIFT (for Moodle).</p>
-                        <p>▸ Changes are saved to <strong>localStorage</strong> automatically — your bank persists across sessions.</p>
+                        <p>▸ <strong>New user?</strong> You don't need to load a file first. Go to <strong>Add Questions</strong> and start writing — questions save to your browser automatically.</p>
+                        <p>▸ Load an existing <strong>.json</strong> bank file via drag-and-drop or the file picker to continue a previous session.</p>
+                        <p>▸ Use <strong>Bank Editor</strong> to search, filter, sort, bulk-rename, set difficulty, or delete questions.</p>
+                        <p>▸ Export your bank as JSON (for reloading), CSV (for spreadsheet editing), plain TXT, or GIFT (for Moodle) when you're ready.</p>
+                        <p>▸ Your bank persists in localStorage across sessions — no login or save button needed.</p>
                     </div>
                 </div>
 
-                <!-- Import & Export sections -->
+                <!-- 2-column Input / Output -->
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
-                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Load an existing JSON bank file. The bank persists in localStorage automatically. Use Clear Bank to wipe it from memory.">Input</h3>
-                    <div class="mb-8">
-						<label for="loadQuestionBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
-                        <div class="drop-zone">
-                            <input type="file" id="loadQuestionBank" accept=".json" class="hidden">
-                            <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button id="loadQuestionButton" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm flex-1">Load Bank</button>
-                        <button id="clearQuestionBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm flex-1">Clear Bank</button>
-                    </div>
-                </section>
-
-                <section class="mb-6 p-4 border border-gray-200 rounded surface">
-                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Set a filename and export your bank as JSON, CSV, plain TXT, or GIFT. JSON is the primary format used by Coeus.">Output</h3>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-6">
                         <div>
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <div class="mb-4">
+                                <label for="loadQuestionBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
+                                <div class="drop-zone">
+                                    <input type="file" id="loadQuestionBank" accept=".json" class="hidden">
+                                    <p class="text-sm text-gray-600">Drag &amp; drop file or click to browse</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="loadQuestionButton" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm flex-1">Load Bank</button>
+                                <button id="clearQuestionBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm flex-1">Clear Bank</button>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
                             <div class="mb-3 flex items-center gap-2">
                                 <label for="questionBankFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="questionBankFilename" placeholder="questionBank" class="flex-1 rounded border text-sm px-2 py-1.5">
@@ -469,18 +471,14 @@
                             <div class="flex items-center gap-2 flex-wrap">
                                 <button id="exportQuestionsJsonBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
                                 <button id="exportQuestionsCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
-                                <button id="exportQuestionsPlainBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export TXT</button>
+                                <button id="exportQuestionsPlainBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
                                 <button id="exportQuestionsGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
                             </div>
-                        </div>
-                        <div class="border-l border-gray-200 pl-4">
-                            <h4 class="text-sm font-semibold mb-3" style="color:var(--text);">Manage Saved Data</h4>
-                            <button id="clearSavedTestBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm">Clear Saved Questions</button>
                         </div>
                     </div>
                 </section>
 
-                <!-- Inner tabs: Add Questions vs Question Bank -->
+                <!-- Edit Bank below -->
                 <div class="qm-inner-tabs">
                     <button class="qm-inner-tab-btn active" data-qm-tab="add-questions">Add Questions</button>
                     <button class="qm-inner-tab-btn" data-qm-tab="bank-editor">Edit Bank</button>
@@ -632,15 +630,15 @@
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Set Difficulty for Selected</label>
-                                <div class="flex gap-2">
-                                    <select id="qm-bulk-difficulty-select" class="flex-1 rounded border px-2 py-1 text-sm">
+                                <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Set Difficulty</label>
+                                <div class="flex gap-1 items-center">
+                                    <select id="qm-bulk-difficulty-select" class="rounded border px-2 py-1 text-sm w-28">
                                         <option value="unset">Unset</option>
                                         <option value="easy">Easy</option>
                                         <option value="medium">Medium</option>
                                         <option value="hard">Hard</option>
                                     </select>
-                                    <button id="qm-bulk-difficulty-btn" disabled class="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium whitespace-nowrap">Set Difficulty</button>
+                                    <button id="qm-bulk-difficulty-btn" disabled class="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium">Apply</button>
                                 </div>
                             </div>
                         </div>
@@ -682,7 +680,7 @@
 
                 <!-- Load bank -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Load a JSON bank here (independent of Question Manager). A warning appears if any questions are missing a correct answer.">Input</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h2>
                     <div class="mb-4">
 					<label for="loadTestBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
                         <div class="drop-zone">
@@ -700,7 +698,7 @@
 
                 <!-- Generate -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Set per-category question counts, pick a difficulty ratio, then click Generate Test. Use Select Questions Across Categories to auto-distribute totals.">Generate Test</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generate Test</h2>
                     <form id="testForm" class="space-y-4">
                         <div id="categoryInputs" class="space-y-3"></div>
                         <div id="testSummary" class="text-sm font-medium text-gray-700"></div>
@@ -712,7 +710,10 @@
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div>
-                                <label for="answerTolerance" class="block text-sm font-medium mb-1" style="color:var(--text);"><strong>Answer Distribution Tolerance</strong></label>
+                                <div class="flex items-center gap-1 mb-1">
+                                    <label for="answerTolerance" class="text-sm font-medium" style="color:var(--text);"><strong>Answer Distribution Tolerance</strong></label>
+                                    <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how closely the answer-key distribution must match a perfectly even spread. 0 = exact; ±5 allows slight imbalance (recommended).</span></span>
+                                </div>
                                 <select id="answerTolerance" class="rounded border px-2 py-1 text-sm w-full">
                                     <option value="0">0 (Exact)</option>
                                     <option value="5" selected>±5 (Default)</option>
@@ -724,41 +725,30 @@
                                 </div>
                             </div>
                             <div style="position:relative;">
-                              <label for="maxConsecutiveMC" class="block text-sm font-medium mb-1" style="color:var(--text);"><strong>Max Consecutive MC Answers</strong></label>
-                              <div style="display:flex; gap:0.5rem; align-items:flex-start;">
-                                <select id="maxConsecutiveMC" class="rounded border px-2 py-1 text-sm w-full">
+                              <div class="flex items-center gap-1 mb-1">
+                                <label for="maxConsecutiveMC" class="text-sm font-medium" style="color:var(--text);"><strong>Max Consecutive MC Answers</strong></label>
+                                <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many times the same answer letter can appear consecutively in the MC section. 1 = strict alternation. Higher values allow that many identical letters in a row. A very tight distribution with a low value may trigger a feasibility warning.</span></span>
+                              </div>
+                              <select id="maxConsecutiveMC" class="rounded border px-2 py-1 text-sm w-full">
                                   <option value="1">1 — Strict alternation</option>
                                   <option value="2" selected>2 (Default)</option>
                                   <option value="3">3</option>
                                   <option value="4">4</option>
                                   <option value="5">5</option>
                                 </select>
-                                <button class="info-btn" style="margin-top:0.125rem; flex-shrink:0;">ⓘ</button>
-                              </div>
-                              <div class="info-popover hidden">
-                                Controls how many times the same answer letter can appear consecutively in the MC section.
-                                1 = strict alternation (no two adjacent answers can be the same letter).
-                                Higher values allow that many identical letters in a row before the engine forces a change.
-                                A very tight answer distribution combined with a low value may trigger a feasibility warning.
-                              </div>
                             </div>
                             <div style="position:relative;">
-                              <label for="maxConsecutiveTF" class="block text-sm font-medium mb-1" style="color:var(--text);"><strong>Max Consecutive T/F Answers</strong></label>
-                              <div style="display:flex; gap:0.5rem; align-items:flex-start;">
-                                <select id="maxConsecutiveTF" class="rounded border px-2 py-1 text-sm w-full">
+                              <div class="flex items-center gap-1 mb-1">
+                                <label for="maxConsecutiveTF" class="text-sm font-medium" style="color:var(--text);"><strong>Max Consecutive T/F Answers</strong></label>
+                                <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many consecutive True or False answers are allowed in the T/F section. 1 = strict alternation. 5 (default) allows up to five of the same answer in a row. A heavily skewed T/F ratio with a low value may trigger a feasibility warning.</span></span>
+                              </div>
+                              <select id="maxConsecutiveTF" class="rounded border px-2 py-1 text-sm w-full">
                                   <option value="1">1 — Strict alt.</option>
                                   <option value="2">2</option>
                                   <option value="3">3</option>
                                   <option value="4">4</option>
                                   <option value="5" selected>5 (Default)</option>
                                 </select>
-                                <button class="info-btn" style="margin-top:0.125rem; flex-shrink:0;">ⓘ</button>
-                              </div>
-                              <div class="info-popover hidden">
-                                Controls how many consecutive True or False answers are allowed in the T/F section.
-                                1 = strict alternation. 5 (default) allows up to five of the same answer in a row.
-                                Unchecking with a heavily skewed T/F ratio may trigger a feasibility warning.
-                              </div>
                             </div>
                         </div>
                         <div class="flex gap-2 flex-wrap">
@@ -770,7 +760,10 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <!-- Left: Difficulty Preset -->
                                 <div>
-                                    <p class="text-xs font-semibold mb-2" style="color:var(--text);">Difficulty Ratio</p>
+                                    <div class="flex items-center gap-1 mb-2">
+                                        <p class="text-xs font-semibold" style="color:var(--text);">Difficulty Ratio</p>
+                                        <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Sets the Easy/Medium/Hard question mix. Unset questions fill in shortfalls automatically.</span></span>
+                                    </div>
                                     <select id="diffRatioPreset" class="w-full rounded border px-2 py-1.5 text-sm mb-3">
                                         <option value="ignore">Ignore Difficulty (default)</option>
                                         <option value="even">Even (33% Easy / 33% Medium / 33% Hard)</option>
@@ -791,7 +784,10 @@
                                 </div>
                                 <!-- Right: Smart Selection -->
                                 <div>
-                                    <p class="text-xs font-semibold mb-2" style="color:var(--text);">Smart Selection</p>
+                                    <div class="flex items-center gap-1 mb-2">
+                                        <p class="text-xs font-semibold" style="color:var(--text);">Smart Selection</p>
+                                        <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Enter target totals per question type and click Select Questions Across Categories to automatically distribute counts across all categories.</span></span>
+                                    </div>
                                     <div class="flex gap-2 flex-wrap mb-2">
                                         <div>
                                             <label for="balanceTargetMC" class="block text-xs mb-1" style="color:var(--text-muted);">Total MCQ</label>
@@ -827,7 +823,7 @@
 
                 <!-- Output -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Set a filename and export your test as TXT, PDF, DOCX, or JSON. DOCX uses long bond paper, Arial 11pt, narrow margins.">Output</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h2>
 
                     <!-- Filename + DOCX info -->
                     <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
@@ -896,7 +892,7 @@
 
                 <!-- Unused Questions -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Questions not selected for this test. Export them as JSON to use as excluded questions in the next version.">Unused Questions</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Unused Questions</h2>
                     <div id="unusedSummary" class="mb-3 p-3 bg-gray-50 border border-gray-300 rounded text-sm text-gray-600">
                         Generate a test to see which questions were not selected.
                     </div>
@@ -911,7 +907,7 @@
 
                 <!-- Generation Report -->
                 <section class="p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="A full breakdown of what was generated: counts per category, available vs requested, shortfalls, and difficulty distribution (if active).">Generation Report</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generation Report</h2>
                     <div id="generationReport" class="p-3 border border-gray-300 rounded text-sm text-gray-600">
                         Generate a test to see the detailed breakdown.
                     </div>
@@ -919,343 +915,233 @@
             </div>
 
             <!-- ════════════════════════════════════════════════════ -->
-            <!-- TAB: Convert to JSON                                 -->
+            <!-- TAB: Write Questions                                 -->
             <!-- ════════════════════════════════════════════════════ -->
-            <div id="convJsonContent" class="tab-content flex flex-col h-full min-h-0">
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
-                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to JSON</h2>
-                    <p class="text-sm text-gray-700">
-                        Convert a GIFT <code class="bg-gray-100 px-1 rounded">.txt</code> file, a
-                        <code class="bg-gray-100 px-1 rounded">.csv</code> file, or plain numbered text into the JSON format used by Coeus.
-                        For plain text, number each question (<code class="bg-gray-100 px-1 rounded">1.</code>), label MCQ choices
-                        (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
-                        the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
-                    </p>
+            <div id="writeQuestionsContent" class="tab-content">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Write Questions</h2>
+                    <p class="text-sm text-gray-700">Write questions from scratch and export them in multiple formats. Your questions are saved to your browser automatically.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ <strong>Upload File</strong> accepts .json, .csv, and GIFT .txt files.</p>
-                        <p>▸ <strong>Paste Text</strong> accepts plain numbered text — set Subject, Category, and Difficulty before converting.</p>
-                        <p>▸ Mark the correct MCQ choice with <code class="bg-gray-100 px-1 rounded">=</code> or <code class="bg-gray-100 px-1 rounded">*</code> before the letter (e.g. <code class="bg-gray-100 px-1 rounded">=b. Paris</code>).</p>
-                        <p>▸ True/False: write <code class="bg-gray-100 px-1 rounded">=True</code> or <code class="bg-gray-100 px-1 rounded">=False</code> on the line below the question.</p>
-                        <p>▸ Matching: write premise on one line, <code class="bg-gray-100 px-1 rounded">=Answer</code> on the next — consecutive pairs are grouped automatically.</p>
+                        <p>▸ Use <strong>Add Questions</strong> to write questions one by one using the form.</p>
+                        <p>▸ Use <strong>Paste Text</strong> to paste plain numbered text and convert it directly.</p>
+                        <p>▸ Toggle the output preview between JSON, TXT, GIFT, and CSV formats.</p>
+                        <p>▸ <strong>Clear Saved Questions</strong> removes only questions written here, not your loaded bank.</p>
                     </div>
                 </div>
-                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
-                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
-                        <div class="flex flex-col overflow-hidden min-h-0">
+
+                <!-- 2-column Input / Output -->
+                <section class="mb-6 p-4 border border-gray-200 rounded surface">
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Left: Input -->
+                        <div class="flex flex-col">
                             <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
-                            <div class="mb-4 flex gap-2 flex-shrink-0">
-                                <button id="convJsonUploadSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Upload File</button>
-                                <button id="convJsonPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                            <!-- Sub-tabs -->
+                            <div class="flex gap-2 mb-4">
+                                <button id="wqAddSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Add Questions</button>
+                                <button id="wqPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
                             </div>
-                            <div id="convJsonUploadPanel" class="flex flex-col flex-1 min-h-0">
-                                <label for="convJsonFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select GIFT TXT or CSV File:</label>
-                                <div class="drop-zone mb-8">
-                                    <input type="file" id="convJsonFileInput" accept=".txt,.csv" class="hidden">
-                                    <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
-                                </div>
+                            <!-- Add Questions panel -->
+                            <div id="wqAddPanel" class="flex flex-col flex-1">
+                                <form id="wqQuestionForm" class="space-y-3">
+                                    <div>
+                                        <label for="wqCategory" class="block text-sm font-medium" style="color:var(--text);">Category</label>
+                                        <input type="text" id="wqCategory" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                    </div>
+                                    <div>
+                                        <label for="wqType" class="block text-sm font-medium" style="color:var(--text);">Type</label>
+                                        <select id="wqType" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                            <option value="multiple_choice">Multiple Choice</option>
+                                            <option value="true_false">True/False</option>
+                                            <option value="matching">Matching Type</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="wqDifficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
+                                        <select id="wqDifficulty" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                            <option value="unset">Unset</option>
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
+                                    </div>
+                                    <div id="wqQuestionSection">
+                                        <label for="wqQuestion" class="block text-sm font-medium" style="color:var(--text);">Question</label>
+                                        <textarea id="wqQuestion" rows="3" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
+                                    </div>
+                                    <div id="wqChoicesSection">
+                                        <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
+                                        <div id="wqChoicesContainer" class="space-y-2 mt-1">
+                                            <div class="flex items-center gap-2 wq-choice-input">
+                                                <input type="text" placeholder="Choice A" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                            </div>
+                                            <div class="flex items-center gap-2 wq-choice-input">
+                                                <input type="text" placeholder="Choice B" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                            </div>
+                                            <div class="flex items-center gap-2 wq-choice-input">
+                                                <input type="text" placeholder="Choice C" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                            </div>
+                                            <div class="flex items-center gap-2 wq-choice-input">
+                                                <input type="text" placeholder="Choice D" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                            </div>
+                                            <div id="wqChoiceERow" class="flex items-center gap-2 wq-choice-input hidden">
+                                                <input type="text" placeholder="Choice E" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="wqToggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
+                                    </div>
+                                    <div id="wqTrueFalseSection" class="hidden">
+                                        <label class="block text-sm font-medium" style="color:var(--text);">Correct Answer</label>
+                                        <div class="space-y-1 mt-1">
+                                            <label class="inline-flex items-center text-sm"><input type="radio" name="wqTfCorrect" value="True" class="mr-1">True</label><br>
+                                            <label class="inline-flex items-center text-sm"><input type="radio" name="wqTfCorrect" value="False" class="mr-1">False</label>
+                                        </div>
+                                    </div>
+                                    <div id="wqMatchingSection" class="hidden">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column A (Premises)</label>
+                                                <div id="wqMatchingColumnA" class="space-y-2"></div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column B (Answers)</label>
+                                                <div id="wqMatchingColumnB" class="space-y-2"></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="wqAddMatchingPair" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium">+ Add Premise &amp; Answer</button>
+                                    </div>
+                                    <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question</button>
+                                </form>
+                                <button id="wqClearSavedBtn" class="mt-3 w-full bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm">Clear Saved Questions</button>
                             </div>
-                            <div id="convJsonPastePanel" class="hidden flex-col flex-1 min-h-0">
-                                <div class="mb-4">
-                                    <label for="convJsonPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
-                                    <input type="text" id="convJsonPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <!-- Paste Text panel -->
+                            <div id="wqPastePanel" class="hidden flex-col flex-1">
+                                <div class="mb-3">
+                                    <label for="wqPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
+                                    <input type="text" id="wqPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                 </div>
-                                <div class="mb-4">
-                                    <label for="convJsonPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
-                                    <input type="text" id="convJsonPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <div class="mb-3">
+                                    <label for="wqPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
+                                    <input type="text" id="wqPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                 </div>
-                                <div class="mb-4">
-                                    <label for="convJsonPasteDifficulty" class="block text-sm font-medium text-gray-700">Difficulty:</label>
-                                    <select id="convJsonPasteDifficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
+                                <div class="mb-3">
+                                    <label for="wqPasteDifficulty" class="block text-sm font-medium text-gray-700">Difficulty:</label>
+                                    <select id="wqPasteDifficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                         <option value="unset">Unset</option>
                                         <option value="easy">Easy</option>
                                         <option value="medium">Medium</option>
                                         <option value="hard">Hard</option>
                                     </select>
                                 </div>
-                                <label for="convJsonPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste GIFT, CSV, or plain text here:</label>
-                                <textarea id="convJsonPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-4" placeholder="1. What is the fundamental unit of life?
-a. Gene
-b. Meme
-c. Atom
-=d. Cell
-
-2. What is the capital of France?
-=A. Paris
-B. London
-C. Berlin
-D. Madrid
-
-3. The heart has four chambers.
-=True
-
-4. Mitosis produces genetically identical daughter cells to meiosis.
-=false
-
-5. Study of life
-=Biology
-
-6. Study of behavior of matter
-=Physics"></textarea>
-                            </div>
-                            <div class="flex gap-2">
-                                <button id="convJsonConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
-                                <button id="convJsonClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
+                                <label for="wqPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste plain text here:</label>
+                                <textarea id="wqPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-3" placeholder="1. What is the fundamental unit of life?&#10;a. Gene&#10;b. Meme&#10;c. Atom&#10;=d. Cell&#10;&#10;2. The heart has four chambers.&#10;=True"></textarea>
+                                <div class="flex gap-2">
+                                    <button id="wqPasteConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Convert &amp; Add</button>
+                                    <button id="wqPasteClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Clear</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex flex-col overflow-hidden min-h-0">
+
+                        <!-- Right: Output -->
+                        <div class="flex flex-col">
                             <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
-                            <div id="convJsonMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
-                            <div class="mb-2 flex gap-2 items-center">
-                                <label for="convJsonFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
-                                <input type="text" id="convJsonFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            <!-- Preview format toggles -->
+                            <div class="flex gap-2 mb-3 flex-wrap">
+                                <button id="wqPreviewJson"  class="px-3 py-1 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600">JSON</button>
+                                <button id="wqPreviewTxt"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">TXT</button>
+                                <button id="wqPreviewGift"  class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">GIFT</button>
+                                <button id="wqPreviewCsv"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">CSV</button>
+                            </div>
+                            <div class="mb-2 flex items-center gap-2">
+                                <label for="wqFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
+                                <input type="text" id="wqFilename" placeholder="exambank" class="flex-1 rounded border text-sm px-2 py-1.5">
                             </div>
                             <div class="flex gap-2 mb-2">
-                                <button id="convJsonJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
-                                <button id="convJsonJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                                <button id="wqJumpToTop"    class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="wqJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                             </div>
-                            <div id="convJsonOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
-                                <pre class="text-xs"><code class="language-json" id="convJsonOutput"></code></pre>
+                            <div id="wqOutputContainer" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3">
+                                <pre class="text-xs"><code id="wqOutput"></code></pre>
                             </div>
-                            <button id="convJsonDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download JSON</button>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="wqExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
+                                <button id="wqExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
+                                <button id="wqExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
+                                <button id="wqExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
+                            </div>
                         </div>
                     </div>
                 </section>
             </div>
 
             <!-- ════════════════════════════════════════════════════ -->
-            <!-- TAB: Convert to CSV                                  -->
+            <!-- TAB: Convert a File                                  -->
             <!-- ════════════════════════════════════════════════════ -->
-            <div id="convCsvContent" class="tab-content flex flex-col h-full min-h-0">
+            <div id="convertFileContent" class="tab-content flex flex-col h-full min-h-0">
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
-                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to CSV</h2>
-                    <p class="text-sm text-gray-700">
-                        Convert a Coeus <code class="bg-gray-100 px-1 rounded">.json</code> file, a GIFT
-                        <code class="bg-gray-100 px-1 rounded">.txt</code> file, or plain numbered text into a CSV spreadsheet.
-                        For plain text, number each question (<code class="bg-gray-100 px-1 rounded">1.</code>), label MCQ choices
-                        (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
-                        the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
-                    </p>
+                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert a File</h2>
+                    <p class="text-sm text-gray-700">Upload a file and convert it to any supported format. Accepts JSON, CSV, GIFT TXT, and plain numbered TXT.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ CSV column order: <strong>Question, Category, Type, Difficulty, Correct, Option 1–4</strong>.</p>
-                        <p>▸ Useful for bulk-editing questions in Excel or Google Sheets before re-importing via Convert to JSON.</p>
-                        <p>▸ Old 8-column CSVs (without Difficulty) are still supported on import.</p>
-                        <p>▸ Matching and T/F questions export with <code class="bg-gray-100 px-1 rounded">null</code> in unused option columns.</p>
+                        <p>▸ <strong>To JSON:</strong> accepts GIFT .txt, .csv, or plain numbered text.</p>
+                        <p>▸ <strong>To CSV:</strong> accepts .json, GIFT .txt, or plain numbered text.</p>
+                        <p>▸ <strong>To GIFT:</strong> accepts .json or .csv.</p>
+                        <p>▸ <strong>To Text:</strong> accepts .json, .csv, or GIFT .txt.</p>
+                        <p>▸ Mark the correct MCQ choice with <code class="bg-gray-100 px-1 rounded">=</code> before the letter (e.g. <code class="bg-gray-100 px-1 rounded">=b. Paris</code>).</p>
                     </div>
                 </div>
                 <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
                     <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
+                        <!-- Left: Input -->
                         <div class="flex flex-col overflow-hidden min-h-0">
                             <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
-                            <div class="mb-4 flex gap-2 flex-shrink-0">
-                                <button id="convCsvUploadSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Upload File</button>
-                                <button id="convCsvPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                            <label for="convertFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select File (JSON, CSV, GIFT TXT, or plain TXT):</label>
+                            <div class="drop-zone mb-4">
+                                <input type="file" id="convertFileInput" accept=".json,.csv,.txt" class="hidden">
+                                <p class="text-sm text-gray-600">Drag &amp; drop file or click to browse</p>
                             </div>
-                            <div id="convCsvUploadPanel" class="flex flex-col flex-1 min-h-0">
-                                <label for="convCsvFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON or GIFT TXT File:</label>
-                                <div class="drop-zone mb-8">
-                                    <input type="file" id="convCsvFileInput" accept=".json,.txt" class="hidden">
-                                    <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
-                                </div>
+                            <!-- Convert-to selector -->
+                            <div class="mb-4">
+                                <label for="convertFileTarget" class="block text-sm font-medium mb-1" style="color:var(--text);">Convert to:</label>
+                                <select id="convertFileTarget" class="w-full rounded border px-2 py-1.5 text-sm">
+                                    <option value="json">JSON</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="gift">GIFT</option>
+                                    <option value="text">Text (TXT)</option>
+                                </select>
                             </div>
-                            <div id="convCsvPastePanel" class="hidden flex-col flex-1 min-h-0">
-                                <div class="mb-4">
-                                    <label for="convCsvPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
-                                    <input type="text" id="convCsvPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
-                                <div class="mb-4">
-                                    <label for="convCsvPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
-                                    <input type="text" id="convCsvPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
-                                <label for="convCsvPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste JSON, GIFT, or plain text here:</label>
-                                <textarea id="convCsvPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-4" placeholder="1. What is the fundamental unit of life?
-a. Gene
-b. Meme
-c. Atom
-=d. Cell
-
-2. What is the capital of France?
-=A. Paris
-B. London
-C. Berlin
-D. Madrid
-
-3. The heart has four chambers.
-=True
-
-4. Mitosis produces genetically identical daughter cells to meiosis.
-=false
-
-5. Study of life
-=Biology
-
-6. Study of behavior of matter
-=Physics"></textarea>
-                            </div>
-                            <div class="flex gap-2">
-                                <button id="convCsvConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
-                                <button id="convCsvClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
+                            <div class="flex gap-2 mt-auto">
+                                <button id="convertFileConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
+                                <button id="convertFileClearBtn"   class="flex-1 bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded">Clear</button>
                             </div>
                         </div>
+                        <!-- Right: Output -->
                         <div class="flex flex-col overflow-hidden min-h-0">
                             <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
-                            <div id="convCsvMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
-                            <div class="mb-2 flex gap-2 items-center">
-                                <label for="convCsvFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
-                                <input type="text" id="convCsvFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            <div id="convertFileMissingCorrectWarning" class="mb-3 text-sm font-medium text-red-600 hidden"></div>
+                            <div class="mb-2 flex items-center gap-2">
+                                <label for="convertFileFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
+                                <input type="text" id="convertFileFilename" placeholder="converted" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
                             </div>
                             <div class="flex gap-2 mb-2">
-                                <button id="convCsvJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
-                                <button id="convCsvJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                                <button id="convertFileJumpToTop"    class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="convertFileJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                             </div>
-                            <div id="convCsvOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
-                                <pre class="text-xs"><code id="convCsvOutput"></code></pre>
+                            <!-- JSON/TXT/GIFT output -->
+                            <div id="convertFileTextOutputWrap" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                                <pre class="text-xs"><code id="convertFileOutput"></code></pre>
                             </div>
-                            <button id="convCsvDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download CSV</button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- ════════════════════════════════════════════════════ -->
-            <!-- TAB: Convert to GIFT                                 -->
-            <!-- ════════════════════════════════════════════════════ -->
-            <div id="convGiftContent" class="tab-content flex flex-col h-full min-h-0">
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
-                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to GIFT</h2>
-                    <p class="text-sm text-gray-700">
-                        Convert a Coeus <code class="bg-gray-100 px-1 rounded">.json</code> file, a
-                        <code class="bg-gray-100 px-1 rounded">.csv</code> file, or plain numbered text into Moodle's GIFT format.
-                        For plain text, number each question (<code class="bg-gray-100 px-1 rounded">1.</code>), label MCQ choices
-                        (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
-                        the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
-                    </p>
-                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ GIFT is Moodle's plain-text question import format. Import via <strong>Question bank → Import → GIFT format</strong>.</p>
-                        <p>▸ Question titles are auto-generated as <code class="bg-gray-100 px-1 rounded">Category_Q01</code>, <code class="bg-gray-100 px-1 rounded">Category_Q02</code>, etc.</p>
-                        <p>▸ Supports MCQ, True/False, and Matching. Difficulty is not exported (not supported by GIFT).</p>
-                        <p>▸ Exported filename gets a <code class="bg-gray-100 px-1 rounded">_gift</code> suffix automatically.</p>
-                    </div>
-                </div>
-                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
-                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
-                        <div class="flex flex-col overflow-hidden min-h-0">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
-                            <div class="mb-4 flex gap-2 flex-shrink-0">
-                                <button id="convGiftUploadSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Upload File</button>
-                                <button id="convGiftPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                            <!-- CSV table output -->
+                            <div id="convertFileCsvOutputWrap" class="border border-gray-300 rounded overflow-auto max-h-96 bg-white dark:bg-slate-800 hidden">
+                                <table id="convertFileCsvTable" class="min-w-full text-xs border-collapse">
+                                    <thead id="convertFileCsvTableHead" class="bg-gray-100 sticky top-0"></thead>
+                                    <tbody id="convertFileCsvTableBody"></tbody>
+                                </table>
                             </div>
-                            <div id="convGiftUploadPanel" class="flex flex-col flex-1 min-h-0">
-                                <label for="convGiftFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON or CSV File:</label>
-                                <div class="drop-zone mb-8">
-                                    <input type="file" id="convGiftFileInput" accept=".json,.csv" class="hidden">
-                                    <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
-                                </div>
-                            </div>
-                            <div id="convGiftPastePanel" class="hidden flex-col flex-1 min-h-0">
-                                <div class="mb-4">
-                                    <label for="convGiftPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
-                                    <input type="text" id="convGiftPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
-                                <div class="mb-4">
-                                    <label for="convGiftPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
-                                    <input type="text" id="convGiftPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
-                                <label for="convGiftPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste JSON, CSV, or plain text here:</label>
-                                <textarea id="convGiftPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-4" placeholder="1. What is the fundamental unit of life?
-a. Gene
-b. Meme
-c. Atom
-=d. Cell
-
-2. What is the capital of France?
-=A. Paris
-B. London
-C. Berlin
-D. Madrid
-
-3. The heart has four chambers.
-=True
-
-4. Mitosis produces genetically identical daughter cells to meiosis.
-=false
-
-5. Study of life
-=Biology
-
-6. Study of behavior of matter
-=Physics"></textarea>
-                            </div>
-                            <div class="flex gap-2">
-                                <button id="convGiftConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
-                                <button id="convGiftClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
-                            </div>
-                        </div>
-                        <div class="flex flex-col overflow-hidden min-h-0">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
-                            <div id="convGiftMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
-                            <div class="mb-2 flex gap-2 items-center">
-                                <label for="convGiftFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
-                                <input type="text" id="convGiftFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
-                            </div>
-                            <div class="flex gap-2 mb-2">
-                                <button id="convGiftJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
-                                <button id="convGiftJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
-                            </div>
-                            <div id="convGiftOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
-                                <pre class="text-xs"><code id="convGiftOutput"></code></pre>
-                            </div>
-                            <button id="convGiftDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download TXT</button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- ════════════════════════════════════════════════════ -->
-            <!-- TAB: Convert to Text                                 -->
-            <!-- ════════════════════════════════════════════════════ -->
-            <div id="convTextContent" class="tab-content flex flex-col h-full min-h-0">
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
-                    <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert to Text</h2>
-                    <p class="text-sm text-gray-700">
-                        Convert a Coeus <code class="bg-gray-100 px-1 rounded">.json</code> file, a
-                        <code class="bg-gray-100 px-1 rounded">.csv</code> file, or a GIFT
-                        <code class="bg-gray-100 px-1 rounded">.txt</code> file into a human-readable text summary.
-                    </p>
-                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ Output uses the same numbered/lettered format as the <strong>Convert to JSON</strong> Paste Text input — making it fully round-trippable.</p>
-                        <p>▸ Upload only — no paste mode. Accepts .json, .csv, and GIFT .txt files.</p>
-                        <p>▸ Useful for reviewing your bank as plain text or sharing with colleagues who don't use Coeus.</p>
-                    </div>
-                </div>
-                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
-                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
-                        <div class="flex flex-col overflow-hidden min-h-0">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
-                            <label for="convTextFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON, CSV, or GIFT TXT File:</label>
-                            <div class="drop-zone mb-8">
-                                <input type="file" id="convTextFileInput" accept=".json,.csv,.txt" class="hidden">
-                                <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
-                            </div>
-                            <div class="flex-1"></div>
-                            <div class="flex gap-2">
-                                <button id="convTextConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
-                                <button id="convTextClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
-                            </div>
-                        </div>
-                        <div class="flex flex-col overflow-hidden min-h-0">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
-                            <div class="mb-2 flex gap-2 items-center">
-                                <label for="convTextFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
-                                <input type="text" id="convTextFilename" placeholder="questions" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
-                            </div>
-                            <div class="flex gap-2 mb-2">
-                                <button id="convTextJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
-                                <button id="convTextJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
-                            </div>
-                            <div id="convTextOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
-                                <pre class="text-xs"><code id="convTextOutput"></code></pre>
-                            </div>
-                            <button id="convTextDownloadBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Download TXT</button>
+                            <button id="convertFileExportBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Export as JSON</button>
                         </div>
                     </div>
                 </section>
@@ -1347,7 +1233,7 @@ D. Madrid
 </div>
 
 <!-- ── Tooltip Popover ───────────────────────────────────────────────── -->
-<div id="tipPopover" class="fixed z-50 hidden max-w-xs text-sm rounded-lg shadow-lg p-3" style="background:var(--surface);color:var(--text);border:1px solid var(--border);line-height:1.5;"></div>
+<div id="tipPopover" class="fixed z-[9999] hidden max-w-xs text-sm rounded-lg shadow-lg p-3 pointer-events-none" style="background:var(--surface);color:var(--text);border:1px solid var(--border);line-height:1.5;"></div>
 
 <!-- ── Welcome Modal ─────────────────────────────────────────────────── -->
 <div id="welcomeModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.6);">

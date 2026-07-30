@@ -19,10 +19,19 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.4.0';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.4.0': [
+        'Added: Write Questions tab — own exam bank (exambank), Add Questions and Paste Text sub-tabs, output preview toggles (JSON/TXT/GIFT/CSV), export buttons, Clear Saved Questions',
+        'Added: Convert a File tab — single unified converter replacing four separate Convert tabs; upload-only; format selector',
+        'Changed: Manage a Bank redesigned — 2-column Input/Output at top, Edit Bank below',
+        'Changed: Tooltips now appear beside labels (hover); info buttons converted to CSS tooltip icons',
+        'Removed: Separate Convert to JSON / CSV / GIFT / Text tabs (merged into Convert a File)',
+        'Removed: Clear Saved Questions from Manage a Bank (moved to Write Questions)',
+        'Fixed: Export TXT button label standardized to "Export as TXT"',
+    ],
     '2.3.0': [
         'Welcome modal shown on first launch with Quick Start guide',
         'Liability disclaimer in welcome modal and footer',
@@ -63,6 +72,7 @@ function assignQuestionUids(arr) {
     return arr;
 }
 let addedQuestions = []; // references to questions added via "Add Question to Bank" form
+let examBank = [];       // Write Questions tab — own bank (exambank)
 let lastGeneratedQuestions = [];
 let lastUnusedQuestions = [];
 let lastSelectedCategories = {};
@@ -157,7 +167,24 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Tooltip / Tips system ───────────────────────────────────────
     let tipsVisible = localStorage.getItem('coeus-tips-visible') === 'true';
     const tipPopover = document.getElementById('tipPopover');
-    let activeTipBtn = null;
+
+    function positionPopover(btn) {
+        const rect = btn.getBoundingClientRect();
+        const pw = 280;
+        let left = rect.left;
+        if (left + pw > window.innerWidth - 12) left = window.innerWidth - pw - 12;
+        if (left < 8) left = 8;
+        // Show below button; if too close to bottom, show above
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 120) {
+            tipPopover.style.top = `${rect.top - 8}px`;
+            tipPopover.style.transform = 'translateY(-100%)';
+        } else {
+            tipPopover.style.top = `${rect.bottom + 6}px`;
+            tipPopover.style.transform = '';
+        }
+        tipPopover.style.left = `${left}px`;
+    }
 
     function renderTipButtons() {
         document.querySelectorAll('.coeus-tip-btn').forEach(b => b.remove());
@@ -168,25 +195,17 @@ document.addEventListener('DOMContentLoaded', function () {
             const btn = document.createElement('button');
             btn.className = 'coeus-tip-btn';
             btn.setAttribute('aria-label', 'Help tip');
-            btn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--hover);color:var(--text-muted);font-size:10px;cursor:pointer;margin-left:6px;vertical-align:middle;flex-shrink:0;';
+            btn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--border);background:var(--hover);color:var(--text-muted);font-size:10px;cursor:default;margin-left:5px;vertical-align:middle;flex-shrink:0;line-height:1;';
             btn.textContent = '?';
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (activeTipBtn === btn && !tipPopover.classList.contains('hidden')) {
-                    tipPopover.classList.add('hidden');
-                    activeTipBtn = null;
-                    return;
-                }
-                activeTipBtn = btn;
+            btn.addEventListener('mouseenter', () => {
                 tipPopover.textContent = tip;
                 tipPopover.classList.remove('hidden');
-                const rect = btn.getBoundingClientRect();
-                const pw = 280;
-                let left = rect.left + window.scrollX;
-                if (left + pw > window.innerWidth - 12) left = window.innerWidth - pw - 12;
-                tipPopover.style.left = `${left}px`;
-                tipPopover.style.top  = `${rect.bottom + window.scrollY + 6}px`;
+                positionPopover(btn);
             });
+            btn.addEventListener('mouseleave', () => {
+                tipPopover.classList.add('hidden');
+            });
+            // Insert immediately after the header element
             if (el.nextSibling) {
                 el.parentNode.insertBefore(btn, el.nextSibling);
             } else {
@@ -206,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tipsVisible = !tipsVisible;
         localStorage.setItem('coeus-tips-visible', tipsVisible);
         if (tipPopover) tipPopover.classList.add('hidden');
-        activeTipBtn = null;
         renderTipButtons();
         updateTipsToggle();
         document.querySelectorAll('.tab-intro').forEach(el => {
@@ -214,21 +232,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.addEventListener('click', (e) => {
-        if (tipPopover && !tipPopover.contains(e.target) && !e.target.classList.contains('coeus-tip-btn')) {
-            tipPopover.classList.add('hidden');
-            activeTipBtn = null;
-        }
-    });
-    document.addEventListener('scroll', () => {
-        if (tipPopover) tipPopover.classList.add('hidden');
-        activeTipBtn = null;
-    }, true);
-
     renderTipButtons();
     updateTipsToggle();
 
-    // ── About modal ─────────────────────────────────────────────────────────────
+    // ── GitHub latest release check ─────────────────────────────
+    (async () => {
+        try {
+            const res = await fetch('https://api.github.com/repos/drussoperio/CoeusTestWriter/releases/latest', {
+                headers: { 'Accept': 'application/vnd.github+json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const latest = (data.tag_name || '').replace(/^v/, '');
+            if (latest && latest !== APP_VERSION) {
+                const banner = document.createElement('div');
+                banner.id = 'updateBanner';
+                banner.style.cssText = 'position:fixed;bottom:60px;right:16px;z-index:9000;background:#3b82f6;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;';
+                banner.innerHTML = `<span>⬆ v${latest} available</span><a href="https://github.com/drussoperio/CoeusTestWriter/releases/latest" target="_blank" rel="noopener" style="color:#fff;font-weight:600;text-decoration:underline;">Download</a><button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1;">&times;</button>`;
+                document.body.appendChild(banner);
+            }
+        } catch (_) { /* network unavailable — silently skip */ }
+    })();
+
+
     const aboutModal = document.getElementById('aboutModal');
     document.getElementById('openAboutModal')?.addEventListener('click', () => {
         aboutModal.classList.remove('hidden');
@@ -317,12 +343,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Tab configuration ──────────────────────────────────────
     const tabConfig = {
+        'writeQuestionsTab':   'writeQuestionsContent',
         'questionManagerTab':  'questionManagerContent',
         'testGeneratorTab':    'testGeneratorContent',
-        'convJsonTab':         'convJsonContent',
-        'convCsvTab':          'convCsvContent',
-        'convGiftTab':         'convGiftContent',
-        'convTextTab':         'convTextContent',
+        'convertFileTab':      'convertFileContent',
         'jsonMergerTab':       'jsonMergerContent'
     };
 
@@ -381,20 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ── Info button & popover setup ────────────────────────────
-    document.querySelectorAll('.info-btn').forEach(btn => {
-        btn.addEventListener('click', e => {
-            e.stopPropagation();
-            const popover = btn.nextElementSibling;
-            document.querySelectorAll('.info-popover').forEach(p => {
-                if (p !== popover) p.classList.add('hidden');
-            });
-            popover.classList.toggle('hidden');
-        });
-    });
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.info-popover').forEach(p => p.classList.add('hidden'));
-    });
+    // ── Tooltips are CSS-only (.tooltip-wrap:hover) ────────────
 
     // ── Get DOM references ─────────────────────────────────────
     const loadButton = document.getElementById('loadButton');
@@ -1028,12 +1039,55 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        function renderCsvTable(csvStr) {
+            const tableEl = document.getElementById('convCsvTable');
+            const headEl  = document.getElementById('convCsvTableHead');
+            const bodyEl  = document.getElementById('convCsvTableBody');
+            const emptyEl = document.getElementById('convCsvEmptyMsg');
+            if (!tableEl || !headEl || !bodyEl) return;
+
+            const rows = csvStr.trim().split('\n').map(r => {
+                // Simple CSV split respecting quoted fields
+                const result = [];
+                let cur = '', inQ = false;
+                for (let i = 0; i < r.length; i++) {
+                    const c = r[i];
+                    if (c === '"') { inQ = !inQ; }
+                    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+                    else { cur += c; }
+                }
+                result.push(cur);
+                return result;
+            });
+
+            if (rows.length < 2) return;
+            const headers = rows[0];
+            headEl.innerHTML = '<tr>' + headers.map(h =>
+                `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 whitespace-nowrap bg-gray-100">${h}</th>`
+            ).join('') + '</tr>';
+
+            bodyEl.innerHTML = rows.slice(1).map((row, ri) =>
+                '<tr class="' + (ri % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-blue-50">' +
+                row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate" title="${cell.replace(/"/g,'&quot;')}">${cell || '<span class="text-gray-300">—</span>'}</td>`).join('') +
+                '</tr>'
+            ).join('');
+
+            tableEl.classList.remove('hidden');
+            if (emptyEl) emptyEl.classList.add('hidden');
+        }
+
         function finishConvert(questions) {
             renderMissingCorrectWarning(warningId, questions);
             const resultStr = formatResult(questions);
             lastResult = resultStr;
-            output.textContent = resultStr;
-            if (window.Prism && outputFormat === 'json') Prism.highlightElement(output);
+            if (outputFormat === 'csv') {
+                renderCsvTable(resultStr);
+            } else {
+                if (output) {
+                    output.textContent = resultStr;
+                    if (window.Prism && outputFormat === 'json') Prism.highlightElement(output);
+                }
+            }
             showToast('✅ Conversion complete', 'success');
         }
 
@@ -1056,6 +1110,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 output.textContent = '';
                 lastResult = '';
+                // Also clear CSV table if present
+                const csvTable = document.getElementById('convCsvTable');
+                const csvEmpty = document.getElementById('convCsvEmptyMsg');
+                if (csvTable) { csvTable.classList.add('hidden'); document.getElementById('convCsvTableHead').innerHTML = ''; document.getElementById('convCsvTableBody').innerHTML = ''; }
+                if (csvEmpty) csvEmpty.classList.remove('hidden');
                 const warnEl = document.getElementById(warningId);
                 if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
                 showToast('🗑️ Cleared', 'success');
@@ -1080,6 +1139,366 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast('✅ File downloaded', 'success');
             });
         }
+    }
+
+    // ── Convert a File tab ─────────────────────────────────────
+    function setupConvertAFile() {
+        const fileInput   = document.getElementById('convertFileInput');
+        const targetSel   = document.getElementById('convertFileTarget');
+        const convertBtn  = document.getElementById('convertFileConvertBtn');
+        const clearBtn    = document.getElementById('convertFileClearBtn');
+        const exportBtn   = document.getElementById('convertFileExportBtn');
+        const filenameIn  = document.getElementById('convertFileFilename');
+        const output      = document.getElementById('convertFileOutput');
+        const textWrap    = document.getElementById('convertFileTextOutputWrap');
+        const csvWrap     = document.getElementById('convertFileCsvOutputWrap');
+        const csvHead     = document.getElementById('convertFileCsvTableHead');
+        const csvBody     = document.getElementById('convertFileCsvTableBody');
+        const warnEl      = document.getElementById('convertFileMissingCorrectWarning');
+        let lastResult = '', lastExt = '.json';
+
+        setupJumpButtonsFor('convertFileJumpToTop', 'convertFileJumpToBottom', 'convertFileTextOutputWrap');
+
+        // keep dropzone wired
+        if (fileInput) {
+            const dz = fileInput.closest('.drop-zone');
+            if (dz) {
+                dz.addEventListener('click', () => { const cur = document.getElementById('convertFileInput'); if (cur) cur.click(); });
+                dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+                dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+                dz.addEventListener('drop', e => {
+                    e.preventDefault(); dz.classList.remove('drag-over');
+                    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; updateDropZoneName(); }
+                });
+            }
+            fileInput.addEventListener('change', updateDropZoneName);
+        }
+
+        function updateDropZoneName() {
+            const dz = fileInput ? fileInput.closest('.drop-zone') : null;
+            const p = dz ? dz.querySelector('p') : null;
+            if (p && fileInput && fileInput.files.length) {
+                p.className = 'text-sm text-green-700 font-medium';
+                p.textContent = fileInput.files[0].name;
+            }
+        }
+
+        function updateExportBtn(fmt) {
+            const labels = { json: 'Export as JSON', csv: 'Export as CSV', gift: 'Export as GIFT', text: 'Export as TXT' };
+            if (exportBtn) exportBtn.textContent = labels[fmt] || 'Export';
+        }
+
+        if (targetSel) targetSel.addEventListener('change', () => updateExportBtn(targetSel.value));
+
+        function renderOutput(fmt, resultStr) {
+            if (fmt === 'csv') {
+                if (textWrap) textWrap.classList.add('hidden');
+                if (csvWrap) csvWrap.classList.remove('hidden');
+                // parse csv into table
+                const rows = resultStr.trim().split('\n').map(r => {
+                    const result = []; let cur = '', inQ = false;
+                    for (let i = 0; i < r.length; i++) {
+                        const c = r[i];
+                        if (c === '"') { inQ = !inQ; }
+                        else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+                        else { cur += c; }
+                    }
+                    result.push(cur); return result;
+                });
+                if (rows.length < 2) return;
+                if (csvHead) csvHead.innerHTML = '<tr>' + rows[0].map(h => `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 whitespace-nowrap bg-gray-100">${h}</th>`).join('') + '</tr>';
+                if (csvBody) csvBody.innerHTML = rows.slice(1).map((row, ri) =>
+                    '<tr class="' + (ri % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-blue-50">' +
+                    row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate" title="${cell.replace(/"/g,'&quot;')}">${cell || '<span class="text-gray-300">—</span>'}</td>`).join('') +
+                    '</tr>').join('');
+            } else {
+                if (csvWrap) csvWrap.classList.add('hidden');
+                if (textWrap) textWrap.classList.remove('hidden');
+                if (output) {
+                    output.textContent = resultStr;
+                    if (window.Prism && fmt === 'json') Prism.highlightElement(output);
+                }
+            }
+        }
+
+        function runConvert() {
+            if (!fileInput || !fileInput.files || !fileInput.files.length) {
+                showToast('⚠️ Please select a file.', 'warning'); return;
+            }
+            const file = fileInput.files[0];
+            const fmt = targetSel ? targetSel.value : 'json';
+            const exts = { json: '.json', csv: '.csv', gift: '_gift.txt', text: '.txt' };
+            lastExt = exts[fmt] || '.json';
+            const baseName = file.name.replace(/\.[^/.]+$/, '');
+            if (filenameIn) filenameIn.value = baseName;
+            updateExportBtn(fmt);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const format = formatFromFileName(file.name);
+                    const questions = parseQuestionsByFormat(e.target.result, format);
+                    renderMissingCorrectWarning('convertFileMissingCorrectWarning', questions);
+                    let resultStr;
+                    if (fmt === 'json')  resultStr = JSON.stringify(questions, null, 2);
+                    else if (fmt === 'csv')  resultStr = convertJsonToCsv(questions);
+                    else if (fmt === 'gift') resultStr = questionsToGift(questions);
+                    else                 resultStr = questionsToPlainText(questions);
+                    lastResult = resultStr;
+                    renderOutput(fmt, resultStr);
+                    showToast('✅ Conversion complete', 'success');
+                } catch (err) {
+                    if (output) output.textContent = 'Error: ' + err.message;
+                    showToast('❌ ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        if (convertBtn) convertBtn.addEventListener('click', runConvert);
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (fileInput) fileInput.value = '';
+                const dz = fileInput ? fileInput.closest('.drop-zone') : null;
+                const p = dz ? dz.querySelector('p') : null;
+                if (p) { p.className = 'text-sm text-gray-600'; p.textContent = 'Drag & drop file or click to browse'; }
+                if (output) output.textContent = '';
+                if (csvHead) csvHead.innerHTML = '';
+                if (csvBody) csvBody.innerHTML = '';
+                if (csvWrap) csvWrap.classList.add('hidden');
+                if (textWrap) textWrap.classList.remove('hidden');
+                if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
+                lastResult = '';
+                showToast('🗑️ Cleared', 'success');
+            });
+        }
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                if (!lastResult) { showToast('⚠️ Please convert first.', 'warning'); return; }
+                const fname = (filenameIn?.value.trim() || 'converted') + lastExt;
+                const mime = lastExt === '.json' ? 'application/json' : 'text/plain';
+                const blob = new Blob([lastResult], { type: mime });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = fname; a.click();
+                URL.revokeObjectURL(url);
+                showToast('✅ File downloaded', 'success');
+            });
+        }
+    }
+
+    // ── Write Questions tab ────────────────────────────────────
+    function setupWriteQuestions() {
+        // Sub-tab switching
+        const addSubTab   = document.getElementById('wqAddSubTab');
+        const pasteSubTab = document.getElementById('wqPasteSubTab');
+        const addPanel    = document.getElementById('wqAddPanel');
+        const pastePanel  = document.getElementById('wqPastePanel');
+
+        function activateSubTab(which) {
+            const isAdd = which === 'add';
+            if (addPanel)   { addPanel.classList.toggle('hidden', !isAdd); addPanel.classList.toggle('flex', isAdd); }
+            if (pastePanel) { pastePanel.classList.toggle('hidden', isAdd); pastePanel.classList.toggle('flex', !isAdd); }
+            if (addSubTab)  { addSubTab.classList.toggle('bg-blue-500', isAdd); addSubTab.classList.toggle('text-white', isAdd); addSubTab.classList.toggle('bg-gray-200', !isAdd); addSubTab.classList.toggle('text-gray-700', !isAdd); }
+            if (pasteSubTab){ pasteSubTab.classList.toggle('bg-blue-500', !isAdd); pasteSubTab.classList.toggle('text-white', !isAdd); pasteSubTab.classList.toggle('bg-gray-200', isAdd); pasteSubTab.classList.toggle('text-gray-700', isAdd); }
+        }
+        if (addSubTab)   addSubTab.addEventListener('click',   () => activateSubTab('add'));
+        if (pasteSubTab) pasteSubTab.addEventListener('click', () => activateSubTab('paste'));
+
+        // Type switching in Add Questions form
+        const typeSelect = document.getElementById('wqType');
+        function updateWqFormSections() {
+            const v = typeSelect ? typeSelect.value : 'multiple_choice';
+            const mc = document.getElementById('wqChoicesSection');
+            const tf = document.getElementById('wqTrueFalseSection');
+            const mt = document.getElementById('wqMatchingSection');
+            if (mc) mc.classList.toggle('hidden', v !== 'multiple_choice');
+            if (tf) tf.classList.toggle('hidden', v !== 'true_false');
+            if (mt) mt.classList.toggle('hidden', v !== 'matching');
+        }
+        if (typeSelect) typeSelect.addEventListener('change', updateWqFormSections);
+        updateWqFormSections();
+
+        // Choice E toggle
+        const choiceEBtn = document.getElementById('wqToggleChoiceEBtn');
+        const choiceERow = document.getElementById('wqChoiceERow');
+        if (choiceEBtn && choiceERow) {
+            choiceEBtn.addEventListener('click', () => {
+                const hidden = choiceERow.classList.toggle('hidden');
+                choiceEBtn.textContent = hidden ? '+ Add Choice E' : '− Remove Choice E';
+            });
+        }
+
+        // Matching pairs
+        const addPairBtn = document.getElementById('wqAddMatchingPair');
+        if (addPairBtn) {
+            addPairBtn.addEventListener('click', () => {
+                const colA = document.getElementById('wqMatchingColumnA');
+                const colB = document.getElementById('wqMatchingColumnB');
+                if (!colA || !colB) return;
+                const idx = colA.children.length + 1;
+                const inp = () => `<input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="`;
+                colA.insertAdjacentHTML('beforeend', `<div>${inp()}Premise ${idx}"></div></div>`);
+                colB.insertAdjacentHTML('beforeend', `<div>${inp()}Answer ${idx}"></div></div>`);
+            });
+        }
+
+        // Add Question form submit
+        const form = document.getElementById('wqQuestionForm');
+        if (form) {
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+                const type = typeSelect ? typeSelect.value : 'multiple_choice';
+                const cat  = (document.getElementById('wqCategory')?.value || '').trim() || 'Uncategorized';
+                const diff = document.getElementById('wqDifficulty')?.value || 'unset';
+                const qText = (document.getElementById('wqQuestion')?.value || '').trim();
+                if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
+
+                let q = { category: cat, type, difficulty: diff, question: qText };
+
+                if (type === 'multiple_choice') {
+                    const rows = document.querySelectorAll('#wqChoicesContainer .wq-choice-input:not(.hidden)');
+                    const choices = [], radios = [];
+                    rows.forEach(r => {
+                        const inp = r.querySelector('input[type="text"]');
+                        const rad = r.querySelector('input[type="radio"]');
+                        if (inp && inp.value.trim()) { choices.push(inp.value.trim()); radios.push(rad); }
+                    });
+                    const checkedIdx = radios.findIndex(r => r.checked);
+                    if (choices.length < 2) { showToast('⚠️ At least 2 choices required.', 'warning'); return; }
+                    if (checkedIdx < 0) { showToast('⚠️ Please mark a correct answer.', 'warning'); return; }
+                    q.choices = choices;
+                    q.correct = choices[checkedIdx];
+                } else if (type === 'true_false') {
+                    const checked = document.querySelector('input[name="wqTfCorrect"]:checked');
+                    if (!checked) { showToast('⚠️ Please select True or False.', 'warning'); return; }
+                    q.choices = [null, null, null, null];
+                    q.correct = checked.value;
+                } else if (type === 'matching') {
+                    const aInputs = document.querySelectorAll('#wqMatchingColumnA input');
+                    const bInputs = document.querySelectorAll('#wqMatchingColumnB input');
+                    aInputs.forEach((a, i) => {
+                        const b = bInputs[i];
+                        if (a.value.trim() && b && b.value.trim()) {
+                            examBank.push({ category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
+                        }
+                    });
+                    saveExamBankToStorage();
+                    refreshWqPreview();
+                    form.reset();
+                    updateWqFormSections();
+                    showToast('✅ Matching pairs added.', 'success');
+                    return;
+                }
+
+                examBank.push(q);
+                saveExamBankToStorage();
+                refreshWqPreview();
+                form.reset();
+                updateWqFormSections();
+                showToast('✅ Question added.', 'success');
+            });
+        }
+
+        // Preview format toggles
+        let wqPreviewFormat = 'json';
+        const previewBtns = {
+            json: document.getElementById('wqPreviewJson'),
+            txt:  document.getElementById('wqPreviewTxt'),
+            gift: document.getElementById('wqPreviewGift'),
+            csv:  document.getElementById('wqPreviewCsv'),
+        };
+        Object.entries(previewBtns).forEach(([fmt, btn]) => {
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                wqPreviewFormat = fmt;
+                Object.values(previewBtns).forEach(b => { if (b) { b.classList.remove('bg-blue-500','text-white'); b.classList.add('bg-gray-200','text-gray-700'); } });
+                btn.classList.add('bg-blue-500','text-white'); btn.classList.remove('bg-gray-200','text-gray-700');
+                refreshWqPreview();
+            });
+        });
+
+        function refreshWqPreview() {
+            const out = document.getElementById('wqOutput');
+            if (!out) return;
+            let str = '';
+            if (wqPreviewFormat === 'json')  str = JSON.stringify(examBank, null, 2);
+            else if (wqPreviewFormat === 'txt')  str = questionsToPlainText(examBank);
+            else if (wqPreviewFormat === 'gift') str = questionsToGift(examBank);
+            else if (wqPreviewFormat === 'csv')  str = convertJsonToCsv(examBank);
+            out.textContent = str;
+            if (window.Prism && wqPreviewFormat === 'json') Prism.highlightElement(out);
+        }
+
+        setupJumpButtonsFor('wqJumpToTop', 'wqJumpToBottom', 'wqOutputContainer');
+
+        // Export buttons
+        function wqExport(fmt) {
+            if (!examBank.length) { showToast('⚠️ No questions to export.', 'warning'); return; }
+            const fname = (document.getElementById('wqFilename')?.value.trim() || 'exambank');
+            let str, ext, mime = 'text/plain';
+            if (fmt === 'json')  { str = JSON.stringify(examBank, null, 2); ext = '.json'; mime = 'application/json'; }
+            else if (fmt === 'csv')  { str = convertJsonToCsv(examBank); ext = '.csv'; }
+            else if (fmt === 'txt')  { str = questionsToPlainText(examBank); ext = '.txt'; }
+            else if (fmt === 'gift') { str = questionsToGift(examBank); ext = '_gift.txt'; }
+            const blob = new Blob([str], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = fname + ext; a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ Exported', 'success');
+        }
+        document.getElementById('wqExportJsonBtn')?.addEventListener('click', () => wqExport('json'));
+        document.getElementById('wqExportCsvBtn')?.addEventListener('click',  () => wqExport('csv'));
+        document.getElementById('wqExportTxtBtn')?.addEventListener('click',  () => wqExport('txt'));
+        document.getElementById('wqExportGiftBtn')?.addEventListener('click', () => wqExport('gift'));
+
+        // Paste & Convert
+        const pasteConvertBtn = document.getElementById('wqPasteConvertBtn');
+        if (pasteConvertBtn) {
+            pasteConvertBtn.addEventListener('click', () => {
+                const text = (document.getElementById('wqPasteInput')?.value || '').trim();
+                if (!text) { showToast('⚠️ Please paste some text first.', 'warning'); return; }
+                const subject  = (document.getElementById('wqPasteSubject')?.value || '').trim();
+                const category = (document.getElementById('wqPasteCategory')?.value || '').trim() || 'Uncategorized';
+                const diff     = document.getElementById('wqPasteDifficulty')?.value || 'unset';
+                try {
+                    const qs = parsePlainTextToJson(text, subject, category);
+                    qs.forEach(q => { q.difficulty = diff; });
+                    examBank.push(...qs);
+                    saveExamBankToStorage();
+                    refreshWqPreview();
+                    showToast(`✅ Added ${qs.length} question(s).`, 'success');
+                } catch(err) { showToast('❌ ' + err.message, 'error'); }
+            });
+        }
+        document.getElementById('wqPasteClearBtn')?.addEventListener('click', () => {
+            const el = document.getElementById('wqPasteInput');
+            if (el) el.value = '';
+        });
+
+        // Clear Saved Questions
+        const clearSavedBtn = document.getElementById('wqClearSavedBtn');
+        if (clearSavedBtn) {
+            clearSavedBtn.addEventListener('click', () => {
+                if (!examBank.length) { showToast('⚠️ Nothing to clear.', 'warning'); return; }
+                examBank = [];
+                saveExamBankToStorage();
+                refreshWqPreview();
+                showToast('🗑️ Exam bank cleared.', 'success');
+            });
+        }
+
+        // Load from storage
+        loadExamBankFromStorage();
+        refreshWqPreview();
+    }
+
+    function saveExamBankToStorage() {
+        try { localStorage.setItem('coeus-exambank', JSON.stringify(examBank)); } catch(e) {}
+    }
+    function loadExamBankFromStorage() {
+        try { const d = localStorage.getItem('coeus-exambank'); if (d) examBank = JSON.parse(d); } catch(e) {}
     }
 
     function setupMerger() {
@@ -1172,22 +1591,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setupExclusions();
     setupCategoryButtons();
     setupGiftJumpButtons();
-    setupConverterTab({
-        prefix: 'convJson', hasSubTabs: true, inputFormats: ['text', 'gift', 'csv'],
-        outputFormat: 'json', downloadExt: '.json'
-    });
-    setupConverterTab({
-        prefix: 'convCsv', hasSubTabs: true, inputFormats: ['text', 'json', 'gift'],
-        outputFormat: 'csv', downloadExt: '.csv'
-    });
-    setupConverterTab({
-        prefix: 'convGift', hasSubTabs: true, inputFormats: ['text', 'json', 'csv'],
-        outputFormat: 'gift', downloadExt: '_gift.txt'
-    });
-    setupConverterTab({
-        prefix: 'convText', hasSubTabs: false, inputFormats: ['json', 'csv', 'gift', 'text'],
-        outputFormat: 'text', downloadExt: '.txt'
-    });
+    setupConvertAFile();
+    setupWriteQuestions();
     setupMergerJumpButtons();
     
     // Initialize Question Manager
@@ -1304,30 +1709,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const clearSavedQuestionsBtn = document.getElementById('clearSavedTestBank');
-    if (clearSavedQuestionsBtn) {
-        clearSavedQuestionsBtn.addEventListener('click', () => {
-            if (addedQuestions.length === 0) {
-                showToast('⚠️ Nothing to clear', 'warning');
-                return;
-            }
-            lastDeletedBank = {
-                type: 'addedQuestions',
-                data: [...addedQuestions]
-            };
-            const toRemove = new Set(addedQuestions);
-            questionBank = questionBank.filter(q => !toRemove.has(q));
-            addedQuestions = [];
-            saveQBankToStorage();
-            saveAddedQuestionsToStorage();
-            clearQuestionManagerState();
-            if (undoTimeoutId) clearTimeout(undoTimeoutId);
-            undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
-            const undoHtml = '<span>🗑️ Cleared added questions. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
-            showToast(undoHtml, 'warning', 5000);
-            renderQuestionManagerList();
-        });
-    }
+    // clearSavedTestBank moved to Write Questions tab (wqClearSavedBtn)
 
     const clearTestBankBtn = document.getElementById('clearTestBank');
     if (clearTestBankBtn) {
