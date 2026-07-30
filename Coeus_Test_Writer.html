@@ -408,14 +408,17 @@
 
         <!-- Sticky tab bar -->
         <div id="tab-bar-wrapper">
-            <div class="flex flex-wrap gap-2 pb-2">
-                <button id="questionManagerTab" class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Manage a Bank</button>
-                <button id="testGeneratorTab"  class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Design a Test</button>
-                <button id="convJsonTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to JSON</button>
-                <button id="convCsvTab"        class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to CSV</button>
-                <button id="convGiftTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to GIFT</button>
-                <button id="convTextTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to Text</button>
-                <button id="jsonMergerTab"     class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Merge JSONs</button>
+            <div class="flex flex-wrap gap-2 pb-2 items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                    <button id="questionManagerTab" class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Manage a Bank</button>
+                    <button id="testGeneratorTab"  class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Design a Test</button>
+                    <button id="convJsonTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to JSON</button>
+                    <button id="convCsvTab"        class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to CSV</button>
+                    <button id="convGiftTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to GIFT</button>
+                    <button id="convTextTab"       class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Convert to Text</button>
+                    <button id="jsonMergerTab"     class="tab-button bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm font-medium">Merge JSONs</button>
+                </div>
+                <button id="showTipsToggle" title="Toggle Tips" class="text-xs px-3 py-1.5 rounded border" style="color:var(--text-muted);border-color:var(--border);">❓ Show Tips</button>
             </div>
         </div>
 
@@ -430,11 +433,18 @@
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
                     <h2 class="text-lg font-semibold text-blue-900 mb-1">Manage a Bank</h2>
                     <p class="text-sm text-gray-700">Load a question bank, add new questions manually, edit, and export your bank in multiple formats.</p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ Load a <strong>.json</strong> bank file via drag-and-drop or the file picker.</p>
+                        <p>▸ Use <strong>Add Questions</strong> to build your bank one question at a time.</p>
+                        <p>▸ Use <strong>Bank Editor</strong> to search, filter, sort, bulk-rename, or delete questions.</p>
+                        <p>▸ Export your bank as JSON (for reloading), CSV (for spreadsheet editing), plain TXT, or GIFT (for Moodle).</p>
+                        <p>▸ Changes are saved to <strong>localStorage</strong> automatically — your bank persists across sessions.</p>
+                    </div>
                 </div>
 
                 <!-- Import & Export sections -->
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
-                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Load an existing JSON bank file. The bank persists in localStorage automatically. Use Clear Bank to wipe it from memory.">Input</h3>
                     <div class="mb-8">
 						<label for="loadQuestionBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
                         <div class="drop-zone">
@@ -449,7 +459,7 @@
                 </section>
 
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
-                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                    <h3 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Set a filename and export your bank as JSON, CSV, plain TXT, or GIFT. JSON is the primary format used by Coeus.">Output</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <div class="mb-3 flex items-center gap-2">
@@ -660,11 +670,19 @@
                         The engine randomizes question order, shuffles answer choices, and balances
                         the answer-key distribution. Export the finished test in your chosen format.
                     </p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ Load your bank here separately from Question Manager — they are independent.</p>
+                        <p>▸ Set MCQ, T/F, and Matching counts per category, or use <strong>Select Questions Across Categories</strong> to distribute a target total evenly.</p>
+                        <p>▸ <strong>Difficulty Ratio</strong> lets you control the Easy/Medium/Hard mix. Unset questions fill in shortfalls automatically.</p>
+                        <p>▸ <strong>Exclude Already-Used Questions</strong> prevents repeats across test versions — upload a previous test's JSON.</p>
+                        <p>▸ The <strong>Generation Report</strong> tab shows a full breakdown including difficulty shortfalls.</p>
+                        <p>▸ Export as TXT, PDF, DOCX (long bond, Arial 11pt), or JSON.</p>
+                    </div>
                 </div>
 
                 <!-- Load bank -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Load a JSON bank here (independent of Question Manager). A warning appears if any questions are missing a correct answer.">Input</h2>
                     <div class="mb-4">
 					<label for="loadTestBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
                         <div class="drop-zone">
@@ -682,7 +700,7 @@
 
                 <!-- Generate -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generate Test</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Set per-category question counts, pick a difficulty ratio, then click Generate Test. Use Select Questions Across Categories to auto-distribute totals.">Generate Test</h2>
                     <form id="testForm" class="space-y-4">
                         <div id="categoryInputs" class="space-y-3"></div>
                         <div id="testSummary" class="text-sm font-medium text-gray-700"></div>
@@ -748,44 +766,49 @@
                             <button type="button" id="clearAllBtn"  class="bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded text-sm">Clear All</button>
                             <button type="button" id="selectAllBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Select All Available</button>
                         </div>
-                        <div class="flex gap-2 flex-wrap items-end mt-3 p-3 rounded border" style="border-color:var(--border);">
-                            <div class="w-full mb-2">
-                                <p class="text-xs font-semibold mb-2" style="color:var(--text);">Global Difficulty Ratio <span class="font-normal text-gray-400">(must sum to 100; leave all 0 to ignore difficulty)</span></p>
-                                <div class="flex gap-3 flex-wrap">
-                                    <div>
-                                        <label for="diffRatioUnset" class="block text-xs mb-1" style="color:var(--text-muted);">⚪ Unset %</label>
-                                        <input type="number" id="diffRatioUnset" min="0" max="100" value="100" class="rounded border px-2 py-1 text-sm w-20">
+                        <div class="mt-3 p-3 rounded border" style="border-color:var(--border);">
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Left: Difficulty Preset -->
+                                <div>
+                                    <p class="text-xs font-semibold mb-2" style="color:var(--text);">Difficulty Ratio</p>
+                                    <select id="diffRatioPreset" class="w-full rounded border px-2 py-1.5 text-sm mb-3">
+                                        <option value="ignore">Ignore Difficulty (default)</option>
+                                        <option value="even">Even (33% Easy / 33% Medium / 33% Hard)</option>
+                                        <option value="easy">Mostly Easy (50% / 30% / 20%)</option>
+                                        <option value="medium">Mostly Medium (30% / 50% / 20%)</option>
+                                        <option value="hard">Mostly Hard (20% / 30% / 50%)</option>
+                                    </select>
+                                    <div class="flex gap-2 flex-wrap text-xs" style="color:var(--text-muted);">
+                                        <span>🟢 Easy: <strong id="diffLabelEasy">—</strong></span>
+                                        <span>🟡 Medium: <strong id="diffLabelMedium">—</strong></span>
+                                        <span>🔴 Hard: <strong id="diffLabelHard">—</strong></span>
                                     </div>
-                                    <div>
-                                        <label for="diffRatioEasy" class="block text-xs mb-1" style="color:var(--text-muted);">🟢 Easy %</label>
-                                        <input type="number" id="diffRatioEasy" min="0" max="100" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                                    <!-- Hidden inputs still used by JS logic -->
+                                    <input type="hidden" id="diffRatioUnset"  value="100">
+                                    <input type="hidden" id="diffRatioEasy"   value="0">
+                                    <input type="hidden" id="diffRatioMedium" value="0">
+                                    <input type="hidden" id="diffRatioHard"   value="0">
+                                </div>
+                                <!-- Right: Smart Selection -->
+                                <div>
+                                    <p class="text-xs font-semibold mb-2" style="color:var(--text);">Smart Selection</p>
+                                    <div class="flex gap-2 flex-wrap mb-2">
+                                        <div>
+                                            <label for="balanceTargetMC" class="block text-xs mb-1" style="color:var(--text-muted);">Total MCQ</label>
+                                            <input type="number" id="balanceTargetMC" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                                        </div>
+                                        <div>
+                                            <label for="balanceTargetTF" class="block text-xs mb-1" style="color:var(--text-muted);">Total T/F</label>
+                                            <input type="number" id="balanceTargetTF" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                                        </div>
+                                        <div>
+                                            <label for="balanceTargetMT" class="block text-xs mb-1" style="color:var(--text-muted);">Total Matching</label>
+                                            <input type="number" id="balanceTargetMT" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label for="diffRatioMedium" class="block text-xs mb-1" style="color:var(--text-muted);">🟡 Medium %</label>
-                                        <input type="number" id="diffRatioMedium" min="0" max="100" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                                    </div>
-                                    <div>
-                                        <label for="diffRatioHard" class="block text-xs mb-1" style="color:var(--text-muted);">🔴 Hard %</label>
-                                        <input type="number" id="diffRatioHard" min="0" max="100" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                                    </div>
-                                    <div class="flex items-end">
-                                        <span id="diffRatioTotal" class="text-sm font-semibold px-3 py-1 rounded" style="background:var(--hover);color:var(--text);">Total: 100%</span>
-                                    </div>
+                                    <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm w-full">Select Questions Across Categories</button>
                                 </div>
                             </div>
-                            <div>
-                                <label for="balanceTargetMC" class="block text-xs font-medium mb-1" style="color:var(--text);">Total MCQ</label>
-                                <input type="number" id="balanceTargetMC" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                            </div>
-                            <div>
-                                <label for="balanceTargetTF" class="block text-xs font-medium mb-1" style="color:var(--text);">Total T/F</label>
-                                <input type="number" id="balanceTargetTF" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                            </div>
-                            <div>
-                                <label for="balanceTargetMT" class="block text-xs font-medium mb-1" style="color:var(--text);">Total Matching</label>
-                                <input type="number" id="balanceTargetMT" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                            </div>
-                            <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">Balanced Pick Across Categories</button>
                         </div>
                     </form>
 
@@ -804,7 +827,7 @@
 
                 <!-- Output -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Set a filename and export your test as TXT, PDF, DOCX, or JSON. DOCX uses long bond paper, Arial 11pt, narrow margins.">Output</h2>
 
                     <!-- Filename + DOCX info -->
                     <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
@@ -873,7 +896,7 @@
 
                 <!-- Unused Questions -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Unused Questions</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="Questions not selected for this test. Export them as JSON to use as excluded questions in the next version.">Unused Questions</h2>
                     <div id="unusedSummary" class="mb-3 p-3 bg-gray-50 border border-gray-300 rounded text-sm text-gray-600">
                         Generate a test to see which questions were not selected.
                     </div>
@@ -888,7 +911,7 @@
 
                 <!-- Generation Report -->
                 <section class="p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generation Report</h2>
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);" data-tip="A full breakdown of what was generated: counts per category, available vs requested, shortfalls, and difficulty distribution (if active).">Generation Report</h2>
                     <div id="generationReport" class="p-3 border border-gray-300 rounded text-sm text-gray-600">
                         Generate a test to see the detailed breakdown.
                     </div>
@@ -908,6 +931,13 @@
                         (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
                         the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
                     </p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ <strong>Upload File</strong> accepts .json, .csv, and GIFT .txt files.</p>
+                        <p>▸ <strong>Paste Text</strong> accepts plain numbered text — set Subject, Category, and Difficulty before converting.</p>
+                        <p>▸ Mark the correct MCQ choice with <code class="bg-gray-100 px-1 rounded">=</code> or <code class="bg-gray-100 px-1 rounded">*</code> before the letter (e.g. <code class="bg-gray-100 px-1 rounded">=b. Paris</code>).</p>
+                        <p>▸ True/False: write <code class="bg-gray-100 px-1 rounded">=True</code> or <code class="bg-gray-100 px-1 rounded">=False</code> on the line below the question.</p>
+                        <p>▸ Matching: write premise on one line, <code class="bg-gray-100 px-1 rounded">=Answer</code> on the next — consecutive pairs are grouped automatically.</p>
+                    </div>
                 </div>
                 <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
                     <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
@@ -1005,6 +1035,12 @@ D. Madrid
                         (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
                         the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
                     </p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ CSV column order: <strong>Question, Category, Type, Difficulty, Correct, Option 1–4</strong>.</p>
+                        <p>▸ Useful for bulk-editing questions in Excel or Google Sheets before re-importing via Convert to JSON.</p>
+                        <p>▸ Old 8-column CSVs (without Difficulty) are still supported on import.</p>
+                        <p>▸ Matching and T/F questions export with <code class="bg-gray-100 px-1 rounded">null</code> in unused option columns.</p>
+                    </div>
                 </div>
                 <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
                     <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
@@ -1093,6 +1129,12 @@ D. Madrid
                         (<code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>), and prefix
                         the correct answer with <code class="bg-gray-100 px-1 rounded">=</code>.
                     </p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ GIFT is Moodle's plain-text question import format. Import via <strong>Question bank → Import → GIFT format</strong>.</p>
+                        <p>▸ Question titles are auto-generated as <code class="bg-gray-100 px-1 rounded">Category_Q01</code>, <code class="bg-gray-100 px-1 rounded">Category_Q02</code>, etc.</p>
+                        <p>▸ Supports MCQ, True/False, and Matching. Difficulty is not exported (not supported by GIFT).</p>
+                        <p>▸ Exported filename gets a <code class="bg-gray-100 px-1 rounded">_gift</code> suffix automatically.</p>
+                    </div>
                 </div>
                 <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
                     <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
@@ -1179,6 +1221,11 @@ D. Madrid
                         <code class="bg-gray-100 px-1 rounded">.csv</code> file, or a GIFT
                         <code class="bg-gray-100 px-1 rounded">.txt</code> file into a human-readable text summary.
                     </p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ Output uses the same numbered/lettered format as the <strong>Convert to JSON</strong> Paste Text input — making it fully round-trippable.</p>
+                        <p>▸ Upload only — no paste mode. Accepts .json, .csv, and GIFT .txt files.</p>
+                        <p>▸ Useful for reviewing your bank as plain text or sharing with colleagues who don't use Coeus.</p>
+                    </div>
                 </div>
                 <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
                     <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
@@ -1225,6 +1272,12 @@ D. Madrid
                         Hold <kbd class="bg-gray-100 border rounded px-1">Ctrl</kbd>/<kbd class="bg-gray-100 border rounded px-1">Cmd</kbd>
                         to select several files at once.
                     </p>
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                        <p>▸ Select multiple .json files at once using Ctrl/Cmd+click or drag-and-drop.</p>
+                        <p>▸ A summary shows question counts per source file after merging.</p>
+                        <p>▸ Duplicate questions are not automatically removed — review before use.</p>
+                        <p>▸ Merged file can be loaded directly into Question Manager or Test Generator.</p>
+                    </div>
                 </div>
                 <section class="mb-8 p-4 border border-gray-200 rounded surface">
                     <div class="grid grid-cols-2 gap-4">
@@ -1293,6 +1346,44 @@ D. Madrid
     </div>
 </div>
 
+<!-- ── Tooltip Popover ───────────────────────────────────────────────── -->
+<div id="tipPopover" class="fixed z-50 hidden max-w-xs text-sm rounded-lg shadow-lg p-3" style="background:var(--surface);color:var(--text);border:1px solid var(--border);line-height:1.5;"></div>
+
+<!-- ── Welcome Modal ─────────────────────────────────────────────────── -->
+<div id="welcomeModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.6);">
+    <div class="rounded-xl shadow-2xl w-full max-w-lg mx-4 p-8" style="background:var(--surface);color:var(--text);border:1px solid var(--border);max-height:90vh;overflow-y:auto;">
+        <p class="app-title text-2xl font-bold mb-1" style="color:var(--text);">Welcome to Coeus</p>
+        <p class="text-xs mb-6" style="color:var(--text-muted);">v<span class="footer-version"></span> &nbsp;·&nbsp; Browser-based exam question manager for educators</p>
+
+        <h3 class="font-semibold mb-2" style="color:var(--text);">Quick Start</h3>
+        <ol class="text-sm space-y-2 mb-6 list-decimal list-inside" style="color:var(--text-muted);">
+            <li>Go to <strong style="color:var(--text);">Question Manager</strong> and load a JSON bank or add questions manually.</li>
+            <li>Use <strong style="color:var(--text);">Bank Editor</strong> to search, filter, sort, and organize your questions.</li>
+            <li>Switch to <strong style="color:var(--text);">Test Generator</strong> and load the same bank.</li>
+            <li>Set how many MCQ, T/F, and Matching questions to pull per category — or use <strong style="color:var(--text);">Select Questions Across Categories</strong> to balance automatically.</li>
+            <li>Click <strong style="color:var(--text);">Generate Test</strong> and export as TXT, PDF, DOCX, or JSON.</li>
+        </ol>
+
+        <div class="rounded-lg p-4 mb-6" style="background:#fef3c7;border:1px solid #f59e0b;">
+            <p class="text-sm font-semibold mb-1" style="color:#92400e;">⚠️ Disclaimer</p>
+            <p class="text-sm" style="color:#78350f;">Coeus Test Writer is provided as-is. The developer is not liable for errors, omissions, or inaccuracies in generated output. Always review exported tests thoroughly before distribution.</p>
+        </div>
+
+        <button id="welcomeDismissBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 rounded text-sm">I Understand &amp; Get Started</button>
+    </div>
+</div>
+
+<!-- ── Changelog Modal ───────────────────────────────────────────────── -->
+<div id="changelogModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.5);">
+    <div class="rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 relative" style="background:var(--surface);color:var(--text);border:1px solid var(--border);max-height:85vh;overflow-y:auto;">
+        <button id="changelogDismissBtn" class="absolute top-4 right-4 text-xl font-bold leading-none" style="color:var(--text-muted);" aria-label="Close">&times;</button>
+        <p class="font-bold text-base mb-1" style="color:var(--text);">What's New in v<span class="footer-version"></span></p>
+        <p class="text-xs mb-4" style="color:var(--text-muted);">See full history on <a href="https://github.com/drussoperio/CoeusTestWriter/releases" target="_blank" rel="noopener" class="underline">GitHub Releases</a>.</p>
+        <div id="changelogContent" class="text-sm space-y-1" style="color:var(--text-muted);"></div>
+        <button id="changelogGotItBtn" class="mt-5 w-full bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 rounded text-sm">Got It</button>
+    </div>
+</div>
+
 <!-- ── Footer ───────────────────────────────────────────────────────── -->
 <footer class="py-4 text-center text-xs" style="background-color:var(--surface);border-top:1px solid var(--border);color:var(--text-muted);">
     <div class="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-3">
@@ -1303,6 +1394,7 @@ D. Madrid
         <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">🛡 AGPLv3</a>
     </div>
     <p style="color:var(--text-muted);">&copy; 2026 Druss Operio &nbsp;·&nbsp; Coeus Test Writer &nbsp;·&nbsp; v<span class="footer-version"></span></p>
+    <p class="mt-1" style="color:var(--text-muted);">Provided as-is. Always review exported output before distribution.</p>
 </footer>
 
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>

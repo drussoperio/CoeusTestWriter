@@ -19,7 +19,37 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
+
+// Changelog entries — add a new array entry for each version
+const CHANGELOG = {
+    '2.3.0': [
+        'Welcome modal shown on first launch with Quick Start guide',
+        'Liability disclaimer in welcome modal and footer',
+        'Changelog modal shown automatically on version update',
+    ],
+    '2.2.0': [
+        'Difficulty setting (Easy / Medium / Hard / Unset) added to questions',
+        'Global difficulty ratio presets in Test Generator',
+        'Balanced Pick now respects difficulty ratio with Unset fallback',
+        'Generation Report now includes Difficulty Breakdown table',
+        'Difficulty badge and filter added to Bank Editor',
+        'Bulk Set Difficulty for selected questions',
+        'Difficulty dropdown in Convert to JSON (Paste Text)',
+        'CSV export/import now includes Difficulty column',
+    ],
+    '2.1.1': [
+        'Footer with About modal, GitHub, Download Latest, Report a Bug, AGPLv3',
+        'About section with project description and credits',
+        'Version number displayed in footer and About modal',
+        'Export as GIFT in Question Manager',
+        'Choice E option in Add New Question (MCQ)',
+        'Select Questions Across Categories (Balanced Pick)',
+        'Zero-padded question numbering in GIFT export',
+        'Answer key in TXT export uses line breaks between entries',
+        'Renamed Export as Plain Text to Export TXT',
+    ],
+};
 
 // ========================================
 // GLOBAL VARIABLES
@@ -68,7 +98,137 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Version display ─────────────────────────────────────────
     document.querySelectorAll('.footer-version').forEach(el => el.textContent = APP_VERSION);
 
-    // ── About modal ─────────────────────────────────────────────
+    // ── Welcome / Changelog modals ──────────────────────────────
+    const seenWelcome      = localStorage.getItem('coeus-seen-welcome');
+    const lastSeenVersion  = localStorage.getItem('coeus-last-seen-version');
+
+    const welcomeModal    = document.getElementById('welcomeModal');
+    const changelogModal  = document.getElementById('changelogModal');
+
+    function showWelcome() {
+        if (welcomeModal) {
+            welcomeModal.classList.remove('hidden');
+            welcomeModal.classList.add('flex');
+        }
+    }
+
+    function dismissWelcome() {
+        if (welcomeModal) {
+            welcomeModal.classList.add('hidden');
+            welcomeModal.classList.remove('flex');
+        }
+        localStorage.setItem('coeus-seen-welcome', 'true');
+        localStorage.setItem('coeus-last-seen-version', APP_VERSION);
+    }
+
+    function showChangelog() {
+        const entries = CHANGELOG[APP_VERSION] || [];
+        const content = document.getElementById('changelogContent');
+        if (content) {
+            content.innerHTML = entries.length
+                ? entries.map(e => `<p class="flex gap-2"><span style="color:#3b82f6;">▸</span><span>${e}</span></p>`).join('')
+                : '<p>Minor fixes and improvements.</p>';
+        }
+        if (changelogModal) {
+            changelogModal.classList.remove('hidden');
+            changelogModal.classList.add('flex');
+        }
+    }
+
+    function dismissChangelog() {
+        if (changelogModal) {
+            changelogModal.classList.add('hidden');
+            changelogModal.classList.remove('flex');
+        }
+        localStorage.setItem('coeus-last-seen-version', APP_VERSION);
+    }
+
+    document.getElementById('welcomeDismissBtn')?.addEventListener('click', dismissWelcome);
+    document.getElementById('changelogDismissBtn')?.addEventListener('click', dismissChangelog);
+    document.getElementById('changelogGotItBtn')?.addEventListener('click', dismissChangelog);
+    changelogModal?.addEventListener('click', e => { if (e.target === changelogModal) dismissChangelog(); });
+
+    if (!seenWelcome) {
+        showWelcome();
+    } else if (lastSeenVersion !== APP_VERSION) {
+        showChangelog();
+    }
+
+    // ── Tooltip / Tips system ───────────────────────────────────────
+    let tipsVisible = localStorage.getItem('coeus-tips-visible') === 'true';
+    const tipPopover = document.getElementById('tipPopover');
+    let activeTipBtn = null;
+
+    function renderTipButtons() {
+        document.querySelectorAll('.coeus-tip-btn').forEach(b => b.remove());
+        if (!tipsVisible) return;
+        document.querySelectorAll('[data-tip]').forEach(el => {
+            const tip = el.getAttribute('data-tip');
+            if (!tip) return;
+            const btn = document.createElement('button');
+            btn.className = 'coeus-tip-btn';
+            btn.setAttribute('aria-label', 'Help tip');
+            btn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--hover);color:var(--text-muted);font-size:10px;cursor:pointer;margin-left:6px;vertical-align:middle;flex-shrink:0;';
+            btn.textContent = '?';
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (activeTipBtn === btn && !tipPopover.classList.contains('hidden')) {
+                    tipPopover.classList.add('hidden');
+                    activeTipBtn = null;
+                    return;
+                }
+                activeTipBtn = btn;
+                tipPopover.textContent = tip;
+                tipPopover.classList.remove('hidden');
+                const rect = btn.getBoundingClientRect();
+                const pw = 280;
+                let left = rect.left + window.scrollX;
+                if (left + pw > window.innerWidth - 12) left = window.innerWidth - pw - 12;
+                tipPopover.style.left = `${left}px`;
+                tipPopover.style.top  = `${rect.bottom + window.scrollY + 6}px`;
+            });
+            if (el.nextSibling) {
+                el.parentNode.insertBefore(btn, el.nextSibling);
+            } else {
+                el.parentNode.appendChild(btn);
+            }
+        });
+    }
+
+    function updateTipsToggle() {
+        const btn = document.getElementById('showTipsToggle');
+        if (!btn) return;
+        btn.textContent = tipsVisible ? '❓ Hide Tips' : '❓ Show Tips';
+        btn.style.background = tipsVisible ? 'var(--hover)' : '';
+    }
+
+    document.getElementById('showTipsToggle')?.addEventListener('click', () => {
+        tipsVisible = !tipsVisible;
+        localStorage.setItem('coeus-tips-visible', tipsVisible);
+        if (tipPopover) tipPopover.classList.add('hidden');
+        activeTipBtn = null;
+        renderTipButtons();
+        updateTipsToggle();
+        document.querySelectorAll('.tab-intro').forEach(el => {
+            el.classList.toggle('hidden', !tipsVisible);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (tipPopover && !tipPopover.contains(e.target) && !e.target.classList.contains('coeus-tip-btn')) {
+            tipPopover.classList.add('hidden');
+            activeTipBtn = null;
+        }
+    });
+    document.addEventListener('scroll', () => {
+        if (tipPopover) tipPopover.classList.add('hidden');
+        activeTipBtn = null;
+    }, true);
+
+    renderTipButtons();
+    updateTipsToggle();
+
+    // ── About modal ─────────────────────────────────────────────────────────────
     const aboutModal = document.getElementById('aboutModal');
     document.getElementById('openAboutModal')?.addEventListener('click', () => {
         aboutModal.classList.remove('hidden');
@@ -961,11 +1121,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const balanceBtn = document.getElementById('balancePickBtn');
         if (balanceBtn) balanceBtn.addEventListener('click', balancedPickAcrossCategories);
 
-        // Live ratio total validator
-        ['diffRatioUnset','diffRatioEasy','diffRatioMedium','diffRatioHard'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', updateDiffRatioTotal);
-        });
+        // Difficulty preset wiring
+        const presetEl = document.getElementById('diffRatioPreset');
+        if (presetEl) {
+            presetEl.addEventListener('change', applyDiffRatioPreset);
+            applyDiffRatioPreset(); // init labels
+        }
     }
 
     // ── Initialize all drop zones ──────────────────────────────
@@ -3880,13 +4041,30 @@ function selectAllAvailableQuestions() {
 
 // ── Difficulty ratio helpers ───────────────────────────────────────────────────
 
-function updateDiffRatioTotal() {
-    const total = getDiffRatioTotal();
-    const el = document.getElementById('diffRatioTotal');
-    if (!el) return;
-    el.textContent = `Total: ${total}%`;
-    el.style.color = total === 100 ? 'var(--text)' : '#ef4444';
+const DIFF_PRESETS = {
+    ignore: { unset: 100, easy: 0,  medium: 0,  hard: 0  },
+    even:   { unset: 0,   easy: 34, medium: 33, hard: 33 },
+    easy:   { unset: 0,   easy: 50, medium: 30, hard: 20 },
+    medium: { unset: 0,   easy: 30, medium: 50, hard: 20 },
+    hard:   { unset: 0,   easy: 20, medium: 30, hard: 50 },
+};
+
+function applyDiffRatioPreset() {
+    const preset = document.getElementById('diffRatioPreset')?.value || 'ignore';
+    const p = DIFF_PRESETS[preset] || DIFF_PRESETS.ignore;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    set('diffRatioUnset',  p.unset);
+    set('diffRatioEasy',   p.easy);
+    set('diffRatioMedium', p.medium);
+    set('diffRatioHard',   p.hard);
+    const fmt = v => v > 0 ? `${v}%` : '—';
+    const label = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = fmt(val); };
+    label('diffLabelEasy',   p.easy);
+    label('diffLabelMedium', p.medium);
+    label('diffLabelHard',   p.hard);
 }
+
+function updateDiffRatioTotal() { /* no-op — kept for compatibility */ }
 
 function getDiffRatioTotal() {
     return ['diffRatioUnset','diffRatioEasy','diffRatioMedium','diffRatioHard']
