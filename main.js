@@ -19,7 +19,7 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.1.1';
+const APP_VERSION = '2.2.0';
 
 // ========================================
 // GLOBAL VARIABLES
@@ -767,6 +767,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const pasteInput = hasSubTabs ? document.getElementById(prefix + 'PasteInput') : null;
         const pasteSubject = hasSubTabs ? document.getElementById(prefix + 'PasteSubject') : null;
         const pasteCategory = hasSubTabs ? document.getElementById(prefix + 'PasteCategory') : null;
+        const pasteDifficulty = hasSubTabs ? document.getElementById(prefix + 'PasteDifficulty') : null;
         const convertBtn = document.getElementById(prefix + 'ConvertBtn');
         const clearBtn = document.getElementById(prefix + 'ClearBtn');
         const downloadBtn = document.getElementById(prefix + 'DownloadBtn');
@@ -853,8 +854,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (inputFormats.includes('text') && looksLikePlainText(text)) {
                     const subject = (pasteSubject?.value || '').trim();
                     const category = (pasteCategory?.value || '').trim();
+                    const difficulty = pasteDifficulty?.value || 'unset';
                     if (!category) { showToast('⚠️ Please enter a category.', 'warning'); return; }
                     questions = parsePlainTextToJson(text, subject, category);
+                    questions.forEach(q => { q.difficulty = difficulty; });
                 } else {
                     ({ questions } = autoParseQuestions(text, inputFormats.filter(f => f !== 'text')));
                 }
@@ -882,6 +885,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (pasteInput) pasteInput.value = '';
                 if (pasteSubject) pasteSubject.value = '';
                 if (pasteCategory) pasteCategory.value = '';
+                if (pasteDifficulty) pasteDifficulty.value = 'unset';
                 const dz = fileInput ? fileInput.closest('.drop-zone') : null;
                 if (dz) {
                     const p = dz.querySelector('p');
@@ -956,6 +960,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const balanceBtn = document.getElementById('balancePickBtn');
         if (balanceBtn) balanceBtn.addEventListener('click', balancedPickAcrossCategories);
+
+        // Live ratio total validator
+        ['diffRatioUnset','diffRatioEasy','diffRatioMedium','diffRatioHard'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateDiffRatioTotal);
+        });
     }
 
     // ── Initialize all drop zones ──────────────────────────────
@@ -1248,6 +1258,14 @@ function renderQuestionManagerList() {
             filtered = filtered.filter(q => q.type === 'true_false');
         } else if (questionManagerState.filterBy === 'matching') {
             filtered = filtered.filter(q => q.type === 'matching');
+        } else if (questionManagerState.filterBy === 'diff-unset') {
+            filtered = filtered.filter(q => !q.difficulty || q.difficulty === 'unset');
+        } else if (questionManagerState.filterBy === 'diff-easy') {
+            filtered = filtered.filter(q => q.difficulty === 'easy');
+        } else if (questionManagerState.filterBy === 'diff-medium') {
+            filtered = filtered.filter(q => q.difficulty === 'medium');
+        } else if (questionManagerState.filterBy === 'diff-hard') {
+            filtered = filtered.filter(q => q.difficulty === 'hard');
         } else {
             filtered = filtered.filter(q => q.category === questionManagerState.filterBy);
         }
@@ -1338,6 +1356,7 @@ function renderQuestionManagerList() {
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1 flex-wrap">
                                     <span class="text-xs px-2 py-0.5 rounded" style="background-color: ${typeColor}40; color: ${typeColor}; font-weight: 600;">${typeLabel}</span>
+                                    ${difficultyBadge(q.difficulty)}
                                 </div>
                                 <p class="text-xs" style="color: var(--text); line-height: 1.4; word-break: break-word;">${preview}</p>
                                 ${q.correct ? `<p class="text-xs mt-1" style="color: var(--text-muted);">✓ ${q.correct}</p>` : '<p class="text-xs mt-1 text-red-500">⚠️ No correct answer</p>'}
@@ -1540,6 +1559,14 @@ function selectAllVisibleQuestions() {
             filtered = filtered.filter(q => q.type === 'true_false');
         } else if (questionManagerState.filterBy === 'matching') {
             filtered = filtered.filter(q => q.type === 'matching');
+        } else if (questionManagerState.filterBy === 'diff-unset') {
+            filtered = filtered.filter(q => !q.difficulty || q.difficulty === 'unset');
+        } else if (questionManagerState.filterBy === 'diff-easy') {
+            filtered = filtered.filter(q => q.difficulty === 'easy');
+        } else if (questionManagerState.filterBy === 'diff-medium') {
+            filtered = filtered.filter(q => q.difficulty === 'medium');
+        } else if (questionManagerState.filterBy === 'diff-hard') {
+            filtered = filtered.filter(q => q.difficulty === 'hard');
         } else {
             filtered = filtered.filter(q => q.category === questionManagerState.filterBy);
         }
@@ -1720,6 +1747,10 @@ function updateChangeCategoryButtonState() {
     if (btn) {
         btn.disabled = questionManagerState.selectedQuestions.size === 0;
     }
+    const diffBtn = document.getElementById('qm-bulk-difficulty-btn');
+    if (diffBtn) {
+        diffBtn.disabled = questionManagerState.selectedQuestions.size === 0;
+    }
 }
 
 function deleteSelectedQuestions() {
@@ -1853,6 +1884,26 @@ function initializeQuestionManager() {
     const changeCatBtn = document.getElementById('qm-change-cat-btn');
     if (changeCatBtn) {
         changeCatBtn.addEventListener('click', changeSelectedQuestionsCategory);
+    }
+
+    // Bulk set difficulty button
+    const bulkDiffBtn = document.getElementById('qm-bulk-difficulty-btn');
+    if (bulkDiffBtn) {
+        bulkDiffBtn.addEventListener('click', () => {
+            const selected = questionManagerState.selectedQuestions;
+            if (selected.size === 0) return;
+            const difficulty = document.getElementById('qm-bulk-difficulty-select')?.value || 'unset';
+            let count = 0;
+            questionBank.forEach(q => {
+                if (selected.has(JSON.stringify(q))) {
+                    q.difficulty = difficulty;
+                    count++;
+                }
+            });
+            saveQBankToStorage();
+            renderQuestionManagerList();
+            showToast(`✅ Set difficulty to "${difficulty}" for ${count} question${count !== 1 ? 's' : ''}.`, 'success');
+        });
     }
 
     // Inner tabs for Question Manager
@@ -2216,6 +2267,19 @@ function renderSidebarQuestions() {
     }).join('');
 }
 
+// ── Helper: Difficulty badge HTML ──────────────────────────────────────────────
+function difficultyBadge(difficulty) {
+    const d = difficulty || 'unset';
+    const map = {
+        unset:  { label: 'Unset',  color: '#6b7280' },
+        easy:   { label: 'Easy',   color: '#22c55e' },
+        medium: { label: 'Medium', color: '#eab308' },
+        hard:   { label: 'Hard',   color: '#ef4444' },
+    };
+    const { label, color } = map[d] || map.unset;
+    return `<span class="text-xs px-2 py-0.5 rounded" style="background-color:${color}30;color:${color};font-weight:600;">${label}</span>`;
+}
+
 // ── Helper: Make category names safe for use as HTML IDs ──────────────────────
 function safeIdFromCategory(cat) {
     return String(cat).trim().toLowerCase().replace(/\W+/g, '_');
@@ -2478,6 +2542,7 @@ function clearQuestionManagerState() {
 function addQuestion() {
     const category = document.getElementById('category').value;
     const type = document.getElementById('type').value;
+    const difficulty = document.getElementById('difficulty')?.value || 'unset';
     const questionText = document.getElementById('question').value;
 
     if (!category.trim()) {
@@ -2558,6 +2623,7 @@ function addQuestion() {
             const newQuestion = {
                 category,
                 type: 'matching',
+                difficulty,
                 question: premise,
                 correct: columnBItems[idx],
                 choices: [null, null, null, null]
@@ -2586,6 +2652,7 @@ function addQuestion() {
     const newQuestion = {
         category,
         type,
+        difficulty,
         question: questionText,
         choices: type === 'multiple_choice' ? choices : null,
         correct: correct
@@ -2880,6 +2947,12 @@ function generateTest() {
 
     const randomizeCheckbox = document.getElementById('randomize');
     const randomize = randomizeCheckbox.checked;
+    const ratio = getDiffRatio();
+    const ratioActive = isDiffRatioActive(ratio);
+    if (ratioActive && getDiffRatioTotal() !== 100) {
+        showToast('⚠️ Difficulty ratio must sum to 100% before generating.', 'warning');
+        return;
+    }
     const categories = [...new Set(testBank.map(q => q.category))];
     let selectedQuestions = [];
     let unusedQuestions = [];
@@ -2953,18 +3026,21 @@ function generateTest() {
             console.warn(`Category "${cat}": Requested ${mtCount} Matching, but only ${mtQuestions.length} available after exclusions`);
         }
 
-        // Select questions
+        // Select questions with difficulty awareness
         let selectedMcQuestions, selectedTfQuestions, selectedMtQuestions;
-        
-        if (randomize) {
-            selectedMcQuestions = shuffleArray([...mcQuestions]).slice(0, Math.min(mcCount, mcQuestions.length));
-            selectedTfQuestions = shuffleArray([...tfQuestions]).slice(0, Math.min(tfCount, tfQuestions.length));
-            selectedMtQuestions = shuffleArray([...mtQuestions]).slice(0, Math.min(mtCount, mtQuestions.length));
-        } else {
-            selectedMcQuestions = mcQuestions.slice(0, Math.min(mcCount, mcQuestions.length));
-            selectedTfQuestions = tfQuestions.slice(0, Math.min(tfCount, tfQuestions.length));
-            selectedMtQuestions = mtQuestions.slice(0, Math.min(mtCount, mtQuestions.length));
-        }
+        let mcDiffStats = null, tfDiffStats = null, mtDiffStats = null;
+
+        const mcSel = selectWithDifficulty(mcQuestions, mcCount, ratio, randomize);
+        selectedMcQuestions = mcSel.selected;
+        mcDiffStats = mcSel.diffStats;
+
+        const tfSel = selectWithDifficulty(tfQuestions, tfCount, ratio, randomize);
+        selectedTfQuestions = tfSel.selected;
+        tfDiffStats = tfSel.diffStats;
+
+        const mtSel = selectWithDifficulty(mtQuestions, mtCount, ratio, randomize);
+        selectedMtQuestions = mtSel.selected;
+        mtDiffStats = mtSel.diffStats;
 
         // Track what was actually generated
         generationStats[cat].mcGenerated = selectedMcQuestions.length;
@@ -2973,6 +3049,9 @@ function generateTest() {
         generationStats[cat].mcShortfall = mcCount - selectedMcQuestions.length;
         generationStats[cat].tfShortfall = tfCount - selectedTfQuestions.length;
         generationStats[cat].mtShortfall = mtCount - selectedMtQuestions.length;
+        generationStats[cat].mcDiffStats = mcDiffStats;
+        generationStats[cat].tfDiffStats = tfDiffStats;
+        generationStats[cat].mtDiffStats = mtDiffStats;
 
         // Track selected
         selectedQuestions.push(...selectedMcQuestions, ...selectedTfQuestions, ...selectedMtQuestions);
@@ -3657,6 +3736,83 @@ function displayGenerationReport() {
     }
 
     reportDiv.innerHTML = reportHtml;
+
+    // Difficulty Breakdown section
+    const ratio = getDiffRatio();
+    if (isDiffRatioActive(ratio)) {
+        const tiers = ['unset','easy','medium','hard'];
+        const tierLabel = { unset:'⚪ Unset', easy:'🟢 Easy', medium:'🟡 Medium', hard:'🔴 Hard' };
+
+        let hasDiffShortfall = false;
+        let diffHtml = `
+            <div class="mt-4">
+                <h3 class="text-lg font-semibold mb-2">Difficulty Breakdown</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-300 text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 border text-left">Category</th>
+                                <th class="px-3 py-2 border text-center">Type</th>
+                                <th class="px-3 py-2 border text-center">Difficulty</th>
+                                <th class="px-3 py-2 border text-center">Requested</th>
+                                <th class="px-3 py-2 border text-center">From Tier</th>
+                                <th class="px-3 py-2 border text-center">From Unset</th>
+                                <th class="px-3 py-2 border text-center">Shortfall</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        Object.keys(generationStats).forEach(cat => {
+            const stat = generationStats[cat];
+            const typeMap = [
+                { key: 'mc', label: 'MCQ',      stats: stat.mcDiffStats },
+                { key: 'tf', label: 'T/F',      stats: stat.tfDiffStats },
+                { key: 'mt', label: 'Matching', stats: stat.mtDiffStats },
+            ].filter(t => t.stats !== null && t.stats !== undefined);
+
+            if (typeMap.length === 0) return;
+
+            let firstRow = true;
+            const totalRows = typeMap.reduce((s, t) => s + Object.keys(t.stats).length, 0);
+
+            typeMap.forEach(({ label, stats }) => {
+                let firstType = true;
+                const typeRows = Object.keys(stats).length;
+                tiers.forEach(tier => {
+                    if (!stats[tier]) return;
+                    const s = stats[tier];
+                    if (s.requested === 0) return;
+                    const sfClass = s.shortfall > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
+                    if (s.shortfall > 0) hasDiffShortfall = true;
+                    diffHtml += `<tr class="hover:bg-gray-50">
+                        ${firstRow ? `<td class="px-4 py-2 border font-medium" rowspan="${totalRows}">${cat}</td>` : ''}
+                        ${firstType ? `<td class="px-3 py-2 border text-center" rowspan="${typeRows}">${label}</td>` : ''}
+                        <td class="px-3 py-2 border text-center">${tierLabel[tier]}</td>
+                        <td class="px-3 py-2 border text-center">${s.requested}</td>
+                        <td class="px-3 py-2 border text-center">${s.fromTier}</td>
+                        <td class="px-3 py-2 border text-center">${s.fromUnset > 0 ? s.fromUnset : '—'}</td>
+                        <td class="px-3 py-2 border text-center ${sfClass}">${s.shortfall > 0 ? s.shortfall : '—'}</td>
+                    </tr>`;
+                    firstRow = false;
+                    firstType = false;
+                });
+            });
+        });
+
+        diffHtml += `</tbody></table></div>`;
+
+        if (hasDiffShortfall) {
+            diffHtml += `
+                <div class="mt-3 p-3 bg-red-50 border border-red-300 rounded">
+                    <h4 class="font-semibold text-red-800 mb-1">⚠️ Difficulty Shortfall</h4>
+                    <p class="text-sm text-red-700">Some difficulty tiers ran short. Unset questions were used where available. Remaining shortfalls could not be filled — consider adjusting the ratio or adding more questions of the needed difficulty.</p>
+                </div>`;
+        }
+
+        diffHtml += `</div>`;
+        reportDiv.innerHTML += diffHtml;
+    }
 }
 
 // Clear all question count inputs
@@ -3722,9 +3878,109 @@ function selectAllAvailableQuestions() {
     showToast('✅ Selected all available questions', 'success');
 }
 
+// ── Difficulty ratio helpers ───────────────────────────────────────────────────
+
+function updateDiffRatioTotal() {
+    const total = getDiffRatioTotal();
+    const el = document.getElementById('diffRatioTotal');
+    if (!el) return;
+    el.textContent = `Total: ${total}%`;
+    el.style.color = total === 100 ? 'var(--text)' : '#ef4444';
+}
+
+function getDiffRatioTotal() {
+    return ['diffRatioUnset','diffRatioEasy','diffRatioMedium','diffRatioHard']
+        .reduce((sum, id) => sum + (parseInt(document.getElementById(id)?.value, 10) || 0), 0);
+}
+
+function getDiffRatio() {
+    return {
+        unset:  parseInt(document.getElementById('diffRatioUnset')?.value,  10) || 0,
+        easy:   parseInt(document.getElementById('diffRatioEasy')?.value,   10) || 0,
+        medium: parseInt(document.getElementById('diffRatioMedium')?.value, 10) || 0,
+        hard:   parseInt(document.getElementById('diffRatioHard')?.value,   10) || 0,
+    };
+}
+
+function isDiffRatioActive(ratio) {
+    // Ratio is "active" (i.e. not the default 100% unset) if any non-unset tier > 0
+    return ratio.easy > 0 || ratio.medium > 0 || ratio.hard > 0;
+}
+
+// Split `total` into per-difficulty counts according to ratio, using integer floor + remainder distribution.
+// Priority order for remainders: unset → easy → medium → hard
+function splitByRatio(total, ratio) {
+    const tiers = ['unset','easy','medium','hard'];
+    const pct = { unset: ratio.unset, easy: ratio.easy, medium: ratio.medium, hard: ratio.hard };
+    const sum = tiers.reduce((s, t) => s + pct[t], 0);
+    if (sum === 0) return { unset: total, easy: 0, medium: 0, hard: 0 };
+
+    const floored = {};
+    let allocated = 0;
+    tiers.forEach(t => {
+        floored[t] = Math.floor(total * pct[t] / sum);
+        allocated += floored[t];
+    });
+    let remainder = total - allocated;
+    // Distribute remainder by priority
+    for (const t of tiers) {
+        if (remainder <= 0) break;
+        if (pct[t] > 0) { floored[t]++; remainder--; }
+    }
+    return floored;
+}
+
+// Select `count` questions of a specific type from a pool, respecting difficulty ratio.
+// Falls back to Unset questions when a difficulty tier runs short.
+// Returns { selected, diffStats: { requested, fromTier, fromUnset, shortfall } per diff }
+function selectWithDifficulty(pool, count, ratio, randomize) {
+    if (count <= 0) return { selected: [], diffStats: {} };
+
+    const active = isDiffRatioActive(ratio);
+    if (!active) {
+        // No difficulty filtering — just pick count from pool
+        const shuffled = randomize ? shuffleArray([...pool]) : [...pool];
+        return { selected: shuffled.slice(0, Math.min(count, pool.length)), diffStats: null };
+    }
+
+    const split = splitByRatio(count, ratio);
+    const tiers = ['unset','easy','medium','hard'];
+    const byTier = {};
+    tiers.forEach(t => {
+        byTier[t] = pool.filter(q => {
+            const d = q.difficulty || 'unset';
+            return d === t;
+        });
+        if (randomize) byTier[t] = shuffleArray(byTier[t]);
+    });
+
+    const selected = [];
+    const diffStats = {};
+    const unsetPool = [...byTier.unset];
+
+    tiers.forEach(t => {
+        const needed = split[t] || 0;
+        if (needed === 0) return;
+        const available = byTier[t];
+        const fromTier = available.slice(0, Math.min(needed, available.length));
+        let shortfall = needed - fromTier.length;
+        let fromUnset = [];
+
+        // Pull from Unset pool to cover shortfall (skip unset tier itself)
+        if (shortfall > 0 && t !== 'unset') {
+            fromUnset = unsetPool.splice(0, Math.min(shortfall, unsetPool.length));
+            shortfall -= fromUnset.length;
+        }
+
+        diffStats[t] = { requested: needed, fromTier: fromTier.length, fromUnset: fromUnset.length, shortfall };
+        selected.push(...fromTier, ...fromUnset);
+    });
+
+    return { selected, diffStats };
+}
+
 // Evenly distribute `target` items across categories, respecting each category's cap.
 function distributeEvenly(target, caps) {
-    // caps: [{ key, cap }]
     const alloc = {};
     caps.forEach(c => { alloc[c.key] = 0; });
     let remaining = target;
@@ -3751,6 +4007,13 @@ function distributeEvenly(target, caps) {
 function balancedPickAcrossCategories() {
     if (!testBank || testBank.length === 0) {
         showToast('⚠️ No questions loaded.', 'warning');
+        return;
+    }
+
+    const ratio = getDiffRatio();
+    const ratioTotal = getDiffRatioTotal();
+    if (isDiffRatioActive(ratio) && ratioTotal !== 100) {
+        showToast('⚠️ Difficulty ratio must sum to 100% before using Balanced Pick.', 'warning');
         return;
     }
 
@@ -3789,27 +4052,14 @@ function balancedPickAcrossCategories() {
         const tfInput = document.getElementById(`cat_${safeCat}_tf`);
         const mtInput = document.getElementById(`cat_${safeCat}_mt`);
 
-        if (mcInput) {
-            mcInput.value = mcResult.alloc[cat] || 0;
-            mcInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        if (tfInput) {
-            tfInput.value = tfResult.alloc[cat] || 0;
-            tfInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        if (mtInput) {
-            mtInput.value = mtResult.alloc[cat] || 0;
-            mtInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+        if (mcInput) { mcInput.value = mcResult.alloc[cat] || 0; mcInput.dispatchEvent(new Event('input', { bubbles: true })); }
+        if (tfInput) { tfInput.value = tfResult.alloc[cat] || 0; tfInput.dispatchEvent(new Event('input', { bubbles: true })); }
+        if (mtInput) { mtInput.value = mtResult.alloc[cat] || 0; mtInput.dispatchEvent(new Event('input', { bubbles: true })); }
     });
 
     const totalShortfall = mcResult.shortfall + tfResult.shortfall + mtResult.shortfall;
     if (totalShortfall > 0) {
-        const parts = [];
-        if (mcResult.shortfall > 0) parts.push(`MCQ short by ${mcResult.shortfall}`);
-        if (tfResult.shortfall > 0) parts.push(`T/F short by ${tfResult.shortfall}`);
-        if (mtResult.shortfall > 0) parts.push(`Matching short by ${mtResult.shortfall}`);
-        showToast(`⚠️ Balanced pick applied, but ${parts.join(', ')} due to limited availability.`, 'warning');
+        showToast('⚠️ Balanced pick applied with shortfalls. See report below.', 'warning');
     } else {
         showToast(`✅ Balanced pick applied across ${categories.length} categories.`, 'success');
     }
@@ -4291,19 +4541,28 @@ function convertCsvToJson(text) {
     }
 
     const headers = rows[0];
-    if (headers.length !== 8 || headers[0] !== "Question") {
-        throw new Error("Invalid format. Ensure the first row contains: Question, Category, Type, Correct, Option 1, Option 2, Option 3, Option 4");
+    const hasDifficulty = headers.length === 9 && headers[3]?.toLowerCase() === 'difficulty';
+    const expectedCols = hasDifficulty ? 9 : 8;
+
+    if (headers.length !== expectedCols || headers[0] !== "Question") {
+        throw new Error("Invalid format. Ensure the first row contains: Question, Category, Type, [Difficulty,] Correct, Option 1, Option 2, Option 3, Option 4");
     }
 
     const questions = [];
 
     for (let i = 1; i < rows.length; i++) {
         const values = rows[i];
-        if (values.length !== 8) {
-            throw new Error(`Invalid row format at line ${i + 1}. Each row must have 8 columns.`);
+        if (values.length !== expectedCols) {
+            throw new Error(`Invalid row format at line ${i + 1}. Each row must have ${expectedCols} columns.`);
         }
 
-        const [question, category, type, correct, option1, option2, option3, option4] = values;
+        let question, category, type, difficulty, correct, option1, option2, option3, option4;
+        if (hasDifficulty) {
+            [question, category, type, difficulty, correct, option1, option2, option3, option4] = values;
+        } else {
+            [question, category, type, correct, option1, option2, option3, option4] = values;
+            difficulty = 'unset';
+        }
 
         // Build choices array, converting "null" strings to null
         let choices = [option1, option2, option3, option4].map(opt => {
@@ -4316,11 +4575,12 @@ function convertCsvToJson(text) {
         }
 
         questions.push({
-            question: question,
-            category: category,
-            type: type,
-            correct: correct,
-            choices: choices
+            question,
+            category,
+            type,
+            difficulty: difficulty || 'unset',
+            correct,
+            choices
         });
     }
 
@@ -4328,7 +4588,7 @@ function convertCsvToJson(text) {
 }
 
 function convertJsonToCsv(jsonData) {
-    let csv = 'Question,Category,Type,Correct,Option 1,Option 2,Option 3,Option 4\n';
+    let csv = 'Question,Category,Type,Difficulty,Correct,Option 1,Option 2,Option 3,Option 4\n';
     jsonData.forEach(item => {
         let choices = item.choices || [];
         if (item.type === 'true_false' || item.type === 'matching') {
@@ -4336,7 +4596,8 @@ function convertJsonToCsv(jsonData) {
         } else {
             while (choices.length < 4) choices.push('');
         }
-        const row = [item.question || '', item.category || '', item.type || '', item.correct || '', choices[0], choices[1], choices[2], choices[3]];
+        const difficulty = item.difficulty || 'unset';
+        const row = [item.question || '', item.category || '', item.type || '', difficulty, item.correct || '', choices[0], choices[1], choices[2], choices[3]];
         csv += row.map(csvEscape).join(',') + '\n';
     });
     return csv;
