@@ -19,10 +19,33 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.4.2';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.4.2': [
+        'Added: Output preview toggles (JSON/CSV/GIFT/TXT) in Convert a File tab',
+        'Added: Placeholders for Subject, Category, Question, and Choices in Write Questions → Add Questions',
+        'Added: Matching placeholders in Paste Text tab (Subject, Category)',
+        'Fixed: Edit Bank section now visible in Manage a Bank (active class restored)',
+        'Fixed: Write Questions CSV preview can now be switched away from without breaking other previews',
+        'Fixed: Design a Test tooltips now use fixed positioning and follow the cursor — no longer clipped',
+        'Changed: Quick Start Guide rewritten to lead with Write Questions tab',
+        'Changed: Default tab is now Write Questions; last-visited tab is remembered across sessions',
+    ],
+    '2.4.1': [
+        'Added: Subject field in Write Questions → Add Questions form',
+        'Added: Undo support for Delete All Questions (5-second window)',
+        'Added: Confirmation popup before deleting all exam bank questions',
+        'Added: CSV preview rendered as table in Write Questions output panel',
+        'Changed: Add Question and Delete All Questions buttons placed side by side',
+        'Changed: Renamed "Clear Saved Questions" to "Delete All Questions"',
+        'Changed: Write Questions form inputs use shadows instead of borders',
+        'Changed: Manage a Bank — Add Questions inner tab removed; Edit Bank is now the only view',
+        'Changed: Set Difficulty dropdown width matches Rename Selected input',
+        'Changed: "Select Questions Across Categories" button shortened to "Auto-Select by Type"',
+        'Changed: Convert a File — replaced Convert-to dropdown with four direct Export buttons',
+    ],
     '2.4.0': [
         'Added: Write Questions tab — own exam bank (exambank), Add Questions and Paste Text sub-tabs, output preview toggles (JSON/TXT/GIFT/CSV), export buttons, Clear Saved Questions',
         'Added: Convert a File tab — single unified converter replacing four separate Convert tabs; upload-only; format selector',
@@ -351,6 +374,23 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ── Setup tab switching ────────────────────────────────────
+    // ── Tooltip position via mousemove ────────────────────────
+    document.querySelectorAll('.tooltip-wrap').forEach(wrap => {
+        wrap.addEventListener('mousemove', e => {
+            const box = wrap.querySelector('.tooltip-box');
+            if (!box) return;
+            const vw = window.innerWidth, vh = window.innerHeight;
+            let x = e.clientX + 14, y = e.clientY - 10;
+            box.style.left = ''; box.style.right = '';
+            box.style.top  = ''; box.style.bottom = '';
+            // Keep within viewport
+            if (x + 290 > vw) x = e.clientX - 294;
+            if (y + box.offsetHeight > vh) y = e.clientY - box.offsetHeight - 4;
+            box.style.left = x + 'px';
+            box.style.top  = Math.max(4, y) + 'px';
+        });
+    });
+
     function setupTabSwitching() {
         Object.entries(tabConfig).forEach(([buttonId, contentId]) => {
             const btn = document.getElementById(buttonId);
@@ -374,6 +414,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Show selected tab and activate button
                 content.classList.add('active-tab');
                 btn.classList.add('active');
+                // Remember last tab
+                localStorage.setItem('coeus-last-tab', buttonId);
             });
         });
     }
@@ -1091,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', function () {
             showToast('✅ Conversion complete', 'success');
         }
 
-        if (convertBtn) convertBtn.addEventListener('click', runConvert);
+        // Convert is now triggered by each export button
 
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
@@ -1144,10 +1186,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Convert a File tab ─────────────────────────────────────
     function setupConvertAFile() {
         const fileInput   = document.getElementById('convertFileInput');
-        const targetSel   = document.getElementById('convertFileTarget');
         const convertBtn  = document.getElementById('convertFileConvertBtn');
         const clearBtn    = document.getElementById('convertFileClearBtn');
-        const exportBtn   = document.getElementById('convertFileExportBtn');
         const filenameIn  = document.getElementById('convertFileFilename');
         const output      = document.getElementById('convertFileOutput');
         const textWrap    = document.getElementById('convertFileTextOutputWrap');
@@ -1155,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const csvHead     = document.getElementById('convertFileCsvTableHead');
         const csvBody     = document.getElementById('convertFileCsvTableBody');
         const warnEl      = document.getElementById('convertFileMissingCorrectWarning');
-        let lastResult = '', lastExt = '.json';
+        let lastResult = '', lastExt = '.json', lastFmt = 'json', convertFilePendingDownload = null;
 
         setupJumpButtonsFor('convertFileJumpToTop', 'convertFileJumpToBottom', 'convertFileTextOutputWrap');
 
@@ -1183,12 +1223,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        function updateExportBtn(fmt) {
-            const labels = { json: 'Export as JSON', csv: 'Export as CSV', gift: 'Export as GIFT', text: 'Export as TXT' };
-            if (exportBtn) exportBtn.textContent = labels[fmt] || 'Export';
-        }
-
-        if (targetSel) targetSel.addEventListener('change', () => updateExportBtn(targetSel.value));
+        // 4 separate export buttons — no single export btn
 
         function renderOutput(fmt, resultStr) {
             if (fmt === 'csv') {
@@ -1221,23 +1256,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        function runConvert() {
+        function runConvert(fmt) {
             if (!fileInput || !fileInput.files || !fileInput.files.length) {
                 showToast('⚠️ Please select a file.', 'warning'); return;
             }
             const file = fileInput.files[0];
-            const fmt = targetSel ? targetSel.value : 'json';
             const exts = { json: '.json', csv: '.csv', gift: '_gift.txt', text: '.txt' };
             lastExt = exts[fmt] || '.json';
             const baseName = file.name.replace(/\.[^/.]+$/, '');
             if (filenameIn) filenameIn.value = baseName;
-            updateExportBtn(fmt);
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const format = formatFromFileName(file.name);
                     const questions = parseQuestionsByFormat(e.target.result, format);
+                    cfStoredQuestions = questions;
                     renderMissingCorrectWarning('convertFileMissingCorrectWarning', questions);
                     let resultStr;
                     if (fmt === 'json')  resultStr = JSON.stringify(questions, null, 2);
@@ -1245,17 +1279,58 @@ document.addEventListener('DOMContentLoaded', function () {
                     else if (fmt === 'gift') resultStr = questionsToGift(questions);
                     else                 resultStr = questionsToPlainText(questions);
                     lastResult = resultStr;
+                    lastFmt = fmt;
                     renderOutput(fmt, resultStr);
-                    showToast('✅ Conversion complete', 'success');
+                    showToast('✅ Converted to ' + fmt.toUpperCase(), 'success');
+                    if (convertFilePendingDownload) { convertFilePendingDownload = null; downloadConvertResult(); }
                 } catch (err) {
                     if (output) output.textContent = 'Error: ' + err.message;
                     showToast('❌ ' + err.message, 'error');
+                    convertFilePendingDownload = null;
                 }
             };
             reader.readAsText(file);
         }
 
-        if (convertBtn) convertBtn.addEventListener('click', runConvert);
+        // Convert is now triggered by each export button
+
+        // Preview format toggles for Convert a File
+        let cfPreviewFormat = 'json';
+        const cfPreviewBtns = {
+            json: document.getElementById('cfPreviewJson'),
+            csv:  document.getElementById('cfPreviewCsv'),
+            gift: document.getElementById('cfPreviewGift'),
+            txt:  document.getElementById('cfPreviewTxt'),
+        };
+        function setCfPreviewActive(fmt) {
+            cfPreviewFormat = fmt;
+            Object.entries(cfPreviewBtns).forEach(([f, b]) => {
+                if (!b) return;
+                b.classList.toggle('bg-blue-500', f === fmt);
+                b.classList.toggle('text-white',  f === fmt);
+                b.classList.toggle('bg-gray-200', f !== fmt);
+                b.classList.toggle('text-gray-700', f !== fmt);
+            });
+        }
+        Object.entries(cfPreviewBtns).forEach(([fmt, btn]) => {
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                setCfPreviewActive(fmt);
+                if (!lastResult) return;
+                // Re-render stored questions in new format
+                if (cfStoredQuestions) {
+                    let str;
+                    if (fmt === 'json')  str = JSON.stringify(cfStoredQuestions, null, 2);
+                    else if (fmt === 'csv')  str = convertJsonToCsv(cfStoredQuestions);
+                    else if (fmt === 'gift') str = questionsToGift(cfStoredQuestions);
+                    else                 str = questionsToPlainText(cfStoredQuestions);
+                    lastResult = str;
+                    lastExt = { json: '.json', csv: '.csv', gift: '_gift.txt', txt: '.txt' }[fmt] || '.txt';
+                    renderOutput(fmt, str);
+                }
+            });
+        });
+        let cfStoredQuestions = null;
 
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
@@ -1270,22 +1345,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (textWrap) textWrap.classList.remove('hidden');
                 if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
                 lastResult = '';
+                cfStoredQuestions = null;
                 showToast('🗑️ Cleared', 'success');
             });
         }
 
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                if (!lastResult) { showToast('⚠️ Please convert first.', 'warning'); return; }
-                const fname = (filenameIn?.value.trim() || 'converted') + lastExt;
-                const mime = lastExt === '.json' ? 'application/json' : 'text/plain';
-                const blob = new Blob([lastResult], { type: mime });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = fname; a.click();
-                URL.revokeObjectURL(url);
-                showToast('✅ File downloaded', 'success');
-            });
+        function doConvertAndExport(fmt) {
+            if (!fileInput || !fileInput.files || !fileInput.files.length) {
+                showToast('⚠️ Please select a file.', 'warning'); return;
+            }
+            setCfPreviewActive(fmt);
+            runConvert(fmt);
+            // Defer download until after reader.onload fires
+            convertFilePendingDownload = fmt;
         }
+        function downloadConvertResult() {
+            if (!lastResult) return;
+            const fname = (filenameIn?.value.trim() || 'converted') + lastExt;
+            const mime = lastExt === '.json' ? 'application/json' : 'text/plain';
+            const blob = new Blob([lastResult], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = fname; a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ File downloaded', 'success');
+        }
+        document.getElementById('convertFileExportJsonBtn')?.addEventListener('click', () => doConvertAndExport('json'));
+        document.getElementById('convertFileExportCsvBtn')?.addEventListener('click',  () => doConvertAndExport('csv'));
+        document.getElementById('convertFileExportGiftBtn')?.addEventListener('click', () => doConvertAndExport('gift'));
+        document.getElementById('convertFileExportTxtBtn')?.addEventListener('click',  () => doConvertAndExport('text'));
     }
 
     // ── Write Questions tab ────────────────────────────────────
@@ -1349,13 +1436,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (form) {
             form.addEventListener('submit', e => {
                 e.preventDefault();
-                const type = typeSelect ? typeSelect.value : 'multiple_choice';
-                const cat  = (document.getElementById('wqCategory')?.value || '').trim() || 'Uncategorized';
-                const diff = document.getElementById('wqDifficulty')?.value || 'unset';
-                const qText = (document.getElementById('wqQuestion')?.value || '').trim();
+                const type    = typeSelect ? typeSelect.value : 'multiple_choice';
+                const subject = (document.getElementById('wqSubject')?.value || '').trim();
+                const cat     = (document.getElementById('wqCategory')?.value || '').trim() || 'Uncategorized';
+                const diff    = document.getElementById('wqDifficulty')?.value || 'unset';
+                const qText   = (document.getElementById('wqQuestion')?.value || '').trim();
                 if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
 
-                let q = { category: cat, type, difficulty: diff, question: qText };
+                let q = { subject, category: cat, type, difficulty: diff, question: qText };
 
                 if (type === 'multiple_choice') {
                     const rows = document.querySelectorAll('#wqChoicesContainer .wq-choice-input:not(.hidden)');
@@ -1381,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     aInputs.forEach((a, i) => {
                         const b = bInputs[i];
                         if (a.value.trim() && b && b.value.trim()) {
-                            examBank.push({ category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
+                            examBank.push({ subject, category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
                         }
                     });
                     saveExamBankToStorage();
@@ -1419,16 +1507,44 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
+        function parseCsvToRows(csvStr) {
+            return csvStr.trim().split('\n').map(r => {
+                const res = []; let cur = '', inQ = false;
+                for (let i = 0; i < r.length; i++) {
+                    const c = r[i];
+                    if (c === '"') { inQ = !inQ; }
+                    else if (c === ',' && !inQ) { res.push(cur); cur = ''; }
+                    else { cur += c; }
+                }
+                res.push(cur); return res;
+            });
+        }
+        function renderCsvTable(csvStr) {
+            const rows = parseCsvToRows(csvStr);
+            if (rows.length < 2) return '<p class="text-xs text-gray-400 p-2">No data</p>';
+            const hdr = rows[0].map(h => `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 bg-gray-100 whitespace-nowrap text-xs">${h}</th>`).join('');
+            const bdy = rows.slice(1).map((row, ri) =>
+                '<tr class="' + (ri%2===0?'bg-white':'bg-gray-50') + '">' +
+                row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate text-xs">${cell || ''}</td>`).join('') + '</tr>'
+            ).join('');
+            return `<div class="overflow-auto max-h-96"><table class="min-w-full text-xs border-collapse"><thead><tr>${hdr}</tr></thead><tbody>${bdy}</tbody></table></div>`;
+        }
         function refreshWqPreview() {
-            const out = document.getElementById('wqOutput');
-            if (!out) return;
-            let str = '';
-            if (wqPreviewFormat === 'json')  str = JSON.stringify(examBank, null, 2);
-            else if (wqPreviewFormat === 'txt')  str = questionsToPlainText(examBank);
-            else if (wqPreviewFormat === 'gift') str = questionsToGift(examBank);
-            else if (wqPreviewFormat === 'csv')  str = convertJsonToCsv(examBank);
-            out.textContent = str;
-            if (window.Prism && wqPreviewFormat === 'json') Prism.highlightElement(out);
+            const container = document.getElementById('wqOutputContainer');
+            if (!container) return;
+            if (wqPreviewFormat === 'csv') {
+                container.innerHTML = renderCsvTable(convertJsonToCsv(examBank));
+            } else {
+                container.innerHTML = '<pre class="text-xs"><code id="wqOutput"></code></pre>';
+                const freshOut = document.getElementById('wqOutput');
+                if (!freshOut) return;
+                let str = '';
+                if (wqPreviewFormat === 'json')  str = JSON.stringify(examBank, null, 2);
+                else if (wqPreviewFormat === 'txt')  str = questionsToPlainText(examBank);
+                else if (wqPreviewFormat === 'gift') str = questionsToGift(examBank);
+                freshOut.textContent = str;
+                if (window.Prism && wqPreviewFormat === 'json') Prism.highlightElement(freshOut);
+            }
         }
 
         setupJumpButtonsFor('wqJumpToTop', 'wqJumpToBottom', 'wqOutputContainer');
@@ -1477,15 +1593,30 @@ document.addEventListener('DOMContentLoaded', function () {
             if (el) el.value = '';
         });
 
-        // Clear Saved Questions
+        // Delete All Questions — confirm + undo
+        let wqDeletedBackup = null, wqUndoTimeout = null;
         const clearSavedBtn = document.getElementById('wqClearSavedBtn');
         if (clearSavedBtn) {
             clearSavedBtn.addEventListener('click', () => {
-                if (!examBank.length) { showToast('⚠️ Nothing to clear.', 'warning'); return; }
+                if (!examBank.length) { showToast('⚠️ Nothing to delete.', 'warning'); return; }
+                const confirmed = window.confirm(`Delete all ${examBank.length} question(s) from the exam bank? This can be undone.`);
+                if (!confirmed) return;
+                wqDeletedBackup = [...examBank];
                 examBank = [];
                 saveExamBankToStorage();
                 refreshWqPreview();
-                showToast('🗑️ Exam bank cleared.', 'success');
+                if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
+                const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
+                showToast(undoHtml, 'warning', 5000);
+                window.__wqUndo = () => {
+                    if (!wqDeletedBackup) return;
+                    examBank = [...wqDeletedBackup];
+                    wqDeletedBackup = null;
+                    saveExamBankToStorage();
+                    refreshWqPreview();
+                    showToast('↩️ Restored.', 'success');
+                };
+                wqUndoTimeout = setTimeout(() => { wqDeletedBackup = null; window.__wqUndo = null; }, 5000);
             });
         }
 
@@ -1763,9 +1894,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Default: show Test Generator tab
-    const testGenTab = document.getElementById('testGeneratorTab');
-    if (testGenTab) testGenTab.click();
+    // Default: restore last tab or fall back to Write Questions
+    const lastTab = localStorage.getItem('coeus-last-tab') || 'writeQuestionsTab';
+    const defaultTabBtn = document.getElementById(lastTab) || document.getElementById('writeQuestionsTab');
+    if (defaultTabBtn) defaultTabBtn.click();
 
     renderSidebarQuestions();
     
@@ -2449,58 +2581,18 @@ function initializeQuestionManager() {
         });
     }
 
-    // Inner tabs for Question Manager
+    // Inner tabs for Question Manager (bank-editor is now the only tab)
     document.querySelectorAll('.qm-inner-tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const tabName = e.target.dataset.qmTab;
-            
-            // Hide all inner content
-            document.querySelectorAll('.qm-inner-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(`qm-${tabName}`).classList.add('active');
-            
-            // Update button styling
-            document.querySelectorAll('.qm-inner-tab-btn').forEach(b => {
-                b.classList.remove('active');
-            });
+            document.querySelectorAll('.qm-inner-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`qm-${tabName}`)?.classList.add('active');
+            document.querySelectorAll('.qm-inner-tab-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            
-            // Re-render question list if switching to bank-editor tab
-            if (tabName === 'bank-editor') {
-                renderQuestionManagerList();
-            }
+            if (tabName === 'bank-editor') renderQuestionManagerList();
         });
     });
-	
-    // Inner tabs for Question Manager
-    document.querySelectorAll('.qm-inner-tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tabName = e.target.dataset.qmTab;
-            
-            // Hide all inner content
-            document.querySelectorAll('.qm-inner-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(`qm-${tabName}`).classList.add('active');
-            
-            // Update button styling
-            document.querySelectorAll('.qm-inner-tab-btn').forEach(b => {
-                b.classList.remove('active');
-            });
-            e.target.classList.add('active');
-            
-            // Re-render question list if switching to bank-editor tab
-            if (tabName === 'bank-editor') {
-                renderQuestionManagerList();
-            }
-        });
-    });
-	
+
     renderQuestionManagerList();
 }
 

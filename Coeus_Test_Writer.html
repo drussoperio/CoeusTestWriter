@@ -299,13 +299,13 @@
           flex-shrink: 0; line-height: 1;
         }
         .tooltip-box {
-          display: none; position: absolute; z-index: 100; max-width: 280px;
+          display: none; position: fixed; z-index: 9999; max-width: 280px;
           font-size: 0.72rem; background: var(--surface, #fff);
           border: 1px solid var(--border, #e5e7eb);
           padding: 0.5rem 0.75rem; border-radius: 0.375rem;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          top: 50%; left: calc(100% + 0.5rem); transform: translateY(-50%);
           white-space: normal; line-height: 1.4;
+          pointer-events: none;
         }
         .tooltip-wrap:hover .tooltip-box { display: block; }
         .hidden { display: none !important; }
@@ -479,95 +479,9 @@
                 </section>
 
                 <!-- Edit Bank below -->
-                <div class="qm-inner-tabs">
-                    <button class="qm-inner-tab-btn active" data-qm-tab="add-questions">Add Questions</button>
-                    <button class="qm-inner-tab-btn" data-qm-tab="bank-editor">Edit Bank</button>
-                </div>
-
-                <!-- Inner Tab 1: Add Questions -->
-                <div id="qm-add-questions" class="qm-inner-content active">
-                    <section class="p-4 border border-gray-200 rounded surface">
-                        <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Add New Question</h2>
-                        <form id="questionForm" class="space-y-3">
-                            <div>
-                                <label for="category" class="block text-sm font-medium" style="color:var(--text);">Category</label>
-                                <input type="text" id="category" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
-                            </div>
-                            <div>
-                                <label for="type" class="block text-sm font-medium" style="color:var(--text);">Type</label>
-                                <select id="type" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
-                                    <option value="multiple_choice">Multiple Choice</option>
-                                    <option value="true_false">True/False</option>
-                                    <option value="matching">Matching Type</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="difficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
-                                <select id="difficulty" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
-                                    <option value="unset">Unset</option>
-                                    <option value="easy">Easy</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="hard">Hard</option>
-                                </select>
-                            </div>
-                            <div id="questionSection">
-                                <label for="question" class="block text-sm font-medium" style="color:var(--text);">Question</label>
-                                <textarea id="question" rows="3" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
-                            </div>
-                            <div id="choicesSection">
-                                <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
-                                <div id="choicesContainer" class="space-y-2 mt-1">
-                                    <div class="flex items-center gap-2 choice-input">
-                                        <input type="text" placeholder="Choice A" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
-                                    </div>
-                                    <div class="flex items-center gap-2 choice-input">
-                                        <input type="text" placeholder="Choice B" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
-                                    </div>
-                                    <div class="flex items-center gap-2 choice-input">
-                                        <input type="text" placeholder="Choice C" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
-                                    </div>
-                                    <div class="flex items-center gap-2 choice-input">
-                                        <input type="text" placeholder="Choice D" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
-                                    </div>
-                                    <div id="choiceERow" class="flex items-center gap-2 choice-input hidden">
-                                        <input type="text" placeholder="Choice E" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                        <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="correctChoice" class="mr-1">Correct</label>
-                                    </div>
-                                </div>
-                                <button type="button" id="toggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
-                            </div>
-                            <div id="trueFalseSection" class="hidden">
-                                <label class="block text-sm font-medium" style="color:var(--text);">Correct Answer</label>
-                                <div class="space-y-1 mt-1">
-                                    <label class="inline-flex items-center text-sm"><input type="radio" name="tfCorrect" value="True" class="mr-1">True</label><br>
-                                    <label class="inline-flex items-center text-sm"><input type="radio" name="tfCorrect" value="False" class="mr-1">False</label>
-                                </div>
-                            </div>
-                            <div id="matchingSection" class="hidden">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column A (Premises)</label>
-                                        <div id="matchingColumnA" class="space-y-2"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column B (Answers)</label>
-                                        <div id="matchingColumnB" class="space-y-2"></div>
-                                    </div>
-                                </div>
-                                <button type="button" id="addMatchingPair"
-                                    class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium">+ Add Premise & Answer</button>
-                            </div>
-                            <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question to Bank</button>
-                        </form>
-                    </section>
-                </div>
-
+                <!-- Question Bank Editor -->
                 <!-- Inner Tab 2: Question Bank Editor -->
-                <div id="qm-bank-editor" class="qm-inner-content">
+                <div id="qm-bank-editor" class="qm-inner-content active">
                     <section class="p-4 border border-gray-200 rounded surface">
                         <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Edit Bank</h2>
                         
@@ -632,7 +546,7 @@
                             <div class="mt-2">
                                 <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Set Difficulty</label>
                                 <div class="flex gap-1 items-center">
-                                    <select id="qm-bulk-difficulty-select" class="rounded border px-2 py-1 text-sm w-28">
+                                    <select id="qm-bulk-difficulty-select" class="flex-1 min-w-0 rounded border px-2 py-1 text-sm">
                                         <option value="unset">Unset</option>
                                         <option value="easy">Easy</option>
                                         <option value="medium">Medium</option>
@@ -670,7 +584,7 @@
                     </p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
                         <p>▸ Load your bank here separately from Question Manager — they are independent.</p>
-                        <p>▸ Set MCQ, T/F, and Matching counts per category, or use <strong>Select Questions Across Categories</strong> to distribute a target total evenly.</p>
+                        <p>▸ Set MCQ, T/F, and Matching counts per category, or use <strong>Auto-Select by Type</strong> to distribute a target total evenly.</p>
                         <p>▸ <strong>Difficulty Ratio</strong> lets you control the Easy/Medium/Hard mix. Unset questions fill in shortfalls automatically.</p>
                         <p>▸ <strong>Exclude Already-Used Questions</strong> prevents repeats across test versions — upload a previous test's JSON.</p>
                         <p>▸ The <strong>Generation Report</strong> tab shows a full breakdown including difficulty shortfalls.</p>
@@ -786,7 +700,7 @@
                                 <div>
                                     <div class="flex items-center gap-1 mb-2">
                                         <p class="text-xs font-semibold" style="color:var(--text);">Smart Selection</p>
-                                        <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Enter target totals per question type and click Select Questions Across Categories to automatically distribute counts across all categories.</span></span>
+                                        <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Enter target totals per question type and click Auto-Select by Type to automatically distribute counts across all categories.</span></span>
                                     </div>
                                     <div class="flex gap-2 flex-wrap mb-2">
                                         <div>
@@ -802,7 +716,7 @@
                                             <input type="number" id="balanceTargetMT" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
                                         </div>
                                     </div>
-                                    <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm w-full">Select Questions Across Categories</button>
+                                    <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm w-full">Auto-Select by Type</button>
                                 </div>
                             </div>
                         </div>
@@ -944,12 +858,16 @@
                             <div id="wqAddPanel" class="flex flex-col flex-1">
                                 <form id="wqQuestionForm" class="space-y-3">
                                     <div>
+                                        <label for="wqSubject" class="block text-sm font-medium" style="color:var(--text);">Subject</label>
+                                        <input type="text" id="wqSubject" placeholder="e.g. Biology" class="mt-1 block w-full rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
+                                    </div>
+                                    <div>
                                         <label for="wqCategory" class="block text-sm font-medium" style="color:var(--text);">Category</label>
-                                        <input type="text" id="wqCategory" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                        <input type="text" id="wqCategory" placeholder="e.g. General Biology" class="mt-1 block w-full rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                     </div>
                                     <div>
                                         <label for="wqType" class="block text-sm font-medium" style="color:var(--text);">Type</label>
-                                        <select id="wqType" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                        <select id="wqType" class="mt-1 block w-full rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             <option value="multiple_choice">Multiple Choice</option>
                                             <option value="true_false">True/False</option>
                                             <option value="matching">Matching Type</option>
@@ -957,7 +875,7 @@
                                     </div>
                                     <div>
                                         <label for="wqDifficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
-                                        <select id="wqDifficulty" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                        <select id="wqDifficulty" class="mt-1 block w-full rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             <option value="unset">Unset</option>
                                             <option value="easy">Easy</option>
                                             <option value="medium">Medium</option>
@@ -966,29 +884,29 @@
                                     </div>
                                     <div id="wqQuestionSection">
                                         <label for="wqQuestion" class="block text-sm font-medium" style="color:var(--text);">Question</label>
-                                        <textarea id="wqQuestion" rows="3" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
+                                        <textarea id="wqQuestion" rows="3" placeholder="e.g. What is the study of animals called?" class="mt-1 block w-full rounded shadow-sm text-sm px-2 py-1.5" style="border:none;"></textarea>
                                     </div>
                                     <div id="wqChoicesSection">
                                         <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
                                         <div id="wqChoicesContainer" class="space-y-2 mt-1">
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice A" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <input type="text" placeholder="e.g. Zoology" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                                 <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice B" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <input type="text" placeholder="e.g. Botany" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                                 <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice C" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <input type="text" placeholder="e.g. Microbiology" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                                 <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice D" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <input type="text" placeholder="e.g. Mycology" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                                 <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
                                             </div>
                                             <div id="wqChoiceERow" class="flex items-center gap-2 wq-choice-input hidden">
-                                                <input type="text" placeholder="Choice E" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                <input type="text" placeholder="e.g. Parasitology" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                                 <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
                                             </div>
                                         </div>
@@ -1014,19 +932,21 @@
                                         </div>
                                         <button type="button" id="wqAddMatchingPair" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium">+ Add Premise &amp; Answer</button>
                                     </div>
-                                    <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question</button>
+                                    <div class="flex gap-2 mt-1">
+                                        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question</button>
+                                        <button type="button" id="wqClearSavedBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium">Delete All Questions</button>
+                                    </div>
                                 </form>
-                                <button id="wqClearSavedBtn" class="mt-3 w-full bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm">Clear Saved Questions</button>
                             </div>
                             <!-- Paste Text panel -->
                             <div id="wqPastePanel" class="hidden flex-col flex-1">
                                 <div class="mb-3">
                                     <label for="wqPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
-                                    <input type="text" id="wqPasteSubject" placeholder="Enter subject here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
+                                    <input type="text" id="wqPasteSubject" placeholder="Science" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                 </div>
                                 <div class="mb-3">
                                     <label for="wqPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
-                                    <input type="text" id="wqPasteCategory" placeholder="Enter category here" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
+                                    <input type="text" id="wqPasteCategory" placeholder="Biology" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                 </div>
                                 <div class="mb-3">
                                     <label for="wqPasteDifficulty" class="block text-sm font-medium text-gray-700">Difficulty:</label>
@@ -1038,9 +958,19 @@
                                     </select>
                                 </div>
                                 <label for="wqPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste plain text here:</label>
-                                <textarea id="wqPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-3" placeholder="1. What is the fundamental unit of life?&#10;a. Gene&#10;b. Meme&#10;c. Atom&#10;=d. Cell&#10;&#10;2. The heart has four chambers.&#10;=True"></textarea>
+                                <textarea id="wqPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-3" placeholder="1. What is the fundamental unit of life?
+a. Gene
+b. Meme
+c. Atom
+=d. Cell
+
+2. The heart has four chambers.
+=True
+
+3. Study of plants
+=Botany"></textarea>
                                 <div class="flex gap-2">
-                                    <button id="wqPasteConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Convert &amp; Add</button>
+                                    <button id="wqPasteConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Add Question</button>
                                     <button id="wqPasteClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Clear</button>
                                 </div>
                             </div>
@@ -1103,19 +1033,8 @@
                                 <input type="file" id="convertFileInput" accept=".json,.csv,.txt" class="hidden">
                                 <p class="text-sm text-gray-600">Drag &amp; drop file or click to browse</p>
                             </div>
-                            <!-- Convert-to selector -->
-                            <div class="mb-4">
-                                <label for="convertFileTarget" class="block text-sm font-medium mb-1" style="color:var(--text);">Convert to:</label>
-                                <select id="convertFileTarget" class="w-full rounded border px-2 py-1.5 text-sm">
-                                    <option value="json">JSON</option>
-                                    <option value="csv">CSV</option>
-                                    <option value="gift">GIFT</option>
-                                    <option value="text">Text (TXT)</option>
-                                </select>
-                            </div>
                             <div class="flex gap-2 mt-auto">
-                                <button id="convertFileConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
-                                <button id="convertFileClearBtn"   class="flex-1 bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded">Clear</button>
+                                <button id="convertFileClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">Clear</button>
                             </div>
                         </div>
                         <!-- Right: Output -->
@@ -1125,6 +1044,13 @@
                             <div class="mb-2 flex items-center gap-2">
                                 <label for="convertFileFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
                                 <input type="text" id="convertFileFilename" placeholder="converted" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                            </div>
+                            <!-- Preview format toggles -->
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <button id="cfPreviewJson"  class="px-3 py-1 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600">JSON</button>
+                                <button id="cfPreviewCsv"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">CSV</button>
+                                <button id="cfPreviewGift"  class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">GIFT</button>
+                                <button id="cfPreviewTxt"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">TXT</button>
                             </div>
                             <div class="flex gap-2 mb-2">
                                 <button id="convertFileJumpToTop"    class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
@@ -1141,7 +1067,12 @@
                                     <tbody id="convertFileCsvTableBody"></tbody>
                                 </table>
                             </div>
-                            <button id="convertFileExportBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full mt-2">Export as JSON</button>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="convertFileExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as JSON</button>
+                                <button id="convertFileExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as CSV</button>
+                                <button id="convertFileExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as GIFT</button>
+                                <button id="convertFileExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as TXT</button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1243,11 +1174,11 @@
 
         <h3 class="font-semibold mb-2" style="color:var(--text);">Quick Start</h3>
         <ol class="text-sm space-y-2 mb-6 list-decimal list-inside" style="color:var(--text-muted);">
-            <li>Go to <strong style="color:var(--text);">Question Manager</strong> and load a JSON bank or add questions manually.</li>
-            <li>Use <strong style="color:var(--text);">Bank Editor</strong> to search, filter, sort, and organize your questions.</li>
-            <li>Switch to <strong style="color:var(--text);">Test Generator</strong> and load the same bank.</li>
-            <li>Set how many MCQ, T/F, and Matching questions to pull per category — or use <strong style="color:var(--text);">Select Questions Across Categories</strong> to balance automatically.</li>
-            <li>Click <strong style="color:var(--text);">Generate Test</strong> and export as TXT, PDF, DOCX, or JSON.</li>
+            <li><strong style="color:var(--text);">Write Questions</strong> — type questions one by one using the form, or paste plain numbered text. Your questions are saved automatically and can be exported as JSON, CSV, GIFT, or TXT.</li>
+            <li><strong style="color:var(--text);">Manage a Bank</strong> — load an existing JSON question bank, then search, filter, sort, bulk-rename, or bulk-delete questions in the Edit Bank panel. Export the updated bank in any format.</li>
+            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category (or use <strong style="color:var(--text);">Auto-Select by Type</strong>), then click <strong style="color:var(--text);">Generate Test</strong>. Export as TXT, PDF, DOCX, or JSON.</li>
+            <li><strong style="color:var(--text);">Convert a File</strong> — upload any supported file (JSON, CSV, GIFT TXT, plain TXT) and export it directly to any other format.</li>
+            <li><strong style="color:var(--text);">Merge JSONs</strong> — combine multiple Coeus JSON banks into one unified file.</li>
         </ol>
 
         <div class="rounded-lg p-4 mb-6" style="background:#fef3c7;border:1px solid #f59e0b;">
