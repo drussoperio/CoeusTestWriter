@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Manage a Bank redesigned — 2-column Input / Output at top, Edit Bank section below
 - Tooltips now appear beside their labels on hover (CSS-only, blue ⓘ icon); answer distribution, max consecutive MC/TF, difficulty ratio, and smart selection all converted to this pattern; info-btn / info-popover JS removed
 ### Removed
--Separate Convert to JSON / CSV / GIFT / Text tabs
--Clear Saved Questions from Manage a Bank (moved to Write Questions)
+- Separate Convert to JSON / CSV / GIFT / Text tabs
+- Clear Saved Questions from Manage a Bank (moved to Write Questions)
 ### Fixed
 - Export TXT button in Manage a Bank now consistently labeled "Export as TXT"
 
