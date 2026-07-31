@@ -19,10 +19,22 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.4.3';
+const APP_VERSION = '2.4.5';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.4.5': [
+        'Fixed: "No categories available" placeholder now displays centered with a document icon and descriptive subtext',
+        'Changed: Smart Selection — Total counter moved above the MCQ / T/F / Matching input fields',
+    ],
+    '2.4.4': [
+        'Changed: Design a Test layout restructured into 4 rows matching reference image',
+        'Changed: Row 1 — Answer Distribution Tolerance, Max Consecutive MC, Max Consecutive T/F in a 3-column grid',
+        'Changed: Row 2 — Difficulty Ratio, Smart Selection inputs + total counter, and action buttons (Auto-Select by Type, Select All Available, Clear All) side by side',
+        'Changed: Row 3 — Exclude Already-Used Questions (inline, no extra nesting)',
+        'Changed: Row 4 — Full-width Construct Test button (renamed from Generate Test)',
+        'Changed: Difficulty Ratio and Smart Selection headers enlarged to match Answer Distribution style; enclosing box removed',
+    ],
     '2.4.3': [
         'Added: Plain-text formatting rules in Write Questions Show Tips',
         'Added: Format warning in Paste Text when input does not follow expected structure',
@@ -562,6 +574,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 const summaryEl = document.getElementById('testSummary');
                 if (summaryEl) summaryEl.textContent = `Total questions to generate: ${totalRequested}`;
+                const summaryTotal = document.getElementById('testSummaryTotal');
+                if (summaryTotal) summaryTotal.textContent = `Total questions to generate: ${totalRequested}`;
             });
         }
     }
@@ -3002,7 +3016,7 @@ function updateCategoryInputs(categories) {
     categoryInputs.innerHTML = '';
 
     if (!categories || categories.length === 0) {
-        categoryInputs.innerHTML = '<p class="text-gray-500">No categories available. Please load a test bank.</p>';
+        categoryInputs.innerHTML = '<div class="flex flex-col items-center justify-center py-10 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p class="text-sm font-medium">No categories available.</p><p class="text-xs mt-1">Please load a test bank to get started.</p></div>';
         return;
     }
 
@@ -4527,6 +4541,8 @@ function clearAllCategoryInputs() {
     });
     const summaryEl = document.getElementById('testSummary');
     if (summaryEl) summaryEl.textContent = `Total questions to generate: 0`;
+    const summaryTotal2 = document.getElementById('testSummaryTotal');
+    if (summaryTotal2) summaryTotal2.textContent = `Total questions to generate: 0`;
 
     showUndoToast('Cleared all inputs.');
 }

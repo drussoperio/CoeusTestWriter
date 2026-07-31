@@ -570,14 +570,14 @@
             </div>
 
             <!-- ════════════════════════════════════════════════════ -->
-            <!-- TAB: Test Generator                                  -->
+            <!-- TAB: Design a Test                                  -->
             <!-- ════════════════════════════════════════════════════ -->
             <div id="testGeneratorContent" class="tab-content">
 
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
                     <h2 class="text-lg font-semibold text-blue-900 mb-1">Design a Test</h2>
                     <p class="text-sm text-gray-700">
-                        Load a JSON question bank, choose how many questions to pull from each category, then click <strong>Generate Test</strong>.
+                        Load a JSON question bank, choose how many questions to pull from each category, then click <strong>Construct Test</strong>.
                         The engine randomizes question order, shuffles answer choices, and balances
                         the answer-key distribution. Export the finished test in your chosen format.
                     </p>
@@ -609,19 +609,21 @@
                     <div id="testBankMissingCorrectWarning" class="mt-2 text-sm font-medium text-red-600 hidden"></div>
                 </section>
 
-                <!-- Generate -->
+                <!-- Design a Test -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generate Test</h2>
-                    <form id="testForm" class="space-y-4">
+                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Design a Test</h2>
+					<form id="testForm" class="space-y-5">
                         <div id="categoryInputs" class="space-y-3"></div>
                         <div id="testSummary" class="text-sm font-medium text-gray-700"></div>
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+						<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <label class="flex items-center text-sm gap-2">
                                 <input type="checkbox" id="randomize" checked class="h-4 w-4">
                                 Randomize Questions and Answers
                             </label>
                         </div>
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        
+                        <!-- Row 1: Answer Dist + Max MC + Max T/F -->
+                        <div class="grid grid-cols-3 gap-4">
                             <div>
                                 <div class="flex items-center gap-1 mb-1">
                                     <label for="answerTolerance" class="text-sm font-medium" style="color:var(--text);"><strong>Answer Distribution Tolerance</strong></label>
@@ -637,101 +639,104 @@
                                     ⚠️ Exact distribution can occasionally force repeated answers.
                                 </div>
                             </div>
-                            <div style="position:relative;">
-                              <div class="flex items-center gap-1 mb-1">
-                                <label for="maxConsecutiveMC" class="text-sm font-medium" style="color:var(--text);"><strong>Max Consecutive MC Answers</strong></label>
-                                <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many times the same answer letter can appear consecutively in the MC section. 1 = strict alternation. Higher values allow that many identical letters in a row. A very tight distribution with a low value may trigger a feasibility warning.</span></span>
-                              </div>
-                              <select id="maxConsecutiveMC" class="rounded border px-2 py-1 text-sm w-full">
-                                  <option value="1">1 — Strict alternation</option>
-                                  <option value="2" selected>2 (Default)</option>
-                                  <option value="3">3</option>
-                                  <option value="4">4</option>
-                                  <option value="5">5</option>
+                            <div>
+                                <div class="flex items-center gap-1 mb-1">
+                                    <label for="maxConsecutiveMC" class="text-sm font-medium" style="color:var(--text);"><strong>Max Consecutive MC Answers</strong></label>
+                                    <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many times the same answer letter can appear consecutively in the MC section. 1 = strict alternation. Higher values allow that many identical letters in a row. A very tight distribution with a low value may trigger a feasibility warning.</span></span>
+                                </div>
+                                <select id="maxConsecutiveMC" class="rounded border px-2 py-1 text-sm w-full">
+                                    <option value="1">1 — Strict alternation</option>
+                                    <option value="2" selected>2 (Default)</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
                                 </select>
                             </div>
-                            <div style="position:relative;">
-                              <div class="flex items-center gap-1 mb-1">
-                                <label for="maxConsecutiveTF" class="text-sm font-medium" style="color:var(--text);"><strong>Max Consecutive T/F Answers</strong></label>
-                                <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many consecutive True or False answers are allowed in the T/F section. 1 = strict alternation. 5 (default) allows up to five of the same answer in a row. A heavily skewed T/F ratio with a low value may trigger a feasibility warning.</span></span>
-                              </div>
-                              <select id="maxConsecutiveTF" class="rounded border px-2 py-1 text-sm w-full">
-                                  <option value="1">1 — Strict alt.</option>
-                                  <option value="2">2</option>
-                                  <option value="3">3</option>
-                                  <option value="4">4</option>
-                                  <option value="5" selected>5 (Default)</option>
+                            <div>
+                                <div class="flex items-center gap-1 mb-1">
+                                    <label for="maxConsecutiveTF" class="text-sm font-medium" style="color:var(--text);"><strong>Max Consecutive T/F Answers</strong></label>
+                                    <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many consecutive True or False answers are allowed in the T/F section. 1 = strict alternation. 5 (default) allows up to five of the same answer in a row. A heavily skewed T/F ratio with a low value may trigger a feasibility warning.</span></span>
+                                </div>
+                                <select id="maxConsecutiveTF" class="rounded border px-2 py-1 text-sm w-full">
+                                    <option value="1">1 — Strict alt.</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5" selected>5 (Default)</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="flex gap-2 flex-wrap">
-                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-semibold">Generate Test</button>
-                            <button type="button" id="clearAllBtn"  class="bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded text-sm">Clear All</button>
-                            <button type="button" id="selectAllBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Select All Available</button>
-                        </div>
-                        <div class="mt-3 p-3 rounded border" style="border-color:var(--border);">
-                            <div class="grid grid-cols-2 gap-4">
-                                <!-- Left: Difficulty Preset -->
-                                <div>
-                                    <div class="flex items-center gap-1 mb-2">
-                                        <p class="text-xs font-semibold" style="color:var(--text);">Difficulty Ratio</p>
-                                        <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Sets the Easy/Medium/Hard question mix. Unset questions fill in shortfalls automatically.</span></span>
-                                    </div>
-                                    <select id="diffRatioPreset" class="w-full rounded border px-2 py-1.5 text-sm mb-3">
-                                        <option value="ignore">Ignore Difficulty (default)</option>
-                                        <option value="even">Even (33% Easy / 33% Medium / 33% Hard)</option>
-                                        <option value="easy">Mostly Easy (50% / 30% / 20%)</option>
-                                        <option value="medium">Mostly Medium (30% / 50% / 20%)</option>
-                                        <option value="hard">Mostly Hard (20% / 30% / 50%)</option>
-                                    </select>
-                                    <div class="flex gap-2 flex-wrap text-xs" style="color:var(--text-muted);">
-                                        <span>🟢 Easy: <strong id="diffLabelEasy">—</strong></span>
-                                        <span>🟡 Medium: <strong id="diffLabelMedium">—</strong></span>
-                                        <span>🔴 Hard: <strong id="diffLabelHard">—</strong></span>
-                                    </div>
-                                    <!-- Hidden inputs still used by JS logic -->
-                                    <input type="hidden" id="diffRatioUnset"  value="100">
-                                    <input type="hidden" id="diffRatioEasy"   value="0">
-                                    <input type="hidden" id="diffRatioMedium" value="0">
-                                    <input type="hidden" id="diffRatioHard"   value="0">
-                                </div>
-                                <!-- Right: Smart Selection -->
-                                <div>
-                                    <div class="flex items-center gap-1 mb-2">
-                                        <p class="text-xs font-semibold" style="color:var(--text);">Smart Selection</p>
-                                        <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Enter target totals per question type and click Auto-Select by Type to automatically distribute counts across all categories.</span></span>
-                                    </div>
-                                    <div class="flex gap-2 flex-wrap mb-2">
-                                        <div>
-                                            <label for="balanceTargetMC" class="block text-xs mb-1" style="color:var(--text-muted);">Total MCQ</label>
-                                            <input type="number" id="balanceTargetMC" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                                        </div>
-                                        <div>
-                                            <label for="balanceTargetTF" class="block text-xs mb-1" style="color:var(--text-muted);">Total T/F</label>
-                                            <input type="number" id="balanceTargetTF" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                                        </div>
-                                        <div>
-                                            <label for="balanceTargetMT" class="block text-xs mb-1" style="color:var(--text-muted);">Total Matching</label>
-                                            <input type="number" id="balanceTargetMT" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
-                                        </div>
-                                    </div>
-                                    <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm w-full">Auto-Select by Type</button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
 
-                    <!-- Exclusion -->
-                    <div class="mt-5 p-3 bg-yellow-50 border border-yellow-300 rounded">
-                        <h3 class="text-sm font-semibold mb-2 text-yellow-800">🚫 Exclude Already-Used Questions</h3>
-                        <p class="text-xs text-gray-700 mb-2">Upload a JSON of previously used questions to exclude them.</p>
-                        <div class="flex items-center gap-2 flex-wrap mb-2">
-                            <input type="file" id="loadExclusionFile" accept=".json" class="text-xs">
-                            <button id="loadExclusionBtn"  class="bg-red-500  hover:bg-red-700  text-white px-3 py-1 rounded text-xs">Load Exclusions</button>
-                            <button id="clearExclusionBtn" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs" disabled>Clear Exclusions</button>
+                        <!-- Row 2: Difficulty Ratio + Smart Selection inputs + Total + Action buttons -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- Difficulty Ratio -->
+                            <div>
+                                <div class="flex items-center gap-1 mb-1">
+                                    <label for="diffRatioPreset" class="text-sm font-medium" style="color:var(--text);"><strong>Difficulty Ratio</strong></label>
+                                    <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Sets the Easy/Medium/Hard question mix. Unset questions fill in shortfalls automatically.</span></span>
+                                </div>
+                                <select id="diffRatioPreset" class="w-full rounded border px-2 py-1.5 text-sm mb-2">
+                                    <option value="ignore">Ignore Difficulty (default)</option>
+                                    <option value="even">Even (33% / 33% / 33%)</option>
+                                    <option value="easy">Mostly Easy (50% / 30% / 20%)</option>
+                                    <option value="medium">Mostly Medium (30% / 50% / 20%)</option>
+                                    <option value="hard">Mostly Hard (20% / 30% / 50%)</option>
+                                </select>
+                                <div class="flex gap-2 flex-wrap text-xs" style="color:var(--text-muted);">
+                                    <span>🟢 Easy: <strong id="diffLabelEasy">—</strong></span>
+                                    <span>🟡 Medium: <strong id="diffLabelMedium">—</strong></span>
+                                    <span>🔴 Hard: <strong id="diffLabelHard">—</strong></span>
+                                </div>
+                                <input type="hidden" id="diffRatioUnset"  value="100">
+                                <input type="hidden" id="diffRatioEasy"   value="0">
+                                <input type="hidden" id="diffRatioMedium" value="0">
+                                <input type="hidden" id="diffRatioHard"   value="0">
+                            </div>
+                            <!-- Smart Selection inputs + total -->
+							<div>
+								<div class="flex items-center gap-1 mb-1">
+									<label class="text-sm font-medium" style="color:var(--text);"><strong>Smart Selection</strong></label>
+									<span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Enter target totals per question type and click Smart Select to automatically distribute counts across all categories.</span></span>
+								</div>                               
+								<div class="flex gap-4 flex-wrap items-center">
+									<div class="flex items-center gap-2">
+										<label for="balanceTargetMC" class="text-xs" style="color:var(--text-muted);">MCQ</label>
+										<input type="number" id="balanceTargetMC" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+									</div>
+									<div class="flex items-center gap-2">
+										<label for="balanceTargetTF" class="text-xs" style="color:var(--text-muted);">T/F</label>
+										<input type="number" id="balanceTargetTF" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+									</div>
+									<div class="flex items-center gap-2">
+										<label for="balanceTargetMT" class="text-xs" style="color:var(--text-muted);">Matching</label>
+										<input type="number" id="balanceTargetMT" min="0" value="0" class="rounded border px-2 py-1 text-sm w-20">
+									</div>
+									<div id="testSummaryTotal" class="text-sm font-medium" style="color:var(--text-muted);">Total questions to generate: 0</div>
+								</div>
+							</div>
+                            <!-- Action buttons -->
+                            <div class="flex flex-col gap-2">
+                                <button type="button" id="balancePickBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">Smart Select</button>
+                                <button type="button" id="selectAllBtn"   class="bg-blue-500  hover:bg-blue-700  text-white px-4 py-2 rounded text-sm">Select All Available</button>
+                                <button type="button" id="clearAllBtn"    class="bg-red-500   hover:bg-red-700   text-white px-4 py-2 rounded text-sm">Clear All</button>
+                            </div>
                         </div>
-                        <div id="exclusionStatus" class="text-xs text-gray-600">No exclusions loaded. All questions available.</div>
-                    </div>
+
+                        <!-- Row 3: Exclude Already-Used Questions -->
+                        <div class="p-3 bg-yellow-50 border border-yellow-300 rounded">
+                            <h3 class="text-sm font-semibold mb-2 text-yellow-800">🚫 Exclude Already-Used Questions</h3>
+                            <p class="text-xs text-gray-700 mb-2">Upload a JSON of previously used questions to exclude them.</p>
+                            <div class="flex items-center gap-2 flex-wrap mb-2">
+                                <input type="file" id="loadExclusionFile" accept=".json" class="text-xs">
+                                <button id="loadExclusionBtn"  class="bg-red-500  hover:bg-red-700  text-white px-3 py-1 rounded text-xs">Load Exclusions</button>
+                                <button id="clearExclusionBtn" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs" disabled>Clear Exclusions</button>
+                            </div>
+                            <div id="exclusionStatus" class="text-xs text-gray-600">No exclusions loaded. All questions available.</div>
+                        </div>
+
+                        <!-- Row 4: Construct Test -->
+                        <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white py-3 rounded text-base font-bold tracking-wide">Construct Test</button>
+                    </form>
                 </section>
 
                 <!-- Output -->
@@ -945,15 +950,15 @@
                             <!-- Paste Text panel -->
                             <div id="wqPastePanel" class="hidden flex-col flex-1">
                                 <div class="mb-3">
-                                    <label for="wqPasteSubject" class="block text-sm font-medium text-gray-700">Subject:</label>
+                                    <label for="wqPasteSubject" class="block text-sm font-medium" style="color:var(--text);">Subject</label>
                                     <input type="text" id="wqPasteSubject" placeholder="e.g. Biology" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="wqPasteCategory" class="block text-sm font-medium text-gray-700">Category:</label>
+                                    <label for="wqPasteCategory" class="block text-sm font-medium" style="color:var(--text);">Category</label>
                                     <input type="text" id="wqPasteCategory" placeholder="e.g. Cell Biology" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="wqPasteDifficulty" class="block text-sm font-medium text-gray-700">Difficulty:</label>
+                                    <label for="wqPasteDifficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
                                     <select id="wqPasteDifficulty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm px-2 py-1.5">
                                         <option value="unset">Unset</option>
                                         <option value="easy">Easy</option>
@@ -961,11 +966,11 @@
                                         <option value="hard">Hard</option>
                                     </select>
                                 </div>
-                                <label for="wqPasteInput" class="block text-sm font-medium text-gray-700 mb-2">Paste plain text here:</label>
+                                <label for="wqPasteInput" class="block text-sm font-medium" style="color:var(--text);">Paste plain text here</label>
                                 <div id="wqPasteWarning" class="hidden mb-2 p-2 rounded text-xs bg-yellow-50 border border-yellow-300 text-yellow-800"></div>
                                 <textarea id="wqPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-3" placeholder="1. What is the fundamental unit of life?&#10;a. Gene&#10;b. Meme&#10;c. Atom&#10;=d. Cell&#10;&#10;2. The heart has four chambers.&#10;=True"></textarea>
                                 <div class="flex gap-2">
-                                    <button id="wqPasteConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">Convert &amp; Add</button>
+                                    <button id="wqPasteConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Add Question</button>
                                     <button id="wqPasteClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Delete All Questions</button>
                                 </div>
                             </div>
