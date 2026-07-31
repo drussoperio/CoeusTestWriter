@@ -19,10 +19,19 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.4.5';
+const APP_VERSION = '2.4.7';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.4.7': [
+        'Fixed: "No categories available" placeholder now always renders on page load when no test bank is present',
+    ],
+    '2.4.6': [
+        'Changed: Randomize is now always on; checkbox removed',
+        'Fixed: "No categories available" placeholder now correctly appears when test bank is empty',
+        'Changed: Generation Report no longer has a nested bordered box',
+        'Changed: Show/Hide Preview button moved to left of Export Unused as JSON',
+    ],
     '2.4.5': [
         'Fixed: "No categories available" placeholder now displays centered with a document icon and descriptive subtext',
         'Changed: Smart Selection — Total counter moved above the MCQ / T/F / Matching input fields',
@@ -474,7 +483,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const bankStatus = document.getElementById('bankStatus');
     const testForm = document.getElementById('testForm');
     const categoryInputs = document.getElementById('categoryInputs');
-    const randomizeCheckbox = document.getElementById('randomize');
     const answerToleranceSelect = document.getElementById('answerTolerance');
     const toleranceWarning = document.getElementById('toleranceWarning');
     const maxConsecutiveMCSelect = document.getElementById('maxConsecutiveMC');
@@ -2864,10 +2872,8 @@ function restoreBanksFromStorage() {
         if (questionBank.length > 0) {
             renderQuestionManagerList();
         }
-        if (testBank.length > 0) {
-            updateCategoryInputs();
-        }
     }
+    updateCategoryInputs();
 }
 
 function undoBankEditorChange() {
@@ -2999,6 +3005,11 @@ function updateCategoryInputs(categories) {
     if (!categoryInputs) {
         console.error('categoryInputs element not found in the DOM.');
         return;
+    }
+
+    // Derive from testBank when no arg provided
+    if (!categories) {
+        categories = testBank.length > 0 ? [...new Set(testBank.map(q => q.category))] : [];
     }
 
     // Build a quick lookup of counts per category/type
@@ -3653,8 +3664,7 @@ function generateTest() {
         return;
     }
 
-    const randomizeCheckbox = document.getElementById('randomize');
-    const randomize = randomizeCheckbox.checked;
+    const randomize = true;
     const ratio = getDiffRatio();
     const ratioActive = isDiffRatioActive(ratio);
     if (ratioActive && getDiffRatioTotal() !== 100) {

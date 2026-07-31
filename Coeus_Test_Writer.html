@@ -437,9 +437,8 @@
                     <h2 class="text-lg font-semibold text-blue-900 mb-1">Manage a Bank</h2>
                     <p class="text-sm text-gray-700">Load a question bank, add new questions manually, edit, and export your bank in multiple formats.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ <strong>New user?</strong> You don't need to load a file first. Go to <strong>Add Questions</strong> and start writing — questions save to your browser automatically.</p>
                         <p>▸ Load an existing <strong>.json</strong> bank file via drag-and-drop or the file picker to continue a previous session.</p>
-                        <p>▸ Use <strong>Bank Editor</strong> to search, filter, sort, bulk-rename, set difficulty, or delete questions.</p>
+                        <p>▸ You can search, filter, sort, bulk-rename, set difficulty, or delete questions.</p>
                         <p>▸ Export your bank as JSON (for reloading), CSV (for spreadsheet editing), plain TXT, or GIFT (for Moodle) when you're ready.</p>
                         <p>▸ Your bank persists in localStorage across sessions — no login or save button needed.</p>
                     </div>
@@ -530,7 +529,7 @@
                             <!-- Row 1: Rename Selected + Set Difficulty -->
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Rename Selected</label>
+                                    <label class="block text-sm font-semibold mb-1" style="color:var(--text);">Rename Selected</label>
                                     <div class="flex gap-2">
                                         <input type="text" id="qm-change-cat-input" placeholder="New category name..."
                                             class="flex-1 min-w-[120px] rounded border px-2 py-1 text-sm">
@@ -538,7 +537,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold mb-1" style="color:var(--text);">Set Difficulty</label>
+                                    <label class="block text-sm font-semibold mb-1" style="color:var(--text);">Set Difficulty</label>
                                     <div class="flex gap-1 items-center">
                                         <select id="qm-bulk-difficulty-select" class="flex-1 min-w-0 rounded border px-2 py-1 text-sm">
                                             <option value="unset">Unset</option>
@@ -546,7 +545,7 @@
                                             <option value="medium">Medium</option>
                                             <option value="hard">Hard</option>
                                         </select>
-                                        <button id="qm-bulk-difficulty-btn" disabled class="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium">Apply</button>
+                                        <button id="qm-bulk-difficulty-btn" disabled class="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium">Apply</button>
                                     </div>
                                 </div>
                             </div>
@@ -582,12 +581,12 @@
                         the answer-key distribution. Export the finished test in your chosen format.
                     </p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
-                        <p>▸ Load your bank here separately from Question Manager — they are independent.</p>
-                        <p>▸ Set MCQ, T/F, and Matching counts per category, or use <strong>Auto-Select by Type</strong> to distribute a target total evenly.</p>
-                        <p>▸ <strong>Difficulty Ratio</strong> lets you control the Easy/Medium/Hard mix. Unset questions fill in shortfalls automatically.</p>
+                        <p>▸ Load an existing <strong>.json</strong> bank file via drag-and-drop or the file picker.</p>
+                        <p>▸ Set MCQ, T/F, and Matching counts per category, or use <strong>Smart Selection</strong> to distribute a target total evenly across categories. You can also select all available questions.</p>
+                        <p>▸ <strong>Difficulty Ratio</strong> lets you control the Easy/Medium/Hard mix. If there are not enough questions, unset questions will be picked.</p>
                         <p>▸ <strong>Exclude Already-Used Questions</strong> prevents repeats across test versions — upload a previous test's JSON.</p>
                         <p>▸ The <strong>Generation Report</strong> tab shows a full breakdown including difficulty shortfalls.</p>
-                        <p>▸ Export as TXT, PDF, DOCX (long bond, Arial 11pt), or JSON.</p>
+                        <p>▸ Export as TXT, PDF, DOCX, or JSON.</p>
                     </div>
                 </div>
 
@@ -658,7 +657,7 @@
                                     <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Controls how many consecutive True or False answers are allowed in the T/F section. 1 = strict alternation. 5 (default) allows up to five of the same answer in a row. A heavily skewed T/F ratio with a low value may trigger a feasibility warning.</span></span>
                                 </div>
                                 <select id="maxConsecutiveTF" class="rounded border px-2 py-1 text-sm w-full">
-                                    <option value="1">1 — Strict alt.</option>
+                                    <option value="1">1 — Strict alternation</option>
                                     <option value="2">2</option>
                                     <option value="3">3</option>
                                     <option value="4">4</option>
@@ -788,6 +787,7 @@
 
                     <div id="output" class="mt-4 border-t pt-4 hidden">
                         <!-- Jump to Top/Bottom buttons -->
+						<h3 class="text-base font-semibold mb-3" style="color:var(--text);">Preview Test and Answer Key</h3>
                         <div class="flex gap-2 mb-3 sticky top-0 z-10 bg-white dark:bg-slate-900 py-2">
                             <button id="jumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
                             <button id="jumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
@@ -826,7 +826,7 @@
                 <!-- Generation Report -->
                 <section class="p-4 border border-gray-200 rounded surface">
                     <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generation Report</h2>
-                    <div id="generationReport" class="p-3 border border-gray-300 rounded text-sm text-gray-600">
+                    <div id="generationReport" class="rounded text-sm text-gray-600">
                         Generate a test to see the detailed breakdown.
                     </div>
                 </section>
@@ -841,9 +841,9 @@
                     <p class="text-sm text-gray-700">Write questions from scratch and export them in multiple formats. Your questions are saved to your browser automatically.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-2">
                         <p>▸ Use <strong>Add Questions</strong> to write questions one by one using the form.</p>
-                        <p>▸ Use <strong>Paste Text</strong> to paste plain numbered text and convert it directly.</p>
+                        <p>▸ Use <strong>Paste Text</strong> to write or paste plain numbered text and convert it directly.</p>
                         <p>▸ Toggle the output preview between JSON, TXT, GIFT, and CSV formats.</p>
-                        <p>▸ <strong>Delete All Questions</strong> removes only questions written here, not your loaded bank.</p>
+                        <p>▸ Export as JSON, CSV, TXT, or GIFT.</p>
                         <p class="font-semibold mt-2" style="color:var(--text);">Plain-Text Formatting Rules (Paste Text)</p>
                         <p>▸ Number each question (<code class="bg-gray-100 px-1 rounded">1. </code>, <code class="bg-gray-100 px-1 rounded">2. </code>, …). A question is only recognized if it has a number, period, and space before the question itself. Numbers can repeat and don't need to be in order.</p>
                         <p>▸ <strong>Multiple choice:</strong> label choices with letters <code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>. A choice is only recognized if it has a letter, period, and space before it. MCQ only accepts four to five choices. Prefix the correct choice with <code class="bg-gray-100 px-1 rounded">=</code> or <code class="bg-gray-100 px-1 rounded">*</code>. An error appears if no choice is marked correct.</p>
