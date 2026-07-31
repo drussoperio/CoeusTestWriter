@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.4.0] - 2026-07-31
+## [v2.4.2] - 2026-07-31
+### Added
+- Output preview toggles (JSON / CSV / GIFT / TXT) in Convert a File tab
+- Placeholders for Subject, Category, Question, and Choices in Write Questions → Add Questions form
+- Matching placeholders in Paste Text (Subject, Category fields)
+### Fixed
+- Edit Bank section now visible in Manage a Bank (active class was missing after tab restructure)
+- Write Questions CSV preview can now be switched away from — other format previews no longer break after selecting CSV
+- Design a Test tooltips now use position: fixed + cursor-tracking via mousemove — no longer clipped by overflow-constrained containers
+### Changed
+- Quick Start Guide rewritten to lead with Write Questions tab workflow
+- Default tab on load is now Write Questions; last-visited tab is remembered across sessions via localStorage
+  
+## [v2.4.0] - 2026-07-31
 
 ### Added
 - Write Questions tab with Add Questions + Paste Text sub-tabs, output preview toggles (JSON / TXT / GIFT / CSV), all Export as buttons, own examBank (persisted to localStorage), Clear Saved Questions button
@@ -19,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Export TXT button in Manage a Bank now consistently labeled "Export as TXT"
 
-## [2.3.0] - 2026-07-30
+## [v2.3.0] - 2026-07-30
 
 ### Added
 - **Welcome Modal** — shown on first ever launch only. Contains app tagline, 5-step Quick Start, liability disclaimer in an amber callout, and an "I Understand & Get Started" button. Not backdrop-dismissible — must click the button.
@@ -40,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Balanced Pick** — Now validates ratio sums to 100 before running. Toast simplified to either ✅ or ⚠️ shortfall message pointing to report.
 - **Test Generation** — selectWithDifficulty() splits each type's requested count by ratio per category, pulls from Unset as fallback when a tier runs short, then logs per-tier stats. Ratio validation runs before generation.
 
-## [2.1.1] - 2026-07-29
+## [v2.1.1] - 2026-07-29
 
 ### **Added**
 - Footer with About modal, GitHub link, Download Latest, Report a Bug, and AGPLv3 license badge
