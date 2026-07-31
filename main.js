@@ -19,10 +19,17 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.4.2';
+const APP_VERSION = '2.4.3';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.4.3': [
+        'Added: Plain-text formatting rules in Write Questions Show Tips',
+        'Added: Format warning in Paste Text when input does not follow expected structure',
+        'Added: Delete All Questions in Paste Text tab — mirrors Add Questions behavior with confirm + undo',
+        'Added: Convert button in Convert a File (previews without downloading)',
+        'Changed: Manage a Bank — Set Difficulty moved to second column beside Rename Selected; Delete Selected button moved below with no header',
+    ],
     '2.4.2': [
         'Added: Output preview toggles (JSON/CSV/GIFT/TXT) in Convert a File tab',
         'Added: Placeholders for Subject, Category, Question, and Choices in Write Questions → Add Questions',
@@ -1292,7 +1299,15 @@ document.addEventListener('DOMContentLoaded', function () {
             reader.readAsText(file);
         }
 
-        // Convert is now triggered by each export button
+        // Convert button: parse + preview in current cfPreviewFormat, no download
+        if (convertBtn) {
+            convertBtn.addEventListener('click', () => {
+                if (!fileInput || !fileInput.files || !fileInput.files.length) {
+                    showToast('⚠️ Please select a file.', 'warning'); return;
+                }
+                runConvert(cfPreviewFormat === 'txt' ? 'text' : cfPreviewFormat);
+            });
+        }
 
         // Preview format toggles for Convert a File
         let cfPreviewFormat = 'json';
@@ -1570,27 +1585,71 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('wqExportGiftBtn')?.addEventListener('click', () => wqExport('gift'));
 
         // Paste & Convert
+        function showPasteWarning(msg) {
+            const w = document.getElementById('wqPasteWarning');
+            if (!w) return;
+            if (msg) { w.textContent = '⚠️ ' + msg; w.classList.remove('hidden'); }
+            else { w.textContent = ''; w.classList.add('hidden'); }
+        }
         const pasteConvertBtn = document.getElementById('wqPasteConvertBtn');
         if (pasteConvertBtn) {
             pasteConvertBtn.addEventListener('click', () => {
+                showPasteWarning('');
                 const text = (document.getElementById('wqPasteInput')?.value || '').trim();
-                if (!text) { showToast('⚠️ Please paste some text first.', 'warning'); return; }
+                if (!text) { showPasteWarning('No text to convert. Paste your questions above.'); return; }
                 const subject  = (document.getElementById('wqPasteSubject')?.value || '').trim();
                 const category = (document.getElementById('wqPasteCategory')?.value || '').trim() || 'Uncategorized';
                 const diff     = document.getElementById('wqPasteDifficulty')?.value || 'unset';
+                // Pre-validate: check for numbered questions
+                const hasNumbered = /^\d+\.\s/m.test(text);
+                if (!hasNumbered) {
+                    showPasteWarning('Format not recognized. Each question must start with a number, period, and space (e.g. "1. Question text"). See Show Tips for formatting rules.');
+                    return;
+                }
                 try {
                     const qs = parsePlainTextToJson(text, subject, category);
+                    if (!qs.length) {
+                        showPasteWarning('No questions could be parsed. Check that your questions follow the plain-text format rules. See Show Tips for details.');
+                        return;
+                    }
+                    // Check for MCQ with no correct answer marked
+                    const noCorrect = qs.filter(q => q.type === 'multiple_choice' && !q.correct);
+                    if (noCorrect.length) {
+                        showPasteWarning(`${noCorrect.length} multiple choice question(s) have no correct answer marked. Prefix the correct choice with = or *.`);
+                        return;
+                    }
                     qs.forEach(q => { q.difficulty = diff; });
                     examBank.push(...qs);
                     saveExamBankToStorage();
                     refreshWqPreview();
                     showToast(`✅ Added ${qs.length} question(s).`, 'success');
-                } catch(err) { showToast('❌ ' + err.message, 'error'); }
+                } catch(err) {
+                    showPasteWarning(err.message);
+                    showToast('❌ ' + err.message, 'error');
+                }
             });
         }
         document.getElementById('wqPasteClearBtn')?.addEventListener('click', () => {
-            const el = document.getElementById('wqPasteInput');
-            if (el) el.value = '';
+            if (!examBank.length) { showToast('⚠️ Nothing to delete.', 'warning'); return; }
+            const confirmed = window.confirm(`Delete all ${examBank.length} question(s) from the exam bank? This can be undone.`);
+            if (!confirmed) return;
+            wqDeletedBackup = [...examBank];
+            examBank = [];
+            saveExamBankToStorage();
+            refreshWqPreview();
+            showPasteWarning('');
+            if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
+            const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
+            showToast(undoHtml, 'warning', 5000);
+            window.__wqUndo = () => {
+                if (!wqDeletedBackup) return;
+                examBank = [...wqDeletedBackup];
+                wqDeletedBackup = null;
+                saveExamBankToStorage();
+                refreshWqPreview();
+                showToast('↩️ Restored.', 'success');
+            };
+            wqUndoTimeout = setTimeout(() => { wqDeletedBackup = null; window.__wqUndo = null; }, 5000);
         });
 
         // Delete All Questions — confirm + undo
