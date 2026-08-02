@@ -430,7 +430,7 @@
             <div class="flex-1 overflow-hidden p-6">
 
             <!-- ════════════════════════════════════════════════════ -->
-            <!-- TAB: Question Manager                                -->
+            <!-- TAB: Manage a Bank                                -->
             <!-- ════════════════════════════════════════════════════ -->
             <div id="questionManagerContent" class="tab-content">
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
@@ -448,7 +448,7 @@
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
                     <div class="grid grid-cols-2 gap-6">
                         <div>
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
                             <div class="mb-4">
                                 <label for="loadQuestionBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
                                 <div class="drop-zone">
@@ -462,7 +462,7 @@
                             </div>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
                             <div class="mb-3 flex items-center gap-2">
                                 <label for="questionBankFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="questionBankFilename" placeholder="questionBank" class="flex-1 rounded border text-sm px-2 py-1.5">
@@ -482,7 +482,7 @@
                 <!-- Inner Tab 2: Question Bank Editor -->
                 <div id="qm-bank-editor" class="qm-inner-content active">
                     <section class="p-4 border border-gray-200 rounded surface">
-                        <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Edit Bank</h2>
+                        <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Edit Bank</h2>
                         
                         <!-- Search & Filter toolbar -->
                         <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
@@ -498,13 +498,18 @@
                                 <div>
                                     <label for="qm-sort-select" class="block text-sm font-medium mb-1" style="color:var(--text);">Sort by</label>
                                     <select id="qm-sort-select" class="w-full rounded border px-2 py-1.5 text-sm">
-                                        <option value="category">Category (A-Z)</option>
-                                        <option value="type">Type (MCQ first)</option>
-                                        <option value="asLoaded">As Loaded</option>
+                                        <option value="asLoaded">Default (As Loaded)</option>
+                                        <option value="diff-asc">By Difficulty (Easy → Hard)</option>
+                                        <option value="diff-desc">By Difficulty (Hard → Easy)</option>
+                                        <option value="cat-asc">By Category (A → Z)</option>
+                                        <option value="cat-desc">By Category (Z → A)</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="qm-filter-select" class="block text-sm font-medium mb-1" style="color:var(--text);">Filter</label>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label for="qm-filter-select" class="block text-sm font-medium" style="color:var(--text);">Filter</label>
+                                        <button id="qm-compact-toggle" title="Toggle compact view" class="text-base leading-none px-1.5 py-0.5 rounded border text-gray-500 hover:text-gray-800" style="font-size:1rem;">▤</button>
+                                    </div>
                                     <select id="qm-filter-select" class="w-full rounded border px-2 py-1.5 text-sm">
                                         <option value="all">All Questions</option>
                                         <option value="mcq">Multiple Choice Only</option>
@@ -521,19 +526,14 @@
 
                         <!-- Bulk actions toolbar -->
                         <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                            <!-- Select All Visible button (full width, top row) -->
-                            <div class="mb-3">
-                                <button id="qm-select-visible-btn" class="w-full bg-blue-500 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium">Select All Visible</button>
-                            </div>
-                            
-                            <!-- Row 1: Rename Selected + Set Difficulty -->
-                            <div class="grid grid-cols-2 gap-2">
+                            <!-- Row 1: Change Category + Set Difficulty -->
+                            <div class="grid grid-cols-2 gap-2 mb-2">
                                 <div>
-                                    <label class="block text-sm font-semibold mb-1" style="color:var(--text);">Rename Selected</label>
+                                    <label class="block text-sm font-semibold mb-1" style="color:var(--text);">Change Category</label>
                                     <div class="flex gap-2">
                                         <input type="text" id="qm-change-cat-input" placeholder="New category name..."
                                             class="flex-1 min-w-[120px] rounded border px-2 py-1 text-sm">
-                                        <button id="qm-change-cat-btn" disabled class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium whitespace-nowrap">Rename</button>
+                                        <button id="qm-change-cat-btn" disabled class="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium whitespace-nowrap">Change</button>
                                     </div>
                                 </div>
                                 <div>
@@ -549,9 +549,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Row 2: Delete Selected -->
-                            <div class="mt-2">
-                                <button id="qm-delete-selected-btn" disabled class="w-full bg-red-500 hover:bg-red-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium">Delete (0)</button>
+                            <!-- Row 2: Select All Visible + Delete Selected -->
+                            <div class="flex gap-2">
+                                <button id="qm-select-visible-btn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium">Select All Visible</button>
+                                <button id="qm-delete-selected-btn" disabled class="flex-1 bg-red-500 hover:bg-red-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium">Delete (0)</button>
                             </div>
                         </div>
 
@@ -592,7 +593,7 @@
 
                 <!-- Load bank -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h2>
+                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h2>
                     <div class="mb-4">
 					<label for="loadTestBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
                         <div class="drop-zone">
@@ -608,20 +609,14 @@
                     <div id="testBankMissingCorrectWarning" class="mt-2 text-sm font-medium text-red-600 hidden"></div>
                 </section>
 
-                <!-- Design a Test -->
+                <!-- Plan a Test -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Design a Test</h2>
+                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Plan a Test</h2>
 					<form id="testForm" class="space-y-5">
                         <div id="categoryInputs" class="space-y-3"></div>
                         <div id="testSummary" class="text-sm font-medium text-gray-700"></div>
-						<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <label class="flex items-center text-sm gap-2">
-                                <input type="checkbox" id="randomize" checked class="h-4 w-4">
-                                Randomize Questions and Answers
-                            </label>
-                        </div>
-                        
-                        <!-- Row 1: Answer Dist + Max MC + Max T/F -->
+	                    <!-- Row 1: Answer Dist + Max MC + Max T/F -->
+						<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                         <div class="grid grid-cols-3 gap-4">
                             <div>
                                 <div class="flex items-center gap-1 mb-1">
@@ -667,7 +662,7 @@
                         </div>
 
                         <!-- Row 2: Difficulty Ratio + Smart Selection inputs + Total + Action buttons -->
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-3 gap-4 mt-4">
                             <!-- Difficulty Ratio -->
                             <div>
                                 <div class="flex items-center gap-1 mb-1">
@@ -720,7 +715,7 @@
                                 <button type="button" id="clearAllBtn"    class="bg-red-500   hover:bg-red-700   text-white px-4 py-2 rounded text-sm">Clear All</button>
                             </div>
                         </div>
-
+						</div>
                         <!-- Row 3: Exclude Already-Used Questions -->
                         <div class="p-3 bg-yellow-50 border border-yellow-300 rounded">
                             <h3 class="text-sm font-semibold mb-2 text-yellow-800">🚫 Exclude Already-Used Questions</h3>
@@ -740,7 +735,7 @@
 
                 <!-- Output -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h2>
+                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h2>
 
                     <!-- Filename + DOCX info -->
                     <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
@@ -808,26 +803,22 @@
                         </div>
                 </section>
 
-                <!-- Unused Questions -->
-                <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Unused Questions</h2>
-                    <div id="unusedSummary" class="mb-3 p-3 bg-gray-50 border border-gray-300 rounded text-sm text-gray-600">
-                        Generate a test to see which questions were not selected.
-                    </div>
-                    <div class="flex gap-2 mb-3">
-                        <button id="exportUnusedJson"    class="bg-orange-500 hover:bg-orange-700 text-white px-4 py-1.5 rounded text-sm" disabled>Export Unused as JSON</button>
-                        <button id="toggleUnusedPreview" class="bg-gray-500   hover:bg-gray-700   text-white px-4 py-1.5 rounded text-sm" disabled>Show/Hide Preview</button>
-                    </div>
-                    <div id="unusedPreview" class="hidden">
-                        <pre id="unusedPreviewContent" class="bg-gray-100 p-4 rounded border border-gray-300 max-h-64 overflow-y-auto text-xs"></pre>
-                    </div>
-                </section>
-
                 <!-- Generation Report -->
                 <section class="p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3" style="color:var(--text);">Generation Report</h2>
+                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Generation Report</h2>
                     <div id="generationReport" class="rounded text-sm text-gray-600">
                         Generate a test to see the detailed breakdown.
+                    </div>
+                    <!-- Unused Questions (inside Generation Report) -->
+                    <div id="unusedQuestionsSection" class="mt-4 hidden">
+                        <h3 class="text-sm font-semibold mb-2 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>Unused Questions</h3>
+                        <div id="unusedSummary" class="rounded text-sm text-gray-600"></div>
+                        <div class="flex gap-2 mt-2">
+                            <button id="exportUnusedJson" class="bg-orange-500 hover:bg-orange-700 text-white px-4 py-1.5 rounded text-sm" disabled>Export Unused as JSON</button>
+                        </div>
+                        <div id="unusedPreview" class="hidden">
+                            <pre id="unusedPreviewContent" class="bg-gray-100 p-4 rounded border border-gray-300 max-h-64 overflow-y-auto text-xs"></pre>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -842,7 +833,7 @@
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-2">
                         <p>▸ Use <strong>Add Questions</strong> to write questions one by one using the form.</p>
                         <p>▸ Use <strong>Paste Text</strong> to write or paste plain numbered text and convert it directly.</p>
-                        <p>▸ Toggle the output preview between JSON, TXT, GIFT, and CSV formats.</p>
+                        <p>▸ Toggle the output preview between JSON, CSV, TXT, and GIFT formats.</p>
                         <p>▸ Export as JSON, CSV, TXT, or GIFT.</p>
                         <p class="font-semibold mt-2" style="color:var(--text);">Plain-Text Formatting Rules (Paste Text)</p>
                         <p>▸ Number each question (<code class="bg-gray-100 px-1 rounded">1. </code>, <code class="bg-gray-100 px-1 rounded">2. </code>, …). A question is only recognized if it has a number, period, and space before the question itself. Numbers can repeat and don't need to be in order.</p>
@@ -857,7 +848,7 @@
                     <div class="grid grid-cols-2 gap-6">
                         <!-- Left: Input -->
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
                             <!-- Sub-tabs -->
                             <div class="flex gap-2 mb-4">
                                 <button id="wqAddSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Add Questions</button>
@@ -899,24 +890,24 @@
                                         <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
                                         <div id="wqChoicesContainer" class="space-y-2 mt-1">
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice A — e.g. answer option" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
-                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                <input type="text" placeholder="Correct answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice B — e.g. answer option" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
-                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice C — e.g. answer option" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
-                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
-                                                <input type="text" placeholder="Choice D — e.g. answer option" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
-                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div id="wqChoiceERow" class="flex items-center gap-2 wq-choice-input hidden">
-                                                <input type="text" placeholder="Choice E — e.g. answer option" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
-                                                <label class="flex items-center text-sm whitespace-nowrap"><input type="radio" name="wqCorrectChoice" class="mr-1">Correct</label>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                         </div>
                                         <button type="button" id="wqToggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
@@ -968,7 +959,7 @@
                                 </div>
                                 <label for="wqPasteInput" class="block text-sm font-medium" style="color:var(--text);">Paste plain text here</label>
                                 <div id="wqPasteWarning" class="hidden mb-2 p-2 rounded text-xs bg-yellow-50 border border-yellow-300 text-yellow-800"></div>
-                                <textarea id="wqPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-3" placeholder="1. What is the fundamental unit of life?&#10;a. Gene&#10;b. Meme&#10;c. Atom&#10;=d. Cell&#10;&#10;2. The heart has four chambers.&#10;=True"></textarea>
+                                <textarea id="wqPasteInput" rows="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm font-mono text-sm mb-3" placeholder="1. What is the fundamental unit of life?&#10;a. Gene&#10;b. Meme&#10;c. Atom&#10;=d. Cell&#10;&#10;2. The heart has four chambers.&#10;=True&#10;&#10;3. The study of plants&#10;=Botany"></textarea>
                                 <div class="flex gap-2">
                                     <button id="wqPasteConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Add Question</button>
                                     <button id="wqPasteClearBtn" class="flex-1 bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Delete All Questions</button>
@@ -978,17 +969,17 @@
 
                         <!-- Right: Output -->
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
-                            <!-- Preview format toggles -->
-                            <div class="flex gap-2 mb-3 flex-wrap">
-                                <button id="wqPreviewJson"  class="px-3 py-1 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600">JSON</button>
-                                <button id="wqPreviewTxt"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">TXT</button>
-                                <button id="wqPreviewGift"  class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">GIFT</button>
-                                <button id="wqPreviewCsv"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">CSV</button>
-                            </div>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
                             <div class="mb-2 flex items-center gap-2">
                                 <label for="wqFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="wqFilename" placeholder="exambank" class="flex-1 rounded border text-sm px-2 py-1.5">
+                            </div>
+								<!-- Preview format toggles -->
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <button id="wqPreviewJson"  class="px-3 py-1 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600">JSON</button>
+                                <button id="wqPreviewCsv"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">CSV</button>
+                                <button id="wqPreviewGift"  class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">GIFT</button>
+                                <button id="wqPreviewTxt"   class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">TXT</button>
                             </div>
                             <div class="flex gap-2 mb-2">
                                 <button id="wqJumpToTop"    class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
@@ -1011,8 +1002,8 @@
             <!-- ════════════════════════════════════════════════════ -->
             <!-- TAB: Convert a File                                  -->
             <!-- ════════════════════════════════════════════════════ -->
-            <div id="convertFileContent" class="tab-content flex flex-col h-full min-h-0">
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex-shrink-0">
+            <div id="convertFileContent" class="tab-content">
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
                     <h2 class="text-lg font-semibold text-blue-900 mb-1">Convert a File</h2>
                     <p class="text-sm text-gray-700">Upload a file and convert it to any supported format. Accepts JSON, CSV, GIFT TXT, and plain numbered TXT.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
@@ -1020,31 +1011,30 @@
                         <p>▸ <strong>To CSV:</strong> accepts .json, GIFT .txt, or plain numbered text.</p>
                         <p>▸ <strong>To GIFT:</strong> accepts .json or .csv.</p>
                         <p>▸ <strong>To Text:</strong> accepts .json, .csv, or GIFT .txt.</p>
-                        <p>▸ Mark the correct MCQ choice with <code class="bg-gray-100 px-1 rounded">=</code> before the letter (e.g. <code class="bg-gray-100 px-1 rounded">=b. Paris</code>).</p>
                     </div>
                 </div>
-                <section class="flex-1 flex flex-col p-4 border border-gray-200 rounded surface overflow-hidden min-h-0">
-                    <div class="grid grid-cols-2 gap-4 h-full overflow-hidden">
+                <section class="mb-6 p-4 border border-gray-200 rounded surface">
+                    <div class="grid grid-cols-2 gap-6">
                         <!-- Left: Input -->
-                        <div class="flex flex-col overflow-hidden min-h-0">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
-                            <label for="convertFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select File (JSON, CSV, GIFT TXT, or plain TXT):</label>
+                        <div class="flex flex-col">
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
+                            <label for="convertFileInput" class="block text-sm font-medium mb-2" style="color:var(--text);">Select File (JSON, CSV, GIFT TXT, or plain TXT):</label>
                             <div class="drop-zone mb-4">
                                 <input type="file" id="convertFileInput" accept=".json,.csv,.txt" class="hidden">
                                 <p class="text-sm text-gray-600">Drag &amp; drop file or click to browse</p>
                             </div>
                             <div class="flex gap-2 mt-auto">
-                                <button id="convertFileConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Convert</button>
-                                <button id="convertFileClearBtn"   class="flex-1 bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded">Clear</button>
+                                <button id="convertFileConvertBtn" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">Convert</button>
+                                <button id="convertFileClearBtn"   class="flex-1 bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded text-sm font-medium">Clear</button>
                             </div>
                         </div>
                         <!-- Right: Output -->
-                        <div class="flex flex-col overflow-hidden min-h-0">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
+                        <div class="flex flex-col">
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
                             <div id="convertFileMissingCorrectWarning" class="mb-3 text-sm font-medium text-red-600 hidden"></div>
                             <div class="mb-2 flex items-center gap-2">
-                                <label for="convertFileFilename" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filename:</label>
-                                <input type="text" id="convertFileFilename" placeholder="converted" class="flex-1 rounded border border-gray-300 px-3 py-1 text-sm">
+                                <label for="convertFileFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
+                                <input type="text" id="convertFileFilename" placeholder="converted" class="flex-1 rounded border text-sm px-2 py-1.5">
                             </div>
                             <!-- Preview format toggles -->
                             <div class="flex gap-2 mb-2 flex-wrap">
@@ -1058,21 +1048,21 @@
                                 <button id="convertFileJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                             </div>
                             <!-- JSON/TXT/GIFT output -->
-                            <div id="convertFileTextOutputWrap" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                            <div id="convertFileTextOutputWrap" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3">
                                 <pre class="text-xs"><code id="convertFileOutput"></code></pre>
                             </div>
                             <!-- CSV table output -->
-                            <div id="convertFileCsvOutputWrap" class="border border-gray-300 rounded overflow-auto max-h-96 bg-white dark:bg-slate-800 hidden">
+                            <div id="convertFileCsvOutputWrap" class="border border-gray-300 rounded overflow-auto max-h-96 bg-white dark:bg-slate-800 hidden mb-3">
                                 <table id="convertFileCsvTable" class="min-w-full text-xs border-collapse">
                                     <thead id="convertFileCsvTableHead" class="bg-gray-100 sticky top-0"></thead>
                                     <tbody id="convertFileCsvTableBody"></tbody>
                                 </table>
                             </div>
-                            <div class="flex flex-wrap gap-2 mt-2">
-                                <button id="convertFileExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as JSON</button>
-                                <button id="convertFileExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as CSV</button>
-                                <button id="convertFileExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as GIFT</button>
-                                <button id="convertFileExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-sm">Export as TXT</button>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="convertFileExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
+                                <button id="convertFileExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
+                                <button id="convertFileExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
+                                <button id="convertFileExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
                             </div>
                         </div>
                     </div>
@@ -1090,48 +1080,48 @@
                         Hold <kbd class="bg-gray-100 border rounded px-1">Ctrl</kbd>/<kbd class="bg-gray-100 border rounded px-1">Cmd</kbd>
                         to select several files at once.
                     </p>
-                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
+                    <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-2">
                         <p>▸ Select multiple .json files at once using Ctrl/Cmd+click or drag-and-drop.</p>
                         <p>▸ A summary shows question counts per source file after merging.</p>
                         <p>▸ Duplicate questions are not automatically removed — review before use.</p>
-                        <p>▸ Merged file can be loaded directly into Question Manager or Test Generator.</p>
+                        <p>▸ Merged file can be loaded directly into Manage a Bank or Design a Test.</p>
                     </div>
                 </div>
-                <section class="mb-8 p-4 border border-gray-200 rounded surface">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Input</h3>
-                            <div class="mb-4">
-                                <label for="mergerFileInput" class="block text-sm font-medium text-gray-700 mb-2">Select JSON Files:</label>
-                                <div class="drop-zone">
-                                    <input type="file" id="mergerFileInput" accept=".json" multiple class="hidden">
-                                    <p class="text-sm text-gray-600">Drag & drop files or click to browse (hold Ctrl/Cmd for multiple)</p>
-                                </div>
+                <section class="mb-6 p-4 border border-gray-200 rounded surface">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="flex flex-col">
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
+                            <label for="mergerFileInput" class="block text-sm font-medium mb-2" style="color:var(--text);">Select JSON Files:</label>
+                            <div class="drop-zone mb-4">
+                                <input type="file" id="mergerFileInput" accept=".json" multiple class="hidden">
+                                <p class="text-sm text-gray-600">Drag & drop files or click to browse (hold Ctrl/Cmd for multiple)</p>
                             </div>
-                            <div class="mb-4 flex gap-2">
-                                <button id="addMergerFilesBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded flex-1">Merge</button>
-                                <button id="clearMergerBtn" class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded flex-1">Clear</button>
+                            <div class="flex gap-2 mb-4">
+                                <button id="addMergerFilesBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium flex-1">Merge</button>
+                                <button id="clearMergerBtn"    class="bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded text-sm font-medium flex-1">Clear</button>
                             </div>
-                            <div id="mergerSummary" class="mb-4 p-4 bg-gray-50 border border-gray-300 rounded">
-                                <h3 class="text-lg font-semibold mb-2">Summary:</h3>
-                                <p class="text-sm text-gray-600">No files loaded yet. Click "Merge" to start.</p>
+                            <div id="mergerSummary" class="text-sm" style="color:var(--text-muted);">
+                                <p class="font-semibold mb-1 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>Summary</p>
+                                <p>No files loaded yet. Click "Merge" to start.</p>
                             </div>
                         </div>
-                        <div class="output-container">
-                            <h3 class="text-base font-semibold mb-3" style="color:var(--text);">Output</h3>
-                            <div class="mb-3 flex items-center gap-2">
+                        <div class="flex flex-col">
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
+                            <div class="mb-2 flex items-center gap-2">
                                 <label for="mergerOutputFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="mergerOutputFilename" placeholder="merged" class="flex-1 rounded border text-sm px-2 py-1.5">
                             </div>
-                            <div id="mergerMissingCorrectWarning" class="mb-4 text-sm font-medium text-red-600 hidden"></div>
+                            <div id="mergerMissingCorrectWarning" class="mb-3 text-sm font-medium text-red-600 hidden"></div>
                             <div class="flex gap-2 mb-2">
-                                <button id="mergerJumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
+                                <button id="mergerJumpToTop"    class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
                                 <button id="mergerJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                             </div>
-                            <div id="mergerOutputContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                            <div id="mergerOutputContainer" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3">
                                 <pre class="text-xs"><code class="language-json" id="mergerOutput"></code></pre>
                             </div>
-                            <button id="downloadMergedBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-2 rounded w-full">Download JSON</button>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="downloadMergedBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Download JSON</button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1177,12 +1167,12 @@
         <ol class="text-sm space-y-2 mb-6 list-decimal list-inside" style="color:var(--text-muted);">
             <li><strong style="color:var(--text);">Write Questions</strong> — type questions one by one using the form, or paste plain numbered text. Your questions are saved automatically and can be exported as JSON, CSV, GIFT, or TXT.</li>
             <li><strong style="color:var(--text);">Manage a Bank</strong> — load an existing JSON question bank, then search, filter, sort, bulk-rename, or bulk-delete questions in the Edit Bank panel. Export the updated bank in any format.</li>
-            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category (or use <strong style="color:var(--text);">Auto-Select by Type</strong>), then click <strong style="color:var(--text);">Generate Test</strong>. Export as TXT, PDF, DOCX, or JSON.</li>
+            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category, then click <strong style="color:var(--text);">Construct Test</strong>. Export as TXT, PDF, DOCX, or JSON.</li>
             <li><strong style="color:var(--text);">Convert a File</strong> — upload any supported file (JSON, CSV, GIFT TXT, plain TXT) and export it directly to any other format.</li>
             <li><strong style="color:var(--text);">Merge JSONs</strong> — combine multiple Coeus JSON banks into one unified file.</li>
         </ol>
 
-        <div class="rounded-lg p-4 mb-6" style="background:#fef3c7;border:1px solid #f59e0b;">
+        <div class="rounded-lg p-4 mb-6" style="background:#fef3c7;border:1px solid #f59e0b;text-align:center;">
             <p class="text-sm font-semibold mb-1" style="color:#92400e;">⚠️ Disclaimer</p>
             <p class="text-sm" style="color:#78350f;">Coeus Test Writer is provided as-is. The developer is not liable for errors, omissions, or inaccuracies in generated output. Always review exported tests thoroughly before distribution.</p>
         </div>

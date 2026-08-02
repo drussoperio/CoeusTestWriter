@@ -19,10 +19,73 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.4.7';
+const APP_VERSION = '2.6.5';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.5.9': [
+        'Changed: Unused Questions section now always shown after test generation; displays "No unused questions" when all were used',
+        'Fixed: Breakdown by Category phantom empty last column removed',
+        'Fixed: All Generation Report tables now use strictly equal column widths',
+    ],
+    '2.5.8': [
+        'Fixed: Unused Questions section now hidden on page load and when no bank is loaded',
+        'Fixed: Clear Bank and Clear All now clear and hide the Unused Questions section',
+        'Fixed: Generation Report tables now use fixed equal column widths',
+    ],
+    '2.5.7': [
+        'Fixed: Clear All now also clears Smart Select inputs and resets shortfall state',
+        'Fixed: Shortfall table no longer persists after generating a new test with no shortfall',
+        'Changed: Renamed "Smart Select Shortfall" to "Shortfall"; now unified table covering both generation-time and Smart Select shortfalls',
+        'Added: "No shortfall detected" message shown when there are no shortfalls',
+        'Fixed: Unused Questions table columns now use fixed equal widths',
+    ],
+    '2.5.6': [
+        'Fixed: Unused Questions section no longer shows placeholder text before a test is generated',
+        'Added: Smart Select shortfall now tracked and shown in Generation Report as a red table after Breakdown by Category',
+        'Changed: Smart Select shortfall is included in the Summary shortfall count and Requested count',
+        'Changed: Shortfall column removed from Breakdown by Category table',
+        'Changed: Smart Select shortfall resets on every Smart Select re-run',
+    ],
+    '2.5.5': [
+        'Changed: Unused Questions section moved inside Generation Report, after Breakdown by Category',
+        'Added: Icons to Summary and Breakdown by Category subheadings in Generation Report',
+        'Changed: Generation Report tables (Breakdown by Category, Unused Questions) now use color-coded styling',
+    ],
+    '2.5.4': [
+        'Changed: Design a Test — increased gap between Answer Distribution Tolerance row and Difficulty Ratio row',
+        'Changed: Unused Questions section padding reduced',
+        'Removed: "Unused Questions: N" header from Unused Questions section',
+        'Added: Unused Questions now displays a table (Category, MCQ, T/F, Matching, Total) with a Total row at the bottom',
+        'Fixed: Generation Report — Summary and Breakdown by Category subheadings are now smaller than the section heading',
+    ],
+    '2.5.3': [
+        'Fixed: Write Questions > Add Questions — form inputs, matching pairs, and Choice E now fully clear after submitting a question',
+        'Added: Upload (↑) and Download (↓) icons added to all Input and Output section headings',
+        'Fixed: Design a Test — loading a bank no longer populates the question list in Manage a Bank',
+    ],
+    '2.5.2': [
+        'Added: Icons next to Edit Bank, Plan a Test, Unused Questions, Generation Report, and Summary (Merge JSONs) section headings',
+        'Fixed: CSV export and import now correctly handles a 5th answer choice (Option 5)',
+        'Fixed: Write Questions > Paste Text — Delete All Questions now also clears Subject, Category, Difficulty, and text input fields',
+    ],
+    '2.5.1': [
+        'Fixed: Write Questions preview buttons (JSON/CSV/GIFT/TXT) now work correctly — buttons had duplicate IDs shared with Convert a File tab',
+        'Fixed: Convert a File export buttons no longer switch the active preview tab or re-render the preview',
+    ],
+    '2.5.0': [
+        'Changed: Write Questions > Add Questions — radio buttons removed from MCQ choices',
+        'Changed: First choice is always the correct answer (✓ icon + "Correct answer" placeholder); remaining choices are always wrong (✗ icon + "Wrong answer" placeholder)',
+    ],
+    '2.4.9': [
+        'Changed: Convert a File and Merge JSONs tabs normalized to match Write Questions layout (gap-6, text-sm font-medium buttons, var(--text) labels, consistent output padding and margins)',
+        'Changed: Merge JSONs summary box removed; summary renders flat like other tabs',
+        'Changed: Download JSON button in Merge JSONs matches export button style',
+    ],
+    '2.4.8': [
+        'Changed: Randomize Questions and Answers checkbox removed; randomization is now always applied automatically',
+        'Removed: Show/Hide Preview button in the Unused Questions section',
+    ],
     '2.4.7': [
         'Fixed: "No categories available" placeholder now always renders on page load when no test bank is present',
     ],
@@ -129,15 +192,17 @@ let lastUnusedQuestions = [];
 let lastSelectedCategories = {};
 let excludedQuestions = [];
 let generationStats = {};
+let lastSmartSelectShortfalls = null; // { mcTarget, tfTarget, mtTarget, mcShortfall, tfShortfall, mtShortfall }
 let testVersionIndex = 0;
 let questionManagerState = {
     searchText: '',
-    sortBy: 'category',
+    sortBy: 'asLoaded',
     filterBy: 'all',
     selectedQuestions: new Set(),
     editingIndex: null,
     editFormData: {},
-    collapsedCategories: {}
+    collapsedCategories: {},
+    compactView: localStorage.getItem('coeus-compact-view') === 'true'
 };
 const VERSION_LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 let giftResults = '';
@@ -1391,10 +1456,28 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!fileInput || !fileInput.files || !fileInput.files.length) {
                 showToast('⚠️ Please select a file.', 'warning'); return;
             }
-            setCfPreviewActive(fmt);
-            runConvert(fmt);
-            // Defer download until after reader.onload fires
+            // If we already have stored questions, just download in the requested format without changing the preview
+            if (cfStoredQuestions) {
+                let str;
+                const fmtKey = fmt === 'text' ? 'txt' : fmt;
+                if (fmt === 'json')       str = JSON.stringify(cfStoredQuestions, null, 2);
+                else if (fmt === 'csv')   str = convertJsonToCsv(cfStoredQuestions);
+                else if (fmt === 'gift')  str = questionsToGift(cfStoredQuestions);
+                else                      str = questionsToPlainText(cfStoredQuestions);
+                const extMap = { json: '.json', csv: '.csv', gift: '_gift.txt', txt: '.txt' };
+                const ext = extMap[fmtKey] || '.txt';
+                const fname = (filenameIn?.value.trim() || 'converted') + ext;
+                const mime = ext === '.json' ? 'application/json' : 'text/plain';
+                const blob = new Blob([str], { type: mime });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = fname; a.click();
+                URL.revokeObjectURL(url);
+                showToast('✅ File downloaded', 'success');
+                return;
+            }
+            // No stored result yet — convert first then download
             convertFilePendingDownload = fmt;
+            runConvert(fmt === 'text' ? 'text' : fmt);
         }
         function downloadConvertResult() {
             if (!lastResult) return;
@@ -1484,17 +1567,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (type === 'multiple_choice') {
                     const rows = document.querySelectorAll('#wqChoicesContainer .wq-choice-input:not(.hidden)');
-                    const choices = [], radios = [];
+                    const choices = [];
                     rows.forEach(r => {
                         const inp = r.querySelector('input[type="text"]');
-                        const rad = r.querySelector('input[type="radio"]');
-                        if (inp && inp.value.trim()) { choices.push(inp.value.trim()); radios.push(rad); }
+                        if (inp && inp.value.trim()) choices.push(inp.value.trim());
                     });
-                    const checkedIdx = radios.findIndex(r => r.checked);
                     if (choices.length < 2) { showToast('⚠️ At least 2 choices required.', 'warning'); return; }
-                    if (checkedIdx < 0) { showToast('⚠️ Please mark a correct answer.', 'warning'); return; }
                     q.choices = choices;
-                    q.correct = choices[checkedIdx];
+                    q.correct = choices[0];
                 } else if (type === 'true_false') {
                     const checked = document.querySelector('input[name="wqTfCorrect"]:checked');
                     if (!checked) { showToast('⚠️ Please select True or False.', 'warning'); return; }
@@ -1522,6 +1602,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 refreshWqPreview();
                 form.reset();
                 updateWqFormSections();
+                // Clear dynamically-added matching pairs and reset choice E
+                const colA = document.getElementById('wqMatchingColumnA');
+                const colB = document.getElementById('wqMatchingColumnB');
+                if (colA) colA.innerHTML = '';
+                if (colB) colB.innerHTML = '';
+                const choiceERowEl = document.getElementById('wqChoiceERow');
+                const choiceEBtnEl = document.getElementById('wqToggleChoiceEBtn');
+                if (choiceERowEl) { choiceERowEl.classList.add('hidden'); choiceERowEl.querySelector('input[type="text"]').value = ''; }
+                if (choiceEBtnEl) choiceEBtnEl.textContent = '+ Add Choice E';
                 showToast('✅ Question added.', 'success');
             });
         }
@@ -1660,6 +1749,15 @@ document.addEventListener('DOMContentLoaded', function () {
             saveExamBankToStorage();
             refreshWqPreview();
             showPasteWarning('');
+            // Clear Paste Text input fields
+            const pasteInput = document.getElementById('wqPasteInput');
+            const pasteSubject = document.getElementById('wqPasteSubject');
+            const pasteCategory = document.getElementById('wqPasteCategory');
+            const pasteDifficulty = document.getElementById('wqPasteDifficulty');
+            if (pasteInput) pasteInput.value = '';
+            if (pasteSubject) pasteSubject.value = '';
+            if (pasteCategory) pasteCategory.value = '';
+            if (pasteDifficulty) pasteDifficulty.value = 'unset';
             if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
             const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
             showToast(undoHtml, 'warning', 5000);
@@ -1726,10 +1824,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Unused questions buttons ───────────────────────────────
     function setupUnusedQuestions() {
         const exportBtn = document.getElementById('exportUnusedJson');
-        const toggleBtn = document.getElementById('toggleUnusedPreview');
 
         if (exportBtn) exportBtn.addEventListener('click', exportUnusedAsJson);
-        if (toggleBtn) toggleBtn.addEventListener('click', toggleUnusedPreview);
     }
 
     // ── Exclusion buttons ──────────────────────────────────────
@@ -1958,6 +2054,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (testPreviewEl) testPreviewEl.innerHTML = '';
             const reportDiv = document.getElementById('generationReport');
             if (reportDiv) reportDiv.innerHTML = '';
+            lastUnusedQuestions = [];
+            const unusedSection = document.getElementById('unusedQuestionsSection');
+            if (unusedSection) unusedSection.classList.add('hidden');
+            const unusedSummaryEl = document.getElementById('unusedSummary');
+            if (unusedSummaryEl) unusedSummaryEl.innerHTML = '';
+            const exportUnusedBtn = document.getElementById('exportUnusedJson');
+            if (exportUnusedBtn) exportUnusedBtn.disabled = true;
             updateCategoryInputs();
             renderSidebarQuestions();
         });
@@ -2028,29 +2131,40 @@ function renderQuestionManagerList() {
     }
 
     // Step 3: Apply sorting
+    const _diffOrder = { easy: 0, medium: 1, hard: 2, unset: 3 };
     switch (questionManagerState.sortBy) {
-        case 'type':
-            filtered.sort((a, b) => {
-                const typeOrder = { 'multiple_choice': 0, 'true_false': 1 };
-                const typeA = typeOrder[a.type] ?? 2;
-                const typeB = typeOrder[b.type] ?? 2;
-                return typeA - typeB || (a.category || '').localeCompare(b.category || '');
-            });
+        case 'diff-asc':
+            filtered.sort((a, b) =>
+                (_diffOrder[a.difficulty] ?? 3) - (_diffOrder[b.difficulty] ?? 3) ||
+                (a.category || '').localeCompare(b.category || '')
+            );
+            break;
+        case 'diff-desc':
+            filtered.sort((a, b) =>
+                (_diffOrder[b.difficulty] ?? 3) - (_diffOrder[a.difficulty] ?? 3) ||
+                (a.category || '').localeCompare(b.category || '')
+            );
+            break;
+        case 'cat-desc':
+            filtered.sort((a, b) => (b.category || '').localeCompare(a.category || ''));
             break;
         case 'asLoaded':
             break;
+        case 'cat-asc':
         case 'category':
         default:
             filtered.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
             break;
     }
 
-    // Step 4: Group by category
+    // Step 4: Group by category (preserve filtered order for category keys)
     const grouped = {};
+    const groupOrder = [];
     filtered.forEach((q, idx) => {
         const cat = q.category || 'Uncategorized';
         if (!grouped[cat]) {
             grouped[cat] = [];
+            groupOrder.push(cat);
         }
         grouped[cat].push({ question: q, filteredIdx: idx });
     });
@@ -2105,17 +2219,18 @@ function renderQuestionManagerList() {
                     typeColor = '#f59e0b';
                 }
 
+                const compact = questionManagerState.compactView;
                 html += `
-                    <div class="q-card ${isSelected ? 'ring-2 ring-blue-500' : ''}" style="cursor: pointer; margin-left: 12px; margin-right: 12px;">
+                    <div class="q-card ${isSelected ? 'ring-2 ring-blue-500' : ''}" style="cursor: pointer; margin-left: 12px; margin-right: 12px; ${compact ? 'padding: 4px 8px !important;' : ''}">
                         <div class="flex items-start gap-2">
                             <input type="checkbox" class="qm-checkbox mt-1" data-uid="${q.__uid}" ${isSelected ? 'checked' : ''} style="cursor: pointer;">
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <div class="flex items-center gap-2 ${compact ? '' : 'mb-1'} flex-wrap">
                                     <span class="text-xs px-2 py-0.5 rounded" style="background-color: ${typeColor}40; color: ${typeColor}; font-weight: 600;">${typeLabel}</span>
                                     ${difficultyBadge(q.difficulty)}
                                 </div>
-                                <p class="text-xs" style="color: var(--text); line-height: 1.4; word-break: break-word;">${preview}</p>
-                                ${q.correct ? `<p class="text-xs mt-1" style="color: var(--text-muted);">✓ ${q.correct}</p>` : '<p class="text-xs mt-1 text-red-500">⚠️ No correct answer</p>'}
+                                <p class="${compact ? 'text-xs' : 'text-xs mt-0.5'}" style="color: var(--text); line-height: 1.4; word-break: break-word;">${preview}</p>
+                                ${compact ? '' : (q.correct ? `<p class="text-xs mt-1" style="color: var(--text-muted);">✓ ${q.correct}</p>` : '<p class="text-xs mt-1 text-red-500">⚠️ No correct answer</p>')}
                             </div>
                             <button class="qm-edit-btn text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-700 text-white font-medium" data-filtered-idx="${filteredIdx}" style="white-space: nowrap;">Edit</button>
                         </div>
@@ -2131,8 +2246,30 @@ function renderQuestionManagerList() {
                     choices: q.choices ? [...q.choices] : ['', '', '', '']
                 };
 
+                // Build choices array: first = correct, rest = wrong
+                const allChoices = editData.type === 'multiple_choice' ? (() => {
+                    const raw = editData.choices ? [...editData.choices] : ['', '', '', ''];
+                    // Ensure 4 slots minimum
+                    while (raw.length < 4) raw.push('');
+                    // Move correct answer to index 0
+                    const correctVal = editData.correct || '';
+                    const correctIdx = raw.indexOf(correctVal);
+                    if (correctIdx > 0) {
+                        raw.splice(correctIdx, 1);
+                        raw.unshift(correctVal);
+                    } else if (correctIdx === -1 && correctVal) {
+                        raw.unshift(correctVal);
+                        if (raw.length > 5) raw.length = 5;
+                    }
+                    return raw;
+                })() : [];
+                const hasChoiceE = allChoices.length >= 5 && allChoices[4] !== undefined && allChoices[4] !== '';
+
+                const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
+                const xIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+
                 html += `
-                    <div class="q-card border-2 border-blue-500 p-4 bg-blue-50" style="margin-left: 12px; margin-right: 12px;">
+                    <div class="q-card p-4" style="margin-left: 12px; margin-right: 12px; box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px rgba(59,130,246,0.15); border: none;">
                         <h4 class="font-semibold mb-3" style="color: var(--text);">Edit Question</h4>
                         
                         <div class="space-y-3">
@@ -2159,23 +2296,27 @@ function renderQuestionManagerList() {
                             ${editData.type === 'multiple_choice' ? `
                                 <div>
                                     <label class="block text-sm font-medium mb-2" style="color: var(--text);">Choices</label>
-                                    <div class="space-y-2">
-                                        ${(editData.choices || ['', '', '', '']).map((choice, i) => `
+                                    <div class="space-y-2" id="qm-edit-choices-${filteredIdx}">
+                                        ${allChoices.slice(0, 4).map((choice, i) => `
                                             <div class="flex items-center gap-2">
-                                                <input type="text" class="qm-edit-choice flex-1 rounded border text-sm px-2 py-1" 
+                                                ${i === 0 ? checkIcon : xIcon}
+                                                <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5" 
                                                     value="${(choice || '').replace(/"/g, '&quot;')}" 
-                                                    data-filtered-idx="${filteredIdx}" data-choice-idx="${i}" placeholder="Choice ${String.fromCharCode(65 + i)}">
-                                                <label class="flex items-center text-sm whitespace-nowrap">
-                                                    <input type="radio" name="qm-edit-correct-${filteredIdx}" 
-                                                        class="qm-edit-correct-radio mr-1" 
-                                                        data-filtered-idx="${filteredIdx}" 
-                                                        value="${i}" 
-                                                        ${editData.correct === (choice || '') ? 'checked' : ''}>
-                                                    Correct
-                                                </label>
+                                                    data-filtered-idx="${filteredIdx}" data-choice-idx="${i}"
+                                                    placeholder="${i === 0 ? 'Correct answer' : 'Wrong answer'}"
+                                                    style="border:none;">
                                             </div>
                                         `).join('')}
+                                        <div class="flex items-center gap-2 qm-edit-choice-e-row" id="qm-edit-choice-e-${filteredIdx}" style="${hasChoiceE ? '' : 'display:none;'}">
+                                            ${xIcon}
+                                            <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5"
+                                                value="${(allChoices[4] || '').replace(/"/g, '&quot;')}"
+                                                data-filtered-idx="${filteredIdx}" data-choice-idx="4"
+                                                placeholder="Wrong answer"
+                                                style="border:none;">
+                                        </div>
                                     </div>
+                                    <button type="button" class="qm-toggle-choice-e-btn mt-2 text-xs text-blue-500 hover:underline" data-filtered-idx="${filteredIdx}">${hasChoiceE ? '− Remove Choice E' : '+ Add Choice E'}</button>
                                 </div>
                             ` : editData.type === 'matching' ? `
                                 <div>
@@ -2230,6 +2371,22 @@ function renderQuestionManagerList() {
 
     html += '</div>';
     container.innerHTML = html;
+
+    // Sync compact toggle icon
+    const _compactBtn = document.getElementById('qm-compact-toggle');
+    if (_compactBtn) _compactBtn.textContent = questionManagerState.compactView ? '☰' : '▤';
+
+    // Force select values (innerHTML sets 'selected' attr but browser may ignore for selects)
+    document.querySelectorAll('.qm-edit-difficulty').forEach(sel => {
+        const idx = parseInt(sel.dataset.filteredIdx);
+        const q = filtered[idx];
+        sel.value = (questionManagerState.editFormData[idx]?.difficulty) || q?.difficulty || 'unset';
+    });
+    document.querySelectorAll('.qm-edit-type').forEach(sel => {
+        const idx = parseInt(sel.dataset.filteredIdx);
+        const q = filtered[idx];
+        sel.value = (questionManagerState.editFormData[idx]?.type) || q?.type || 'multiple_choice';
+    });
 
     // Attach event listeners
     attachQuestionManagerEventListeners(filtered);
@@ -2575,15 +2732,31 @@ function updateQuestionManagerCategories() {
     if (filterSelect) {
         const categories = [...new Set(questionBank.map(q => q.category))].sort();
         const currentValue = filterSelect.value;
-        
-        // Preserve existing options for 'all', 'mcq', 'tf', and 'matching'
+
+        // Count per type for static options
+        const total = questionBank.length;
+        const mcqCount = questionBank.filter(q => q.type === 'multiple_choice').length;
+        const tfCount  = questionBank.filter(q => q.type === 'true_false').length;
+        const mtCount  = questionBank.filter(q => q.type === 'matching').length;
+        const unsetCount  = questionBank.filter(q => !q.difficulty || q.difficulty === 'unset').length;
+        const easyCount   = questionBank.filter(q => q.difficulty === 'easy').length;
+        const mediumCount = questionBank.filter(q => q.difficulty === 'medium').length;
+        const hardCount   = questionBank.filter(q => q.difficulty === 'hard').length;
+
         const optionsHtml = `
-            <option value="all">All Questions</option>
-            <option value="mcq">Multiple Choice Only</option>
-            <option value="tf">True/False Only</option>
-            <option value="matching">Matching Only</option>
-        ` + categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-        
+            <option value="all">All Questions (${total})</option>
+            <option value="mcq">Multiple Choice Only (${mcqCount})</option>
+            <option value="tf">True/False Only (${tfCount})</option>
+            <option value="matching">Matching Only (${mtCount})</option>
+            <option value="diff-unset">Difficulty: Unset (${unsetCount})</option>
+            <option value="diff-easy">Difficulty: Easy (${easyCount})</option>
+            <option value="diff-medium">Difficulty: Medium (${mediumCount})</option>
+            <option value="diff-hard">Difficulty: Hard (${hardCount})</option>
+        ` + categories.map(cat => {
+            const n = questionBank.filter(q => q.category === cat).length;
+            return `<option value="${cat}">${cat} (${n})</option>`;
+        }).join('');
+
         filterSelect.innerHTML = optionsHtml;
         filterSelect.value = currentValue;
     }
@@ -2626,6 +2799,18 @@ function initializeQuestionManager() {
     if (filterSelect) {
         filterSelect.addEventListener('change', (e) => {
             questionManagerState.filterBy = e.target.value;
+            renderQuestionManagerList();
+        });
+    }
+
+    // Compact/Comfortable view toggle
+    const compactBtn = document.getElementById('qm-compact-toggle');
+    if (compactBtn) {
+        compactBtn.textContent = questionManagerState.compactView ? '☰' : '▤';
+        compactBtn.addEventListener('click', () => {
+            questionManagerState.compactView = !questionManagerState.compactView;
+            localStorage.setItem('coeus-compact-view', questionManagerState.compactView);
+            compactBtn.textContent = questionManagerState.compactView ? '☰' : '▤';
             renderQuestionManagerList();
         });
     }
@@ -3179,7 +3364,6 @@ function loadFile(fileInput, isTxt, bankType) {
                 updateStatusBank(file.name.replace(/\.[^/.]+$/, ''), testBank.length);
                 const outputFilenameInput = document.getElementById('outputFilename');
                 if (outputFilenameInput) outputFilenameInput.value = file.name.replace(/\.[^/.]+$/, '');
-                renderSidebarQuestions();
                 showToast(`✅ Loaded ${testBank.length} questions from "${file.name}"`, 'success');
             } else {
                 questionBank = normalizedData;
@@ -3677,6 +3861,7 @@ function generateTest() {
     
     // Track what was requested per category
     lastSelectedCategories = {};
+    generationStats = {}; // reset so stale shortfall from prior run is cleared
 
     categories.forEach(cat => {
         const safeCat = safeIdFromCategory(cat);
@@ -4038,55 +4223,83 @@ function displayTest(questions) {
 function displayUnusedSummary() {
     const summaryDiv = document.getElementById('unusedSummary');
     const exportBtn = document.getElementById('exportUnusedJson');
-    const toggleBtn = document.getElementById('toggleUnusedPreview');
-    
+    const section = document.getElementById('unusedQuestionsSection');
+
     if (!lastUnusedQuestions || lastUnusedQuestions.length === 0) {
-        summaryDiv.innerHTML = `
-            <p class="text-sm text-green-600 font-semibold">✅ All questions from selected categories were used!</p>
-        `;
+        if (section) section.classList.remove('hidden');
+        summaryDiv.innerHTML = `<p class="text-sm text-green-600 font-semibold">✅ No unused questions.</p>`;
         exportBtn.disabled = true;
-        toggleBtn.disabled = true;
         return;
     }
+
+    if (section) section.classList.remove('hidden');
 
     // Count by category and type
     const unusedByCategory = {};
     lastUnusedQuestions.forEach(q => {
         if (!unusedByCategory[q.category]) {
-            unusedByCategory[q.category] = { mc: 0, tf: 0, total: 0 };
+            unusedByCategory[q.category] = { mc: 0, tf: 0, mt: 0, total: 0 };
         }
         if (q.type === 'multiple_choice') unusedByCategory[q.category].mc++;
-        if (q.type === 'true_false') unusedByCategory[q.category].tf++;
+        else if (q.type === 'true_false') unusedByCategory[q.category].tf++;
+        else if (q.type === 'matching') unusedByCategory[q.category].mt++;
         unusedByCategory[q.category].total++;
     });
 
-    // Build summary HTML
-    let summaryHtml = `
-        <h3 class="text-lg font-semibold mb-2 text-orange-700">Unused Questions: ${lastUnusedQuestions.length}</h3>
-        <div class="text-sm">
-            <p class="mb-2 text-gray-700">These questions were not selected for the current test:</p>
-            <ul class="list-disc list-inside ml-4 space-y-1">
-    `;
-
-    Object.keys(unusedByCategory).forEach(cat => {
-        const stats = unusedByCategory[cat];
-        summaryHtml += `
-            <li><strong>${cat}:</strong> ${stats.total} questions (MCQ: ${stats.mc}, T/F: ${stats.tf})</li>
-        `;
+    const cats = Object.keys(unusedByCategory);
+    let totalMc = 0, totalTf = 0, totalMt = 0, grandTotal = 0;
+    cats.forEach(cat => {
+        totalMc += unusedByCategory[cat].mc;
+        totalTf += unusedByCategory[cat].tf;
+        totalMt += unusedByCategory[cat].mt;
+        grandTotal += unusedByCategory[cat].total;
     });
 
-    summaryHtml += `
-            </ul>
+    let rows = cats.map((cat, i) => {
+        const s = unusedByCategory[cat];
+        const bg = i % 2 === 0 ? 'background:#fff7ed;' : 'background:#ffedd5;';
+        return `<tr style="${bg}">
+            <td class="px-3 py-1.5 border border-orange-100 text-left">${cat}</td>
+            <td class="px-3 py-1.5 border border-orange-100 text-center">${s.mc || '—'}</td>
+            <td class="px-3 py-1.5 border border-orange-100 text-center">${s.tf || '—'}</td>
+            <td class="px-3 py-1.5 border border-orange-100 text-center">${s.mt || '—'}</td>
+            <td class="px-3 py-1.5 border border-orange-100 text-center font-semibold text-orange-800">${s.total}</td>
+        </tr>`;
+    }).join('');
+
+    rows += `<tr style="background:#fed7aa;" class="font-semibold">
+        <td class="px-3 py-1.5 border border-orange-200 text-left text-orange-900">Total</td>
+        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${totalMc || '—'}</td>
+        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${totalTf || '—'}</td>
+        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${totalMt || '—'}</td>
+        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${grandTotal}</td>
+    </tr>`;
+
+    summaryDiv.innerHTML = `
+        <div class="overflow-x-auto">
+            <table class="w-full table-fixed border border-orange-200 text-sm">
+                <colgroup>
+                    <col style="width:20%">
+                    <col style="width:20%">
+                    <col style="width:20%">
+                    <col style="width:20%">
+                    <col style="width:20%">
+                </colgroup>
+                <thead style="background:#fff7ed;">
+                    <tr>
+                        <th class="px-3 py-1.5 border border-orange-200 text-left text-orange-900">Category</th>
+                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">MCQ</th>
+                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">T/F</th>
+                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">Matching</th>
+                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">Total</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
         </div>
     `;
 
-    summaryDiv.innerHTML = summaryHtml;
-    
-    // Enable buttons
     exportBtn.disabled = false;
-    toggleBtn.disabled = false;
-
-    // Update preview
     updateUnusedPreview();
 }
 
@@ -4108,16 +4321,6 @@ function updateUnusedPreview() {
     }
 
     previewContent.textContent = previewText;
-}
-
-// Toggle unused questions preview visibility
-function toggleUnusedPreview() {
-    const previewDiv = document.getElementById('unusedPreview');
-    if (previewDiv.classList.contains('hidden')) {
-        previewDiv.classList.remove('hidden');
-    } else {
-        previewDiv.classList.add('hidden');
-    }
 }
 
 // Export unused questions as JSON
@@ -4296,71 +4499,59 @@ function displayGenerationReport() {
         return;
     }
 
-    // Calculate totals
+    // Calculate totals (generation-time shortfall only)
     let totalRequested = 0;
     let totalGenerated = 0;
-    let totalShortfall = 0;
-    let hasShortfall = false;
+    let genShortfall = 0;
 
     Object.values(generationStats).forEach(stat => {
         totalRequested += stat.mcRequested + stat.tfRequested + stat.mtRequested;
         totalGenerated += stat.mcGenerated + stat.tfGenerated + stat.mtGenerated;
-        totalShortfall += stat.mcShortfall + stat.tfShortfall + stat.mtShortfall;
-        if (stat.mcShortfall > 0 || stat.tfShortfall > 0 || stat.mtShortfall > 0) {
-            hasShortfall = true;
-        }
+        genShortfall  += stat.mcShortfall  + stat.tfShortfall  + stat.mtShortfall;
     });
 
-    // Build report HTML
+    // Smart Select shortfall (logged before generateTest ran)
+    const ssShortfall = lastSmartSelectShortfalls
+        ? lastSmartSelectShortfalls.mcShortfall + lastSmartSelectShortfalls.tfShortfall + lastSmartSelectShortfalls.mtShortfall
+        : 0;
+
+    const totalShortfall = genShortfall + ssShortfall;
+
+    // Build report HTML — Summary
     let reportHtml = `
         <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">Summary</h3>
+            <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>Summary</h3>
             <div class="grid grid-cols-3 gap-4 text-center">
-                <div class="p-3 bg-white rounded border">
-                    <div class="text-2xl font-bold text-blue-600">${totalRequested}</div>
-                    <div class="text-xs text-gray-600">Requested</div>
+                <div class="p-3 bg-blue-50 border border-blue-200 rounded">
+                    <div class="text-2xl font-bold text-blue-600">${totalRequested + ssShortfall}</div>
+                    <div class="text-xs text-blue-700">Requested</div>
                 </div>
-                <div class="p-3 bg-white rounded border">
+                <div class="p-3 bg-green-50 border border-green-200 rounded">
                     <div class="text-2xl font-bold text-green-600">${totalGenerated}</div>
-                    <div class="text-xs text-gray-600">Generated</div>
+                    <div class="text-xs text-green-700">Generated</div>
                 </div>
-                <div class="p-3 bg-white rounded border">
+                <div class="p-3 ${totalShortfall > 0 ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'} rounded">
                     <div class="text-2xl font-bold ${totalShortfall > 0 ? 'text-red-600' : 'text-gray-400'}">${totalShortfall}</div>
-                    <div class="text-xs text-gray-600">Shortfall</div>
+                    <div class="text-xs ${totalShortfall > 0 ? 'text-red-700' : 'text-gray-500'}">Shortfall</div>
                 </div>
             </div>
         </div>
     `;
 
-    if (hasShortfall) {
-        reportHtml += `
-            <div class="mb-4 p-3 bg-red-50 border border-red-300 rounded">
-                <h4 class="font-semibold text-red-800 mb-2">⚠️ Shortfall Detected</h4>
-                <p class="text-sm text-red-700 mb-2">
-                    Not enough questions available after exclusions. You need to manually select 
-                    <strong>${totalShortfall} question(s)</strong> from your excluded bank to reach your target.
-                </p>
-                <p class="text-sm text-red-700">
-                    Use the breakdown below to maintain category distribution.
-                </p>
-            </div>
-        `;
-    }
-
-    // Detailed breakdown by category
+    // Detailed breakdown by category (no shortfall column)
     reportHtml += `
         <div class="mb-4">
-            <h3 class="text-lg font-semibold mb-2">Breakdown by Category</h3>
+            <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>Breakdown by Category</h3>
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-300 text-sm">
-                    <thead class="bg-gray-100">
+                <table class="w-full table-fixed border border-indigo-200 text-sm">
+                    <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+                    <thead style="background:#e0e7ff;">
                         <tr>
-                            <th class="px-4 py-2 border text-left">Category</th>
-                            <th class="px-3 py-2 border text-center">Type</th>
-                            <th class="px-3 py-2 border text-center">Requested</th>
-                            <th class="px-3 py-2 border text-center">Available</th>
-                            <th class="px-3 py-2 border text-center">Generated</th>
-                            <th class="px-3 py-2 border text-center">Shortfall</th>
+                            <th class="px-4 py-2 border border-indigo-200 text-left text-indigo-900">Category</th>
+                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Type</th>
+                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Requested</th>
+                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Available</th>
+                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Generated</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -4369,62 +4560,54 @@ function displayGenerationReport() {
     Object.keys(generationStats).forEach(cat => {
         const stat = generationStats[cat];
         const hasMcq = stat.mcRequested > 0;
-        const hasTf = stat.tfRequested > 0;
-        const hasMt = stat.mtRequested > 0;
+        const hasTf  = stat.tfRequested  > 0;
+        const hasMt  = stat.mtRequested  > 0;
         const rowSpan = (hasMcq ? 1 : 0) + (hasTf ? 1 : 0) + (hasMt ? 1 : 0);
 
+        const rowBg    = 'background:#f5f3ff;';
+        const rowBgAlt = 'background:#ede9fe;';
+
         if (hasMcq) {
-            const mcShortfallClass = stat.mcShortfall > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
             reportHtml += `
-                <tr class="hover:bg-gray-50">
-                    ${rowSpan > 0 ? `<td class="px-4 py-2 border font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
-                    <td class="px-3 py-2 border text-center">MCQ</td>
-                    <td class="px-3 py-2 border text-center">${stat.mcRequested}</td>
-                    <td class="px-3 py-2 border text-center">${stat.mcAvailable}</td>
-                    <td class="px-3 py-2 border text-center">${stat.mcGenerated}</td>
-                    <td class="px-3 py-2 border text-center ${mcShortfallClass}">${stat.mcShortfall > 0 ? stat.mcShortfall : '—'}</td>
+                <tr style="${rowBg}">
+                    ${rowSpan > 0 ? `<td class="px-4 py-2 border border-indigo-100 font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
+                    <td class="px-3 py-2 border border-indigo-100 text-center font-medium text-indigo-700">MCQ</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mcRequested}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mcAvailable}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center text-green-700 font-semibold">${stat.mcGenerated}</td>
                 </tr>
             `;
         }
-
         if (hasTf) {
-            const tfShortfallClass = stat.tfShortfall > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
             reportHtml += `
-                <tr class="hover:bg-gray-50">
-                    ${!hasMcq && rowSpan > 0 ? `<td class="px-4 py-2 border font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
-                    <td class="px-3 py-2 border text-center">T/F</td>
-                    <td class="px-3 py-2 border text-center">${stat.tfRequested}</td>
-                    <td class="px-3 py-2 border text-center">${stat.tfAvailable}</td>
-                    <td class="px-3 py-2 border text-center">${stat.tfGenerated}</td>
-                    <td class="px-3 py-2 border text-center ${tfShortfallClass}">${stat.tfShortfall > 0 ? stat.tfShortfall : '—'}</td>
+                <tr style="${rowBgAlt}">
+                    ${!hasMcq && rowSpan > 0 ? `<td class="px-4 py-2 border border-indigo-100 font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
+                    <td class="px-3 py-2 border border-indigo-100 text-center font-medium text-indigo-700">T/F</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.tfRequested}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.tfAvailable}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center text-green-700 font-semibold">${stat.tfGenerated}</td>
                 </tr>
             `;
         }
-
         if (hasMt) {
-            const mtShortfallClass = stat.mtShortfall > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
             reportHtml += `
-                <tr class="hover:bg-gray-50">
-                    ${!hasMcq && !hasTf && rowSpan > 0 ? `<td class="px-4 py-2 border font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
-                    <td class="px-3 py-2 border text-center">Matching</td>
-                    <td class="px-3 py-2 border text-center">${stat.mtRequested}</td>
-                    <td class="px-3 py-2 border text-center">${stat.mtAvailable}</td>
-                    <td class="px-3 py-2 border text-center">${stat.mtGenerated}</td>
-                    <td class="px-3 py-2 border text-center ${mtShortfallClass}">${stat.mtShortfall > 0 ? stat.mtShortfall : '—'}</td>
+                <tr style="${rowBg}">
+                    ${!hasMcq && !hasTf && rowSpan > 0 ? `<td class="px-4 py-2 border border-indigo-100 font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
+                    <td class="px-3 py-2 border border-indigo-100 text-center font-medium text-indigo-700">Matching</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mtRequested}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mtAvailable}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center text-green-700 font-semibold">${stat.mtGenerated}</td>
                 </tr>
             `;
         }
-
-        // If nothing was requested, still show (with 0s)
         if (!hasMcq && !hasTf && !hasMt) {
             reportHtml += `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-2 border font-medium">${cat}</td>
-                    <td class="px-3 py-2 border text-center">—</td>
-                    <td class="px-3 py-2 border text-center">0</td>
-                    <td class="px-3 py-2 border text-center">${stat.mcAvailable + stat.tfAvailable + stat.mtAvailable}</td>
-                    <td class="px-3 py-2 border text-center">0</td>
-                    <td class="px-3 py-2 border text-center">—</td>
+                <tr style="${rowBg}">
+                    <td class="px-4 py-2 border border-indigo-100 font-medium">${cat}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">—</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">0</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mcAvailable + stat.tfAvailable + stat.mtAvailable}</td>
+                    <td class="px-3 py-2 border border-indigo-100 text-center">0</td>
                 </tr>
             `;
         }
@@ -4437,95 +4620,174 @@ function displayGenerationReport() {
         </div>
     `;
 
-    // Instructions for handling shortfall
-    if (hasShortfall) {
+    // Unified Shortfall table
+    {
+        // Build per-category generation shortfall rows
+        const catRows = [];
+        Object.keys(generationStats).forEach(cat => {
+            const s = generationStats[cat];
+            if (s.mcShortfall > 0) catRows.push({ source: cat, type: 'MCQ',      requested: s.mcRequested, available: s.mcAvailable, shortfall: s.mcShortfall });
+            if (s.tfShortfall > 0) catRows.push({ source: cat, type: 'T/F',      requested: s.tfRequested, available: s.tfAvailable, shortfall: s.tfShortfall });
+            if (s.mtShortfall > 0) catRows.push({ source: cat, type: 'Matching', requested: s.mtRequested, available: s.mtAvailable, shortfall: s.mtShortfall });
+        });
+
+        // Build SS shortfall rows
+        const ssRows = [];
+        if (lastSmartSelectShortfalls) {
+            const ss = lastSmartSelectShortfalls;
+            if (ss.mcShortfall > 0) ssRows.push({ type: 'MCQ',      target: ss.mcTarget, sf: ss.mcShortfall });
+            if (ss.tfShortfall > 0) ssRows.push({ type: 'T/F',      target: ss.tfTarget, sf: ss.tfShortfall });
+            if (ss.mtShortfall > 0) ssRows.push({ type: 'Matching', target: ss.mtTarget, sf: ss.mtShortfall });
+        }
+
+        const hasAnyShortfall = catRows.length > 0 || ssRows.length > 0;
+
         reportHtml += `
-            <div class="p-3 bg-yellow-50 border border-yellow-300 rounded">
-                <h4 class="font-semibold text-yellow-800 mb-2">📋 How to Complete Your Test:</h4>
-                <ol class="list-decimal list-inside text-sm text-gray-700 space-y-1 ml-2">
-                    <li>Export your current test (${totalGenerated} questions)</li>
-                    <li>Open your excluded questions file</li>
-                    <li>Manually select <strong>${totalShortfall} question(s)</strong> following the shortfall breakdown above</li>
-                    <li>Add them to your exported test file</li>
-                    <li>Or use Manage a Bank to combine them</li>
-                </ol>
-            </div>
+            <div class="mb-4">
+                <h3 class="text-sm font-semibold mb-2 flex items-center gap-1 ${hasAnyShortfall ? 'text-red-700' : ''}" style="${hasAnyShortfall ? '' : 'color:var(--text);'}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                    Shortfall
+                </h3>
         `;
+
+        if (!hasAnyShortfall) {
+            reportHtml += `<p class="text-sm text-green-600 font-medium">✅ No shortfall detected.</p>`;
+        } else {
+            let allRows = '';
+            let rowIdx = 0;
+            let totalRequested2 = 0, totalAvailable2 = 0, totalSF = 0;
+
+            catRows.forEach(r => {
+                const bg = rowIdx++ % 2 === 0 ? '#fff1f2' : '#ffe4e6';
+                totalRequested2 += r.requested; totalAvailable2 += r.available; totalSF += r.shortfall;
+                allRows += `<tr style="background:${bg};">
+                    <td class="px-3 py-1.5 border border-red-100">${r.source}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center font-medium text-red-800">${r.type}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center">Generation</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center">${r.requested}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center">${r.available}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center font-bold text-red-600">${r.shortfall}</td>
+                </tr>`;
+            });
+
+            ssRows.forEach(r => {
+                const bg = rowIdx++ % 2 === 0 ? '#fff1f2' : '#ffe4e6';
+                const avail = r.target - r.sf;
+                totalRequested2 += r.target; totalAvailable2 += avail; totalSF += r.sf;
+                allRows += `<tr style="background:${bg};">
+                    <td class="px-3 py-1.5 border border-red-100">Smart Select</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center font-medium text-red-800">${r.type}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center">Smart Select</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center">${r.target}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center">${avail}</td>
+                    <td class="px-3 py-1.5 border border-red-100 text-center font-bold text-red-600">${r.sf}</td>
+                </tr>`;
+            });
+
+            reportHtml += `
+                <div class="overflow-x-auto">
+                    <table class="w-full table-fixed border border-red-200 text-sm">
+                        <colgroup><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"></colgroup>
+                        <thead style="background:#fee2e2;">
+                            <tr>
+                                <th class="px-3 py-2 border border-red-200 text-left text-red-900">Category</th>
+                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Type</th>
+                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Source</th>
+                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Requested</th>
+                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Available</th>
+                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Shortfall</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allRows}
+                            <tr style="background:#fecaca;" class="font-semibold">
+                                <td class="px-3 py-1.5 border border-red-200 text-red-900" colspan="3">Total</td>
+                                <td class="px-3 py-1.5 border border-red-200 text-center text-red-900">${totalRequested2}</td>
+                                <td class="px-3 py-1.5 border border-red-200 text-center text-red-900">${totalAvailable2}</td>
+                                <td class="px-3 py-1.5 border border-red-200 text-center text-red-900">${totalSF}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        reportHtml += `</div>`;
     }
 
     reportDiv.innerHTML = reportHtml;
 
-    // Difficulty Breakdown section
-    const ratio = getDiffRatio();
-    if (isDiffRatioActive(ratio)) {
-        const tiers = ['unset','easy','medium','hard'];
-        const tierLabel = { unset:'⚪ Unset', easy:'🟢 Easy', medium:'🟡 Medium', hard:'🔴 Hard' };
+    // Difficulty Breakdown section — always shown
+    {
+        const tiers = ['easy','medium','hard','unset'];
+        const tierLabel  = { unset:'Unset',  easy:'Easy',   medium:'Medium', hard:'Hard' };
+        const tierColor  = { easy:'#16a34a', medium:'#d97706', hard:'#dc2626', unset:'#6b7280' };
+        const tierBg     = { easy:'#f0fdf4', medium:'#fffbeb', hard:'#fef2f2', unset:'#f9fafb' };
 
+        // Check if any difficulty data exists at all
+        let anyDiffData = false;
         let hasDiffShortfall = false;
-        let diffHtml = `
-            <div class="mt-4">
-                <h3 class="text-lg font-semibold mb-2">Difficulty Breakdown</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border border-gray-300 text-sm">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-2 border text-left">Category</th>
-                                <th class="px-3 py-2 border text-center">Type</th>
-                                <th class="px-3 py-2 border text-center">Difficulty</th>
-                                <th class="px-3 py-2 border text-center">Requested</th>
-                                <th class="px-3 py-2 border text-center">From Tier</th>
-                                <th class="px-3 py-2 border text-center">From Unset</th>
-                                <th class="px-3 py-2 border text-center">Shortfall</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
+        let rows = [];
 
         Object.keys(generationStats).forEach(cat => {
             const stat = generationStats[cat];
             const typeMap = [
-                { key: 'mc', label: 'MCQ',      stats: stat.mcDiffStats },
-                { key: 'tf', label: 'T/F',      stats: stat.tfDiffStats },
-                { key: 'mt', label: 'Matching', stats: stat.mtDiffStats },
-            ].filter(t => t.stats !== null && t.stats !== undefined);
-
-            if (typeMap.length === 0) return;
-
-            let firstRow = true;
-            const totalRows = typeMap.reduce((s, t) => s + Object.keys(t.stats).length, 0);
+                { label: 'MCQ',      stats: stat.mcDiffStats },
+                { label: 'T/F',      stats: stat.tfDiffStats },
+                { label: 'Matching', stats: stat.mtDiffStats },
+            ].filter(t => t.stats);
 
             typeMap.forEach(({ label, stats }) => {
-                let firstType = true;
-                const typeRows = Object.keys(stats).length;
                 tiers.forEach(tier => {
-                    if (!stats[tier]) return;
                     const s = stats[tier];
-                    if (s.requested === 0) return;
-                    const sfClass = s.shortfall > 0 ? 'text-red-600 font-bold' : 'text-gray-600';
+                    if (!s || s.requested === 0) return;
+                    anyDiffData = true;
                     if (s.shortfall > 0) hasDiffShortfall = true;
-                    diffHtml += `<tr class="hover:bg-gray-50">
-                        ${firstRow ? `<td class="px-4 py-2 border font-medium" rowspan="${totalRows}">${cat}</td>` : ''}
-                        ${firstType ? `<td class="px-3 py-2 border text-center" rowspan="${typeRows}">${label}</td>` : ''}
-                        <td class="px-3 py-2 border text-center">${tierLabel[tier]}</td>
-                        <td class="px-3 py-2 border text-center">${s.requested}</td>
-                        <td class="px-3 py-2 border text-center">${s.fromTier}</td>
-                        <td class="px-3 py-2 border text-center">${s.fromUnset > 0 ? s.fromUnset : '—'}</td>
-                        <td class="px-3 py-2 border text-center ${sfClass}">${s.shortfall > 0 ? s.shortfall : '—'}</td>
-                    </tr>`;
-                    firstRow = false;
-                    firstType = false;
+                    rows.push({ cat, label, tier, s });
                 });
             });
         });
 
-        diffHtml += `</tbody></table></div>`;
+        const diffIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`;
+
+        let diffHtml = `<div class="mt-4">
+            <h3 class="text-sm font-semibold mb-1 flex items-center gap-1" style="color:var(--text);">${diffIcon}Breakdown by Difficulty</h3>`;
 
         if (hasDiffShortfall) {
-            diffHtml += `
-                <div class="mt-3 p-3 bg-red-50 border border-red-300 rounded">
-                    <h4 class="font-semibold text-red-800 mb-1">⚠️ Difficulty Shortfall</h4>
-                    <p class="text-sm text-red-700">Some difficulty tiers ran short. Unset questions were used where available. Remaining shortfalls could not be filled — consider adjusting the ratio or adding more questions of the needed difficulty.</p>
-                </div>`;
+            diffHtml += `<p class="text-xs text-red-600 mb-2">⚠️ Some difficulty tiers ran short. Unset questions were used where available. Consider adjusting the ratio or adding more questions of the needed difficulty.</p>`;
+        }
+
+        if (!anyDiffData) {
+            diffHtml += `<p class="text-sm text-gray-500 italic">No difficulty set.</p>`;
+        } else {
+            const colW = 'width:16.66%';
+            diffHtml += `<div class="overflow-x-auto"><table class="min-w-full text-xs border-collapse" style="table-layout:fixed;width:100%;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th class="px-3 py-2 border border-gray-200 text-left font-semibold" style="${colW}">Category</th>
+                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Type</th>
+                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Difficulty</th>
+                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Requested</th>
+                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">From Tier</th>
+                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Shortfall</th>
+                    </tr>
+                </thead><tbody>`;
+
+            rows.forEach(({ cat, label, tier, s }) => {
+                const bg  = tierBg[tier];
+                const col = tierColor[tier];
+                const sfVal = s.shortfall > 0 ? `<span style="color:#dc2626;font-weight:700;">${s.shortfall}</span>` : '—';
+                diffHtml += `<tr style="background:${bg};">
+                    <td class="px-3 py-1.5 border border-gray-200 font-medium" style="color:var(--text);${colW}">${cat}</td>
+                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${label}</td>
+                    <td class="px-3 py-1.5 border border-gray-200 text-center font-semibold" style="color:${col};${colW}">${tierLabel[tier]}</td>
+                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${s.requested}</td>
+                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${s.fromTier}</td>
+                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${sfVal}</td>
+                </tr>`;
+            });
+
+            diffHtml += `</tbody></table></div>`;
         }
 
         diffHtml += `</div>`;
@@ -4549,6 +4811,23 @@ function clearAllCategoryInputs() {
         input.value = '0';
         input.dispatchEvent(new Event('input', { bubbles: true }));
     });
+
+    ['balanceTargetMC', 'balanceTargetTF', 'balanceTargetMT'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '0';
+    });
+    lastSmartSelectShortfalls = null;
+
+    // Clear generation report and unused questions
+    lastUnusedQuestions = [];
+    const unusedSection = document.getElementById('unusedQuestionsSection');
+    if (unusedSection) unusedSection.classList.add('hidden');
+    const unusedSummaryEl = document.getElementById('unusedSummary');
+    if (unusedSummaryEl) unusedSummaryEl.innerHTML = '';
+    const exportUnusedBtn = document.getElementById('exportUnusedJson');
+    if (exportUnusedBtn) exportUnusedBtn.disabled = true;
+    const reportDiv2 = document.getElementById('generationReport');
+    if (reportDiv2) reportDiv2.innerHTML = 'Generate a test to see the detailed breakdown.';
     const summaryEl = document.getElementById('testSummary');
     if (summaryEl) summaryEl.textContent = `Total questions to generate: 0`;
     const summaryTotal2 = document.getElementById('testSummaryTotal');
@@ -4783,6 +5062,9 @@ function balancedPickAcrossCategories() {
     const tfResult = distributeEvenly(targetTF, tfCaps);
     const mtResult = distributeEvenly(targetMT, mtCaps);
 
+    // Reset SS shortfalls on every run
+    lastSmartSelectShortfalls = null;
+
     categories.forEach(cat => {
         const safeCat = safeIdFromCategory(cat);
         const mcInput = document.getElementById(`cat_${safeCat}_mc`);
@@ -4796,7 +5078,11 @@ function balancedPickAcrossCategories() {
 
     const totalShortfall = mcResult.shortfall + tfResult.shortfall + mtResult.shortfall;
     if (totalShortfall > 0) {
-        showToast('⚠️ Balanced pick applied with shortfalls. See report below.', 'warning');
+        lastSmartSelectShortfalls = {
+            mcTarget: targetMC, tfTarget: targetTF, mtTarget: targetMT,
+            mcShortfall: mcResult.shortfall, tfShortfall: tfResult.shortfall, mtShortfall: mtResult.shortfall
+        };
+        showToast('⚠️ Balanced pick applied with shortfalls. See Generation Report after generating.', 'warning');
     } else {
         showToast(`✅ Balanced pick applied across ${categories.length} categories.`, 'success');
     }
@@ -5278,35 +5564,40 @@ function convertCsvToJson(text) {
     }
 
     const headers = rows[0];
-    const hasDifficulty = headers.length === 9 && headers[3]?.toLowerCase() === 'difficulty';
-    const expectedCols = hasDifficulty ? 9 : 8;
+    const hasDifficulty = headers[3]?.toLowerCase() === 'difficulty';
+    const has5 = headers[headers.length - 1]?.toLowerCase().includes('option 5') || headers[headers.length - 1]?.toLowerCase().includes('5');
+    const expectedCols = hasDifficulty ? (has5 ? 10 : 9) : (has5 ? 9 : 8);
 
-    if (headers.length !== expectedCols || headers[0] !== "Question") {
-        throw new Error("Invalid format. Ensure the first row contains: Question, Category, Type, [Difficulty,] Correct, Option 1, Option 2, Option 3, Option 4");
+    if (headers[0] !== "Question") {
+        throw new Error("Invalid format. Ensure the first row starts with: Question, Category, Type, [Difficulty,] Correct, Option 1, Option 2, Option 3, Option 4[, Option 5]");
     }
 
     const questions = [];
 
     for (let i = 1; i < rows.length; i++) {
         const values = rows[i];
-        if (values.length !== expectedCols) {
-            throw new Error(`Invalid row format at line ${i + 1}. Each row must have ${expectedCols} columns.`);
+        if (values.length < expectedCols - 1) {
+            throw new Error(`Invalid row format at line ${i + 1}. Expected ${expectedCols} columns.`);
         }
 
-        let question, category, type, difficulty, correct, option1, option2, option3, option4;
+        let question, category, type, difficulty, correct, option1, option2, option3, option4, option5;
         if (hasDifficulty) {
-            [question, category, type, difficulty, correct, option1, option2, option3, option4] = values;
+            [question, category, type, difficulty, correct, option1, option2, option3, option4, option5] = values;
         } else {
-            [question, category, type, correct, option1, option2, option3, option4] = values;
+            [question, category, type, correct, option1, option2, option3, option4, option5] = values;
             difficulty = 'unset';
         }
 
         // Build choices array, converting "null" strings to null
-        let choices = [option1, option2, option3, option4].map(opt => {
+        const rawChoices = has5
+            ? [option1, option2, option3, option4, option5]
+            : [option1, option2, option3, option4];
+        let choices = rawChoices.map(opt => {
+            if (opt === undefined) return null;
             const trimmed = opt.trim();
             return trimmed === 'null' ? null : trimmed;
         });
-        // Filter out null values for MCQ display
+        // Filter out null/empty values for MCQ
         if (type !== 'true_false' && type !== 'matching') {
             choices = choices.filter(c => c !== null && c !== '');
         }
@@ -5325,16 +5616,22 @@ function convertCsvToJson(text) {
 }
 
 function convertJsonToCsv(jsonData) {
-    let csv = 'Question,Category,Type,Difficulty,Correct,Option 1,Option 2,Option 3,Option 4\n';
+    // Check if any question has 5 choices
+    const has5 = jsonData.some(item => item.choices && item.choices.filter(c => c !== null).length >= 5);
+    const header = has5
+        ? 'Question,Category,Type,Difficulty,Correct,Option 1,Option 2,Option 3,Option 4,Option 5\n'
+        : 'Question,Category,Type,Difficulty,Correct,Option 1,Option 2,Option 3,Option 4\n';
+    let csv = header;
     jsonData.forEach(item => {
-        let choices = item.choices || [];
-        if (item.type === 'true_false' || item.type === 'matching') {
-            while (choices.length < 4) choices.push('null');
-        } else {
-            while (choices.length < 4) choices.push('');
-        }
+        let choices = (item.choices || []).slice();
+        const isTfOrMatch = item.type === 'true_false' || item.type === 'matching';
+        const fillVal = isTfOrMatch ? 'null' : '';
+        const targetLen = has5 ? 5 : 4;
+        while (choices.length < targetLen) choices.push(fillVal);
         const difficulty = item.difficulty || 'unset';
-        const row = [item.question || '', item.category || '', item.type || '', difficulty, item.correct || '', choices[0], choices[1], choices[2], choices[3]];
+        const row = [item.question || '', item.category || '', item.type || '', difficulty, item.correct || '',
+            choices[0], choices[1], choices[2], choices[3]];
+        if (has5) row.push(choices[4] ?? fillVal);
         csv += row.map(csvEscape).join(',') + '\n';
     });
     return csv;
@@ -5603,8 +5900,8 @@ function updateMergerDisplay() {
 
     if (mergedQuestions.length === 0) {
         summaryDiv.innerHTML = `
-            <h3 class="text-lg font-semibold mb-2">Summary:</h3>
-            <p class="text-sm text-gray-600">No files loaded yet. Click "Add Files" to start.</p>
+            <p class="font-semibold mb-1" style="color:var(--text);">Summary</p>
+            <p>No files loaded yet. Click "Merge" to start.</p>
         `;
         outputPre.textContent = '';
         renderMissingCorrectWarning('mergerMissingCorrectWarning', []);
@@ -5612,11 +5909,10 @@ function updateMergerDisplay() {
     }
 
     let summaryHtml = `
-        <h3 class="text-lg font-semibold mb-2">Summary:</h3>
-        <div class="text-sm">
-            <p class="font-semibold text-green-700 mb-2">Total Questions: ${mergedQuestions.length}</p>
-            <p class="font-semibold mb-1">Files Loaded:</p>
-            <ul class="list-disc list-inside ml-4">
+        <p class="font-semibold mb-1" style="color:var(--text);">Summary</p>
+        <p class="font-semibold text-green-700 mb-2">Total Questions: ${mergedQuestions.length}</p>
+        <p class="font-semibold mb-1" style="color:var(--text);">Files Loaded:</p>
+        <ul class="list-disc list-inside ml-4">
     `;
 
     mergerFileStats.forEach(stat => {
@@ -5625,7 +5921,6 @@ function updateMergerDisplay() {
 
     summaryHtml += `
             </ul>
-        </div>
     `;
 
     summaryDiv.innerHTML = summaryHtml;
