@@ -131,6 +131,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Show/Hide Preview button in the Unused Questions section
 
+## [2.4.7] - 2026-07-31
+### Fixed
+- "No categories available" placeholder now always renders on page load when no test bank is present (updateCategoryInputs was previously skipped entirely when testBank was empty)
+
+## [2.4.6] - 2026-07-31
+### Changed
+- Randomize is now always enabled automatically; checkbox removed
+- Generation Report no longer wrapped in a nested bordered box
+- Show/Hide Preview button moved to left of Export Unused as JSON
+### Fixed
+- "No categories available" placeholder now correctly appears when test bank is empty
+
+## [2.4.5] - 2026-07-31
+### Fixed
+- "No categories available" placeholder now shows centered with a document icon and subtext
+### Changed
+- Smart Selection: Total counter moved above MCQ / T/F / Matching input fields
+
 ## [v2.4.2] - 2026-07-31
 ### Added
 - Output preview toggles (JSON / CSV / GIFT / TXT) in Convert a File tab
