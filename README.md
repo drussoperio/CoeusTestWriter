@@ -1,16 +1,15 @@
 # Coeus Test Writer
 
-A single-file, browser-based toolkit for writing, organizing, and creating exam questions. No installation, backend, or account required — open the HTML file and it runs entirely client-side.
+A browser-based toolkit for writing, organizing, and generating exam questions. No installation, backend, or account required — open the HTML file and it runs entirely client-side.
 
 ## Features
 
-- **Question bank management** — add, search, sort, filter, bulk-rename, and bulk-delete questions in a JSON-based bank.
-- **Randomized test generation** — pull questions per category and type, with answer-distribution balancing and consecutive-answer limits.
-- **Balanced Pick Across Categories** — auto-split target question counts evenly across every category.
-- **Versioned exports** — export generated tests as DOCX, JSON, GIFT (Moodle), CSV, or TXT, each auto-labeled with a version letter.
-- **Format converters** — convert between JSON, CSV, GIFT (Moodle), and plain numbered text, via file upload or pasted text.
-- **Bank merging** — combine multiple JSON question banks into one file.
-- **Local-only storage** — banks and dark-mode preference persist via browser `localStorage`; nothing leaves the browser.
+- **Write questions** — type questions one at a time or paste plain numbered text; preview in JSON, CSV, GIFT, or TXT instantly.
+- **Manage a bank** — load, search, filter, sort, bulk-rename, set difficulty, and bulk-delete from a JSON question bank.
+- **Design a test** — generate randomized, versioned tests with answer-distribution balancing, difficulty ratios, and per-category quotas.
+- **Convert a file** — upload any supported format (JSON, CSV, GIFT TXT, plain TXT) and export to any other format.
+- **Merge JSONs** — combine multiple JSON question banks into one file.
+- **Local-only storage** — question banks and preferences persist via browser `localStorage`; nothing leaves the browser.
 
 ## Installation
 
@@ -27,17 +26,17 @@ git clone https://github.com/your-username/coeus-test-writer.git
 cd coeus-test-writer
 ```
 
-Then open `Coeus_Test_Writer.html` directly in your browser.
+Then open `Coeus_Test_Writer.html` in your browser.
 
-No server, build step, or internet connection is required after the initial page load, aside from CDN libraries (jsPDF, docx.js, Prism) referenced by the page.
+No server or build step is required. CDN libraries (docx.js, Prism) are loaded from the internet on first use.
 
 ## Updating
 
 ### From a Release
 
-1. Go to the [Releases](../../releases) page and download the latest `.zip`.
-2. Extract and replace your existing `Coeus_Test_Writer.html` and `main.js` with the new versions.
-3. Your saved question bank and preferences in `localStorage` are preserved automatically.
+1. Download the latest `.zip` from [Releases](../../releases).
+2. Replace your existing `Coeus_Test_Writer.html` and `main.js` with the new versions.
+3. Your saved bank and preferences in `localStorage` are preserved automatically.
 
 ### With Git
 
@@ -49,7 +48,7 @@ Then reload `Coeus_Test_Writer.html` in your browser.
 
 ## Coeus JSON Question Format
 
-Most tabs read/write a common JSON array format:
+All tabs share a common JSON array format:
 
 ```json
 [
@@ -57,73 +56,106 @@ Most tabs read/write a common JSON array format:
     "question": "What is the capital of France?",
     "category": "Geography",
     "type": "multiple_choice",
+    "difficulty": "easy",
     "correct": "Paris",
     "choices": ["London", "Paris", "Berlin", "Madrid"]
   }
 ]
 ```
 
-- `type` is one of `multiple_choice`, `true_false`, or `matching`.
-- For `true_false`, `correct` is `"True"` or `"False"` (choices omitted).
-- For `matching`, each premise is its own question object (`choices` is `[null, null, null, null]`), not a grouped pairs array.
+- `type` — `"multiple_choice"`, `"true_false"`, or `"matching"`.
+- `difficulty` — `"unset"`, `"easy"`, `"medium"`, or `"hard"`. Defaults to `"unset"`.
+- For `true_false`, `correct` is `"True"` or `"False"`; `choices` is omitted.
+- For `matching`, each premise is its own question object with `choices: [null, null, null, null]` — not a grouped pairs array.
 
 ## Tabs
 
-### Edit a Bank
+### Write Questions
 
-Central hub for building and curating a question bank.
+Write and accumulate questions into a local exam bank, then export the whole bank at once.
 
-- **Input** — Load an existing JSON bank via drag-and-drop or file picker. **Clear Bank** wipes the current in-memory bank.
-- **Export Questions** — Set a filename, then export the current bank as JSON, CSV, or Plain Text.
-- **Manage Saved Data** — **Clear Saved Questions** removes any newly added questions.
-- **Add Questions** (inner tab) — Form to add one question at a time:
-  - Set **Category** and **Type** (Multiple Choice / True-False / Matching).
-  - Multiple Choice: enter choices A–E; the first choice is always the correct answer.
-  - True/False: select True or False.
-  - Matching: use **+ Add Premise & Answer** to add paired rows.
-  - Click **Add Question to Bank** to append it to the loaded bank.
-- **Bank Editor** (inner tab) — Manage the loaded bank:
-  - **Search** by question text, answers, or category.
-  - **Sort** by Default (As Loaded), By Difficulty, or By Category.
-  - **Filter** to show All Questions, MCQ, True/False, Matching, or a specific category. Each option shows its question count.
-  - **Compact/Comfortable** toggle (▤/☰) controls card density; preference is saved.
-  - **Select All Visible** selects everything matching the current search/filter.
-  - **Change Category** bulk-renames the category of selected questions.
-  - **Delete Selected** removes selected questions.
+**Add Questions** (sub-tab) — One-question-at-a-time form:
+- Set **Subject**, **Category**, **Type** (Multiple Choice / True/False / Matching), and **Difficulty**.
+- Multiple Choice: the first choice is always the correct answer (✓); choices 2–5 are wrong answers (✗). Use **+ Add Choice E** to show a fifth option.
+- True/False: select True or False.
+- Matching: click **+ Add Premise & Answer** to add premise/answer pairs in two columns.
+- **Add Question** appends to the bank. **Delete All Questions** clears the entire saved bank.
+
+**Paste Text** (sub-tab) — Bulk-add via plain numbered text (same format as Convert a File → JSON). Set Subject, Category, and Difficulty first, then paste and click **Add Question**.
+
+**Output** panel — preview the current bank as JSON, CSV, GIFT, or TXT. Export using **Export as JSON / CSV / TXT / GIFT**.
+
+---
+
+### Manage a Bank
+
+Load and curate an existing JSON question bank.
+
+**Input** — Drag-and-drop or browse for a `.json` file. **Clear Bank** removes it from memory without affecting `localStorage`. Export the current bank as **JSON**, **CSV**, or **TXT**.
+
+**Edit Bank** — Search, sort, and filter the loaded bank:
+- **Search** — matches question text, answers, or category.
+- **Sort** — Default (As Loaded), By Difficulty (Easy→Hard / Hard→Easy), By Category (A→Z / Z→A).
+- **Filter** — All Questions, Multiple Choice Only, True/False Only, Matching Only, or any Difficulty tier. Each option shows its question count.
+- **Compact/Comfortable toggle** (▤/☰) — compact mode hides the correct-answer preview line and reduces card padding. Preference is saved in `localStorage`.
+- **Change Category** — bulk-renames the category of selected questions.
+- **Set Difficulty** — bulk-sets the difficulty of selected questions.
+- **Select All Visible** — selects all questions matching the current search/filter.
+- **Delete (N)** — removes selected questions permanently.
+
+---
 
 ### Design a Test
 
-Builds randomized, versioned tests from a loaded JSON bank.
+Generate a randomized, versioned test from a loaded JSON bank.
 
-- **Input** — Load a JSON bank (drag-and-drop or browse). A warning appears if any questions are missing a `correct` field.
-- **Generate Test**
-  - Per-category inputs let you choose how many MCQ, True/False, Matching questions to pull from each category.
-    - **Select All Available** fills these in with every remaining available question per category.
-    - **Clear All** resets all inputs to 0.
-    - **Balanced Pick Across Categories** — enter target totals for MCQ, T/F, and Matching, and it distributes those totals as evenly as possible across every category, respecting each category's available supply.
-  - **Answer Distribution Tolerance** — how evenly the correct-answer letters/T-F values are balanced (0 = exact, up to ±15).
-  - **Max Consecutive MC Answers** / **Max Consecutive T/F Answers** — caps how many times the same answer can repeat in a row.
-  - **Exclude Already-Used Questions** — upload a JSON file of previously used questions to prevent repeats across test versions.
-- **Output**
-  - Set a **Filename**; a version letter is appended automatically (e.g. `test_A.docx`).
-  - **DOCX format details** (expandable): 8.5"×13" paper size, 0.5" margins, Arial 11pt, MCQ choices auto-set in two columns when they fit. **Force single column** overrides this.
-  - Export as **DOCX**, **JSON**, **GIFT**, **CSV**, or **TXT**.
-  - Preview pane shows the generated test with a collapsible **Answer Key**.
-- **Generation Report** — Detailed breakdown of how the test was assembled: summary, breakdown by category and difficulty, shortfall warnings, and unused questions.
+**Input** — Load a `.json` bank. A warning appears if any questions lack a `correct` field.
 
-### Convert to JSON
+**Generate Test** — Configure per-category question counts:
+- Enter MCQ, T/F, and Matching counts for each category row.
+- **Select All Available** — fills in the maximum available for every category.
+- **Clear All** — resets all inputs to zero.
+- **Smart Selection (Balanced Pick)** — enter total target counts for MCQ, T/F, and Matching; the engine distributes them as evenly as possible across all categories, respecting each category's supply. Shortfalls are reported.
+- **Answer Distribution Tolerance** — controls how evenly correct-answer letters are balanced (0 = exact balance, up to ±15).
+- **Max Consecutive MC / T/F Answers** — prevents the same answer from repeating more than N times in a row.
+- **Difficulty Ratio** — set the ⚪ Unset / 🟢 Easy / 🟡 Medium / 🔴 Hard mix. Must total 100%. Unset questions are used as fallback when a tier runs short.
+- **Exclude Already-Used Questions** — upload a previous test's JSON to prevent repeats.
 
-Converts a `.txt` or `.csv` file, or pasted plain numbered text, into the Coeus JSON format.
+**Output** — Set a filename (a version letter is appended automatically, e.g. `exam_A.docx`). DOCX format details are expandable: 8.5"×13" long bond paper, 0.5" margins, Arial 11pt, auto two-column MCQ choices (override with **Force single column**). Export as **DOCX**, **JSON**, **GIFT**, **CSV**, or **TXT**. A preview pane shows the test with a collapsible answer key.
 
-- Choose input mode: **Upload File** or **Paste Text**.
-- Plain-text formatting rules:
-  - Number each question (`1. `, `2. `, ...).
-  - **Multiple choice**: label choices `a.`–`e.`. Prefix the correct choice with `=` or `*`.
-  - **True/False**: put `=True` or `=False` on the line below the question.
-  - **Matching**: consecutive premise/answer pairs are grouped automatically.
-- Click **Convert**, review the JSON output, set a filename, and **Download JSON**.
+**Generation Report** — appears after generating a test:
+- **Summary** — total questions requested, selected, and any shortfall.
+- **Breakdown by Category** — per-category and per-type counts.
+- **Breakdown by Difficulty** — per-tier counts; shows "No difficulty set." when all questions are Unset.
+- **Shortfall** — red table of unfilled requests, or "No shortfall detected."
+- **Unused Questions** — questions not selected for the test, with a count table by category and type. Export unused questions as JSON.
 
-Example input:
+---
+
+### Convert a File
+
+Upload any supported file and convert it to any other format in one step.
+
+- **Input** — drag-and-drop or browse for a `.json`, `.csv`, or `.txt` file (plain text or GIFT).
+- **Convert** — detects the input format automatically and converts.
+- **Output** — preview the result as **JSON**, **CSV**, **GIFT**, or **TXT** using the format toggles. Use ↑ Top / ↓ Bottom to navigate long output. Export using **Export as JSON / CSV / GIFT / TXT**.
+
+**Accepted inputs per output format:**
+
+| Export as | Accepts |
+|-----------|---------|
+| JSON | GIFT `.txt`, `.csv`, plain numbered `.txt` |
+| CSV | `.json`, GIFT `.txt`, plain numbered `.txt` |
+| GIFT | `.json`, `.csv` |
+| TXT | `.json`, `.csv`, GIFT `.txt` |
+
+**Plain-text formatting rules** (for TXT → JSON/CSV):
+- Number each question: `1. `, `2. `, … (numbers can repeat and don't need to be in order).
+- Multiple choice: label choices `a.`–`e.` Prefix the correct choice with `=` or `*`. Requires 4–5 choices; an error appears if none is marked correct.
+- True/False: put `=True` or `=False` on the line immediately below the question.
+- Matching: write a premise line followed by `=Answer`; consecutive pairs are grouped into one matching question automatically.
+
+Example:
 ```
 1. What is the fundamental unit of life?
 a. Gene
@@ -134,39 +166,22 @@ c. Atom
 2. The heart has four chambers.
 =True
 
-3. Study of life
-=Biology
+3. The study of plants
+=Botany
 ```
 
-### Convert to CSV
-
-Converts a Coeus JSON file, GIFT `.txt` file, or plain text into CSV for bulk-editing in Excel or Google Sheets.
-
-- Choose input mode: **Upload File** or **Paste Text**.
-- Click **Convert**, review the output, then **Download CSV**.
-
-### Convert to GIFT
-
-Converts questions into [Moodle GIFT format](https://docs.moodle.org/en/GIFT_format) for import via *Question bank → Import → GIFT format*.
-
-- Choose input mode: **Upload File** (`.json`, `.csv`) or **Paste Text**.
-- Supports multiple choice, true/false, and matching questions.
-- Click **Convert**, then **Download TXT** (exported filename gets a `_gift` suffix).
-
-### Convert to Text
-
-Converts a Coeus JSON, CSV, or `.txt` file into plain numbered text.
-
-- Upload a `.json`, `.csv`, or `.txt` file.
-- Click **Convert**, review the output, then **Download TXT**.
+---
 
 ### Merge JSONs
 
-Combines multiple Coeus JSON question banks into one file.
+Combine multiple Coeus JSON question banks into a single file.
 
-- Select multiple `.json` files at once (drag-and-drop or Ctrl/Cmd-click).
-- Click **Merge** to combine them; a summary shows counts per source file.
-- Set an output filename and click **Merge & Download**.
+- Drag-and-drop or Ctrl/Cmd-click to select multiple `.json` files.
+- **Merge** — combines all files; a summary shows question counts per source file.
+- Set a filename and click **Merge & Download**.
+- A warning appears if any merged question is missing a `correct` field. Duplicate questions are not automatically removed.
+
+---
 
 ## File Structure
 
