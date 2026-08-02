@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.6.7] - 2026-08-02
+### Fixed
+- Merge JSONs: Summary heading icon now persists after merging (was lost when innerHTML was rewritten)
+### Added
+- Merge JSONs: Comprehensive summary table showing Category × Type × Difficulty (Easy / Medium / Hard / Unset) × Total, with rowspan cell merging and a Total row
+### Changed
+- All report tables (Breakdown by Category, Shortfall, Unused Questions, Breakdown by Difficulty, Merger Summary): header row and total row are now the darkest shade + bold white text; body rows alternate two lighter shades; identical adjacent cells merged via rowspan; font size unified to text-xs across all tables
+
+## [2.6.6] - 2026-08-02
+### Added
+- Empty state placeholders for Write Questions output, Convert a File output, and Merge JSONs output panels
+
 ## [v2.6.5] - 2026-08-02
 ### Added
 - Manage a Bank: Filter dropdown now shows question counts per option — e.g. "All Questions (42)", "Chapter 1 (12)"
