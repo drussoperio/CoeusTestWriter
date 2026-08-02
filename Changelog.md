@@ -6,6 +6,130 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [v2.6.5] - 2026-08-02
+### Added
+- Manage a Bank: Filter dropdown now shows question counts per option — e.g. "All Questions (42)", "Chapter 1 (12)"
+- Manage a Bank: Compact/Comfortable view toggle button (▤/☰) added beside Filter label; preference persisted in localStorage
+### Changed
+- Compact mode hides the correct answer preview line and reduces card padding
+- Merge JSONs: Summary icon now matches the Summary icon in Design a Test Generation Report
+
+## [v2.6.4] - 2026-08-02
+### Fixed
+- exportQuestionsAsJson now calls .map(stripRuntimeFields) before serializing, which destructures __uid out and spreads the rest
+- saveQBankToStorage does the same, so localStorage is also clean going forward
+
+## [v2.6.3] - 2026-08-02
+-Iterate all .qm-edit-difficulty (and .qm-edit-type) selects after DOM insertion and imperatively setting .value from the question data.
+
+## [v2.6.2] - 2026-08-02
+### Added
+- Difficulty select (Unset / Easy / Medium / Hard) now appears between Type and Question in the Edit Question form, pre-populated from the question's existing difficulty, and saved back on submit.
+
+## [v2.6.1] - 2026-08-02
+### Fixed
+- Edit Question inputs — category, type, question textarea, and both matching fields now use rounded shadow-sm with border:none instead of rounded border.
+- Add Choice E bug — root cause was a missing event listener. The .qm-toggle-choice-e-btn button was rendered in the edit form HTML but attachQuestionManagerEventListeners never wired it up. Added the listener: toggles display:none/flex on the row, updates button text, clears the input on remove.
+- Save with Choice E — saveQuestionEdit also had the old radio-based correct logic. Fixed to first-choice-is-correct, and now correctly collects the Choice E input (index 4) — trimming it if empty.
+- Breakdown by Difficulty position — the section was being appended to the DOM after reportDiv.innerHTML = reportHtml (as a separate += pass), so it always ended up last regardless of intent. Fixed by inserting it directly into reportHtml before the Shortfall block.
+
+## [v2.6.0] - 2026-08-01
+### Changed
+- Manage a Bank: Sort options replaced — Default (As Loaded), By Difficulty (Easy→Hard), By Difficulty (Hard→Easy), By Category (A→Z), By Category (Z→A); sort now correctly reorders category groups
+- Manage a Bank: "Rename Selected" label renamed to "Change Category"; button renamed from "Rename" to "Change"
+- Manage a Bank: Edit Question card now uses box-shadow ring instead of hard border
+- Design a Test: Difficulty Breakdown now always shown after test generation (previously only shown when difficulty ratio was active)
+- Design a Test: Difficulty Breakdown renamed to "Breakdown by Difficulty"
+- Design a Test: Shortfall warning moved below the section heading
+- Design a Test: Breakdown by Difficulty uses color-coded rows per tier, equal-width columns, icon in heading, and "No difficulty set." message when all questions are unset
+
+## [v2.5.9] - 2026-08-01
+### Changed
+- Unused Questions section now always shown after test generation; displays "No unused questions" when all were used
+### Fixed
+- Breakdown by Category phantom empty last column removed
+- All Generation Report tables now use strictly equal column widths
+
+## [v2.5.8] - 2026-08-01
+### Fixed
+- Unused Questions section now hidden on page load and when no bank is loaded
+- Clear Bank and Clear All now clear and hide the Unused Questions section
+- Generation Report tables (Breakdown by Category, Shortfall) now use fixed equal column widths
+
+## [v2.5.7] - 2026-08-01
+### Added
+- "No shortfall detected" message shown in Shortfall section when there are none
+### Changed
+- "Smart Select Shortfall" renamed to "Shortfall"; now a unified table covering both generation-time (per category) and Smart Select shortfalls
+### Fixed
+- Clear All now also clears Smart Select inputs and resets shortfall state
+- Shortfall table no longer persists after generating a new test without shortfalls
+- Unused Questions table columns now use fixed equal widths
+
+## [v2.5.6] - 2026-08-01
+### Added
+- Smart Select shortfall now tracked and displayed in Generation Report as a red table after Breakdown by Category
+### Changed
+- Smart Select shortfall is included in the Summary Requested and Shortfall counts
+- Shortfall column removed from Breakdown by Category table
+- Smart Select shortfall resets on every Smart Select re-run
+### Fixed
+- Unused Questions section no longer shows placeholder text before a test is generated
+
+## [v2.5.5] - 2026-08-01
+### Added
+- Icons added to Summary and Breakdown by Category subheadings in Generation Report
+### Changed
+- Unused Questions section moved inside Generation Report, after Breakdown by Category
+- Generation Report tables (Breakdown by Category, Unused Questions) now use color-coded styling
+
+## [v2.5.4] - 2026-08-01
+### Added
+- Unused Questions now displays a table (Category, MCQ, T/F, Matching, Total) with a Total row at the bottom
+### Changed
+- Design a Test: increased gap between Answer Distribution Tolerance row and Difficulty Ratio row
+- Unused Questions section padding reduced
+### Fixed
+- Generation Report: Summary and Breakdown by Category subheadings are now smaller than the section heading
+### Removed
+- "Unused Questions: N" header from Unused Questions section
+
+## [v2.5.3] - 2026-08-01
+### Added
+- Upload/Download icons added to all Input and Output section headings
+### Fixed
+- Write Questions > Add Questions: all inputs (including matching pairs and Choice E) now clear after submitting
+- Design a Test: loading a bank no longer populates the question list in Manage a Bank
+
+## [v2.5.2] - 2026-08-01
+### Added
+- Icons next to Edit Bank, Plan a Test, Unused Questions, Generation Report, and Summary (Merge JSONs) section headings
+### Fixed
+- CSV export and import now correctly handles a 5th answer choice (Option 5)
+- Write Questions > Paste Text: Delete All Questions now also clears all input fields
+
+## [v2.5.1] - 2026-08-01
+### Fixed
+- Write Questions preview buttons (JSON/CSV/GIFT/TXT) now work — had duplicate IDs shared with Convert a File tab
+- Convert a File export buttons no longer switch the active preview tab or re-render the preview
+
+## [v2.5.0] - 2026-08-01
+### Changed
+- Write Questions > Add Questions: radio buttons removed from MCQ choices
+- First choice always treated as correct answer (green ✓ icon, "Correct answer" placeholder)
+- Choices 2–5 always treated as wrong answers (red ✗ icon, "Wrong answer" placeholder)
+
+## [v2.4.9] - 2026-08-01
+### Changed
+- Convert a File and Merge JSONs tabs normalized to match Write Questions layout (gap-6, text-sm font-medium buttons, var(--text) labels, consistent output padding and margins)
+- Merge JSONs summary box removed; summary now renders flat
+- Download JSON button in Merge JSONs matches export button style
+
+## [v2.4.8] - 2026-08-01
+### Changed
+- Randomize Questions and Answers checkbox removed; randomization always applied automatically
+### Removed
+- Show/Hide Preview button in the Unused Questions section
 
 ## [v2.4.2] - 2026-07-31
 ### Added
