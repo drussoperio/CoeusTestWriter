@@ -69,7 +69,7 @@ Most tabs read/write a common JSON array format:
 
 ## Tabs
 
-### Question Manager
+### Edit a Bank
 
 Central hub for building and curating a question bank.
 
@@ -91,7 +91,7 @@ Central hub for building and curating a question bank.
   - **Change Category** bulk-renames the category of selected questions.
   - **Delete Selected** removes selected questions.
 
-### Test Generator
+### Design a Test
 
 Builds randomized, versioned tests from a loaded JSON bank.
 
