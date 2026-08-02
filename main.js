@@ -19,10 +19,45 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.6.5';
+const APP_VERSION = '2.6.7';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.6.7': [
+        'Fixed: Merge JSONs — Summary heading icon now persists after merging',
+        'Added: Merge JSONs — comprehensive summary table (Category, Type, Difficulty, Total)',
+        'Changed: All report tables — header and total rows are darkest + bold; body rows alternate two lighter shades; identical adjacent cells merged via rowspan; font size unified to text-xs',
+    ],
+	'2.6.6': [
+		'Added: Empty state placeholders for Write Questions output, Convert a File output, and Merge JSONs output panels',
+	],
+	'2.6.5': [
+        'Added: Manage a Bank: Filter dropdown now shows question counts per option — e.g. "All Questions (42)", "Chapter 1 (12)"',
+        'Added: Manage a Bank: Compact/Comfortable view toggle button (▤/☰) added beside Filter label; preference persisted in localStorage',
+        'Changed: Compact mode hides the correct answer preview line and reduces card padding',
+		'Changed: Merge JSONs: Summary icon now matches the Summary icon in Design a Test Generation Report',
+    ],
+	'2.6.4': [
+        'Fixed: exportQuestionsAsJson now calls .map(stripRuntimeFields) before serializing, which destructures __uid out and spreads the rest',
+        'Fixed: saveQBankToStorage does the same, so localStorage is also clean going forward',
+    ],
+	'2.6.3': [
+        'Fixed: Iterate all .qm-edit-difficulty (and .qm-edit-type) selects after DOM insertion and imperatively setting .value from the question data.',
+    ],
+	'2.6.2': [
+		'Added: Difficulty select (Unset / Easy / Medium / Hard) now appears between Type and Question in the Edit Question form, pre-populated from the questions existing difficulty, and saved back on submit.',
+    ],
+	'2.6.1': [
+        'Added: Edit Question inputs — category, type, question textarea, and both matching fields now use rounded shadow-sm with border:none instead of rounded border.',
+		'Added: Add Choice E bug — root cause was a missing event listener. The .qm-toggle-choice-e-btn button was rendered in the edit form HTML but attachQuestionManagerEventListeners never wired it up. Added the listener: toggles display:none/flex on the row, updates button text, clears the input on remove.',
+		'Added: Save with Choice E — saveQuestionEdit also had the old radio-based correct logic. Fixed to first-choice-is-correct, and now correctly collects the Choice E input (index 4) — trimming it if empty.',
+		'Added: Breakdown by Difficulty position — the section was being appended to the DOM after reportDiv.innerHTML = reportHtml (as a separate += pass), so it always ended up last regardless of intent. Fixed by inserting it directly into reportHtml before the Shortfall block.',
+    ],
+	'2.6.0': [
+        'Changed: Unused Questions section now always shown after test generation; displays "No unused questions" when all were used',
+        'Fixed: Breakdown by Category phantom empty last column removed',
+        'Fixed: All Generation Report tables now use strictly equal column widths',
+    ],
     '2.5.9': [
         'Changed: Unused Questions section now always shown after test generation; displays "No unused questions" when all were used',
         'Fixed: Breakdown by Category phantom empty last column removed',
@@ -1320,6 +1355,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // 4 separate export buttons — no single export btn
 
         function renderOutput(fmt, resultStr) {
+            const cfEmpty = document.getElementById('convertFileEmptyState');
+            const cfPre = textWrap ? textWrap.querySelector('pre') : null;
+            if (cfEmpty) cfEmpty.classList.add('hidden');
+            if (cfPre) cfPre.classList.remove('hidden');
             if (fmt === 'csv') {
                 if (textWrap) textWrap.classList.add('hidden');
                 if (csvWrap) csvWrap.classList.remove('hidden');
@@ -1658,10 +1697,21 @@ document.addEventListener('DOMContentLoaded', function () {
         function refreshWqPreview() {
             const container = document.getElementById('wqOutputContainer');
             if (!container) return;
+            const emptyState = document.getElementById('wqEmptyState');
+            const pre = container.querySelector('pre');
+            if (!examBank.length) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                if (pre) pre.classList.add('hidden');
+                return;
+            }
+            if (emptyState) emptyState.classList.add('hidden');
+            if (pre) pre.classList.remove('hidden');
             if (wqPreviewFormat === 'csv') {
                 container.innerHTML = renderCsvTable(convertJsonToCsv(examBank));
             } else {
-                container.innerHTML = '<pre class="text-xs"><code id="wqOutput"></code></pre>';
+                if (!document.getElementById('wqOutput')) {
+                    container.innerHTML = '<pre class="text-xs"><code id="wqOutput"></code></pre>';
+                }
                 const freshOut = document.getElementById('wqOutput');
                 if (!freshOut) return;
                 let str = '';
@@ -4255,45 +4305,40 @@ function displayUnusedSummary() {
         grandTotal += unusedByCategory[cat].total;
     });
 
+    const to = TBL.orange;
     let rows = cats.map((cat, i) => {
         const s = unusedByCategory[cat];
-        const bg = i % 2 === 0 ? 'background:#fff7ed;' : 'background:#ffedd5;';
-        return `<tr style="${bg}">
-            <td class="px-3 py-1.5 border border-orange-100 text-left">${cat}</td>
-            <td class="px-3 py-1.5 border border-orange-100 text-center">${s.mc || '—'}</td>
-            <td class="px-3 py-1.5 border border-orange-100 text-center">${s.tf || '—'}</td>
-            <td class="px-3 py-1.5 border border-orange-100 text-center">${s.mt || '—'}</td>
-            <td class="px-3 py-1.5 border border-orange-100 text-center font-semibold text-orange-800">${s.total}</td>
+        const bg = tblRowBg(to, i);
+        return `<tr style="background:${bg};">
+            ${tblTd(to, cat, 'left')}
+            ${tblTd(to, s.mc || '—')}
+            ${tblTd(to, s.tf || '—')}
+            ${tblTd(to, s.mt || '—')}
+            ${tblTd(to, `<strong>${s.total}</strong>`)}
         </tr>`;
     }).join('');
 
-    rows += `<tr style="background:#fed7aa;" class="font-semibold">
-        <td class="px-3 py-1.5 border border-orange-200 text-left text-orange-900">Total</td>
-        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${totalMc || '—'}</td>
-        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${totalTf || '—'}</td>
-        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${totalMt || '—'}</td>
-        <td class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">${grandTotal}</td>
+    rows += `<tr>
+        ${tblTotalTd(to, 'Total', 'left')}
+        ${tblTotalTd(to, totalMc || '—')}
+        ${tblTotalTd(to, totalTf || '—')}
+        ${tblTotalTd(to, totalMt || '—')}
+        ${tblTotalTd(to, grandTotal)}
     </tr>`;
 
     summaryDiv.innerHTML = `
         <div class="overflow-x-auto">
-            <table class="w-full table-fixed border border-orange-200 text-sm">
+            <table class="w-full table-fixed border-collapse" style="border:1px solid ${to.hBdr};">
                 <colgroup>
-                    <col style="width:20%">
-                    <col style="width:20%">
-                    <col style="width:20%">
-                    <col style="width:20%">
-                    <col style="width:20%">
+                    <col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%">
                 </colgroup>
-                <thead style="background:#fff7ed;">
-                    <tr>
-                        <th class="px-3 py-1.5 border border-orange-200 text-left text-orange-900">Category</th>
-                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">MCQ</th>
-                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">T/F</th>
-                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">Matching</th>
-                        <th class="px-3 py-1.5 border border-orange-200 text-center text-orange-900">Total</th>
-                    </tr>
-                </thead>
+                <thead><tr>
+                    ${tblTh(to,'Category','left')}
+                    ${tblTh(to,'MCQ')}
+                    ${tblTh(to,'T/F')}
+                    ${tblTh(to,'Matching')}
+                    ${tblTh(to,'Total')}
+                </tr></thead>
                 <tbody>${rows}</tbody>
             </table>
         </div>
@@ -4538,87 +4583,71 @@ function displayGenerationReport() {
         </div>
     `;
 
-    // Detailed breakdown by category (no shortfall column)
-    reportHtml += `
-        <div class="mb-4">
-            <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>Breakdown by Category</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full table-fixed border border-indigo-200 text-sm">
-                    <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
-                    <thead style="background:#e0e7ff;">
-                        <tr>
-                            <th class="px-4 py-2 border border-indigo-200 text-left text-indigo-900">Category</th>
-                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Type</th>
-                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Requested</th>
-                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Available</th>
-                            <th class="px-3 py-2 border border-indigo-200 text-center text-indigo-900">Generated</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-    `;
+    // Detailed breakdown by category
+    {
+        const ti = TBL.indigo;
+        let catRows = '';
+        let rowIdx = 0;
+        let totReq = 0, totAvail = 0, totGen = 0;
 
-    Object.keys(generationStats).forEach(cat => {
-        const stat = generationStats[cat];
-        const hasMcq = stat.mcRequested > 0;
-        const hasTf  = stat.tfRequested  > 0;
-        const hasMt  = stat.mtRequested  > 0;
-        const rowSpan = (hasMcq ? 1 : 0) + (hasTf ? 1 : 0) + (hasMt ? 1 : 0);
+        Object.keys(generationStats).forEach(cat => {
+            const stat = generationStats[cat];
+            const activeTypes = [
+                stat.mcRequested > 0 && { label:'MCQ',      req:stat.mcRequested, avail:stat.mcAvailable, gen:stat.mcGenerated },
+                stat.tfRequested  > 0 && { label:'T/F',      req:stat.tfRequested,  avail:stat.tfAvailable,  gen:stat.tfGenerated  },
+                stat.mtRequested  > 0 && { label:'Matching', req:stat.mtRequested,  avail:stat.mtAvailable,  gen:stat.mtGenerated  },
+            ].filter(Boolean);
+            const span = activeTypes.length || 1;
 
-        const rowBg    = 'background:#f5f3ff;';
-        const rowBgAlt = 'background:#ede9fe;';
+            if (activeTypes.length === 0) {
+                const avail = stat.mcAvailable + stat.tfAvailable + stat.mtAvailable;
+                const bg = tblRowBg(ti, rowIdx++);
+                catRows += `<tr style="background:${bg};">
+                    ${tblTd(ti, cat, 'left', 'font-weight:600;')}
+                    ${tblTd(ti, '—')}${tblTd(ti, '0')}${tblTd(ti, avail)}${tblTd(ti, '0')}
+                </tr>`;
+            } else {
+                activeTypes.forEach((tp, tpIdx) => {
+                    const bg = tblRowBg(ti, rowIdx++);
+                    totReq += tp.req; totAvail += tp.avail; totGen += tp.gen;
+                    const catCell = tpIdx === 0
+                        ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${span}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${ti.cBdr};">${cat}</td>`
+                        : '';
+                    catRows += `<tr style="background:${bg};">
+                        ${catCell}
+                        ${tblTd(ti, tp.label)}
+                        ${tblTd(ti, tp.req)}
+                        ${tblTd(ti, tp.avail)}
+                        ${tblTd(ti, `<strong>${tp.gen}</strong>`)}
+                    </tr>`;
+                });
+            }
+        });
 
-        if (hasMcq) {
-            reportHtml += `
-                <tr style="${rowBg}">
-                    ${rowSpan > 0 ? `<td class="px-4 py-2 border border-indigo-100 font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
-                    <td class="px-3 py-2 border border-indigo-100 text-center font-medium text-indigo-700">MCQ</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mcRequested}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mcAvailable}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center text-green-700 font-semibold">${stat.mcGenerated}</td>
-                </tr>
-            `;
-        }
-        if (hasTf) {
-            reportHtml += `
-                <tr style="${rowBgAlt}">
-                    ${!hasMcq && rowSpan > 0 ? `<td class="px-4 py-2 border border-indigo-100 font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
-                    <td class="px-3 py-2 border border-indigo-100 text-center font-medium text-indigo-700">T/F</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.tfRequested}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.tfAvailable}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center text-green-700 font-semibold">${stat.tfGenerated}</td>
-                </tr>
-            `;
-        }
-        if (hasMt) {
-            reportHtml += `
-                <tr style="${rowBg}">
-                    ${!hasMcq && !hasTf && rowSpan > 0 ? `<td class="px-4 py-2 border border-indigo-100 font-medium" rowspan="${rowSpan}">${cat}</td>` : ''}
-                    <td class="px-3 py-2 border border-indigo-100 text-center font-medium text-indigo-700">Matching</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mtRequested}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mtAvailable}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center text-green-700 font-semibold">${stat.mtGenerated}</td>
-                </tr>
-            `;
-        }
-        if (!hasMcq && !hasTf && !hasMt) {
-            reportHtml += `
-                <tr style="${rowBg}">
-                    <td class="px-4 py-2 border border-indigo-100 font-medium">${cat}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">—</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">0</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">${stat.mcAvailable + stat.tfAvailable + stat.mtAvailable}</td>
-                    <td class="px-3 py-2 border border-indigo-100 text-center">0</td>
-                </tr>
-            `;
-        }
-    });
+        catRows += `<tr>
+            ${tblTotalTd(ti,'Total','left')}
+            ${tblTotalTd(ti,'')}
+            ${tblTotalTd(ti,totReq)}
+            ${tblTotalTd(ti,totAvail)}
+            ${tblTotalTd(ti,totGen)}
+        </tr>`;
 
-    reportHtml += `
-                    </tbody>
-                </table>
+        reportHtml += `
+            <div class="mb-4">
+                <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>Breakdown by Category</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-fixed border-collapse" style="border:1px solid ${ti.hBdr};">
+                        <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+                        <thead><tr>
+                            ${tblTh(ti,'Category','left')}
+                            ${tblTh(ti,'Type')}${tblTh(ti,'Requested')}${tblTh(ti,'Available')}${tblTh(ti,'Generated')}
+                        </tr></thead>
+                        <tbody>${catRows}</tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 
     // Unified Shortfall table
     {
@@ -4653,60 +4682,65 @@ function displayGenerationReport() {
         if (!hasAnyShortfall) {
             reportHtml += `<p class="text-sm text-green-600 font-medium">✅ No shortfall detected.</p>`;
         } else {
+            const tr = TBL.red;
             let allRows = '';
             let rowIdx = 0;
             let totalRequested2 = 0, totalAvailable2 = 0, totalSF = 0;
 
+            // Group catRows by source for rowspan
+            const catGroups = {};
             catRows.forEach(r => {
-                const bg = rowIdx++ % 2 === 0 ? '#fff1f2' : '#ffe4e6';
-                totalRequested2 += r.requested; totalAvailable2 += r.available; totalSF += r.shortfall;
-                allRows += `<tr style="background:${bg};">
-                    <td class="px-3 py-1.5 border border-red-100">${r.source}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center font-medium text-red-800">${r.type}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center">Generation</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center">${r.requested}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center">${r.available}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center font-bold text-red-600">${r.shortfall}</td>
-                </tr>`;
+                if (!catGroups[r.source]) catGroups[r.source] = [];
+                catGroups[r.source].push(r);
             });
-
+            // Emit cat rows with rowspan on source cell
+            Object.entries(catGroups).forEach(([src, rows]) => {
+                rows.forEach((r, ri) => {
+                    const bg = tblRowBg(tr, rowIdx++);
+                    totalRequested2 += r.requested; totalAvailable2 += r.available; totalSF += r.shortfall;
+                    const srcCell = ri === 0
+                        ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${rows.length}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tr.cBdr};">${src}</td>`
+                        : '';
+                    allRows += `<tr style="background:${bg};">
+                        ${srcCell}
+                        ${tblTd(tr, r.type)}
+                        ${tblTd(tr, 'Generation')}
+                        ${tblTd(tr, r.requested)}
+                        ${tblTd(tr, r.available)}
+                        ${tblTd(tr, `<strong style="color:#dc2626;">${r.shortfall}</strong>`)}
+                    </tr>`;
+                });
+            });
             ssRows.forEach(r => {
-                const bg = rowIdx++ % 2 === 0 ? '#fff1f2' : '#ffe4e6';
+                const bg = tblRowBg(tr, rowIdx++);
                 const avail = r.target - r.sf;
                 totalRequested2 += r.target; totalAvailable2 += avail; totalSF += r.sf;
                 allRows += `<tr style="background:${bg};">
-                    <td class="px-3 py-1.5 border border-red-100">Smart Select</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center font-medium text-red-800">${r.type}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center">Smart Select</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center">${r.target}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center">${avail}</td>
-                    <td class="px-3 py-1.5 border border-red-100 text-center font-bold text-red-600">${r.sf}</td>
+                    ${tblTd(tr, 'Smart Select', 'left', 'font-weight:600;')}
+                    ${tblTd(tr, r.type)}
+                    ${tblTd(tr, 'Smart Select')}
+                    ${tblTd(tr, r.target)}
+                    ${tblTd(tr, avail)}
+                    ${tblTd(tr, `<strong style="color:#dc2626;">${r.sf}</strong>`)}
                 </tr>`;
             });
 
+            allRows += `<tr>
+                <td class="px-3 py-1.5 text-xs font-bold border" colspan="3" style="text-align:left;background:${tr.tBg};color:${tr.tTxt};border-color:${tr.tBdr};">Total</td>
+                ${tblTotalTd(tr,totalRequested2)}
+                ${tblTotalTd(tr,totalAvailable2)}
+                ${tblTotalTd(tr,totalSF)}
+            </tr>`;
+
             reportHtml += `
                 <div class="overflow-x-auto">
-                    <table class="w-full table-fixed border border-red-200 text-sm">
+                    <table class="w-full table-fixed border-collapse" style="border:1px solid ${tr.hBdr};">
                         <colgroup><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"></colgroup>
-                        <thead style="background:#fee2e2;">
-                            <tr>
-                                <th class="px-3 py-2 border border-red-200 text-left text-red-900">Category</th>
-                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Type</th>
-                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Source</th>
-                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Requested</th>
-                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Available</th>
-                                <th class="px-3 py-2 border border-red-200 text-center text-red-900">Shortfall</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allRows}
-                            <tr style="background:#fecaca;" class="font-semibold">
-                                <td class="px-3 py-1.5 border border-red-200 text-red-900" colspan="3">Total</td>
-                                <td class="px-3 py-1.5 border border-red-200 text-center text-red-900">${totalRequested2}</td>
-                                <td class="px-3 py-1.5 border border-red-200 text-center text-red-900">${totalAvailable2}</td>
-                                <td class="px-3 py-1.5 border border-red-200 text-center text-red-900">${totalSF}</td>
-                            </tr>
-                        </tbody>
+                        <thead><tr>
+                            ${tblTh(tr,'Category','left')}
+                            ${tblTh(tr,'Type')}${tblTh(tr,'Source')}${tblTh(tr,'Requested')}${tblTh(tr,'Available')}${tblTh(tr,'Shortfall')}
+                        </tr></thead>
+                        <tbody>${allRows}</tbody>
                     </table>
                 </div>
             `;
@@ -4760,34 +4794,74 @@ function displayGenerationReport() {
         if (!anyDiffData) {
             diffHtml += `<p class="text-sm text-gray-500 italic">No difficulty set.</p>`;
         } else {
-            const colW = 'width:16.66%';
-            diffHtml += `<div class="overflow-x-auto"><table class="min-w-full text-xs border-collapse" style="table-layout:fixed;width:100%;">
-                <thead>
-                    <tr style="background:#f1f5f9;">
-                        <th class="px-3 py-2 border border-gray-200 text-left font-semibold" style="${colW}">Category</th>
-                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Type</th>
-                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Difficulty</th>
-                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Requested</th>
-                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">From Tier</th>
-                        <th class="px-3 py-2 border border-gray-200 text-center font-semibold" style="${colW}">Shortfall</th>
-                    </tr>
-                </thead><tbody>`;
-
-            rows.forEach(({ cat, label, tier, s }) => {
-                const bg  = tierBg[tier];
-                const col = tierColor[tier];
-                const sfVal = s.shortfall > 0 ? `<span style="color:#dc2626;font-weight:700;">${s.shortfall}</span>` : '—';
-                diffHtml += `<tr style="background:${bg};">
-                    <td class="px-3 py-1.5 border border-gray-200 font-medium" style="color:var(--text);${colW}">${cat}</td>
-                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${label}</td>
-                    <td class="px-3 py-1.5 border border-gray-200 text-center font-semibold" style="color:${col};${colW}">${tierLabel[tier]}</td>
-                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${s.requested}</td>
-                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${s.fromTier}</td>
-                    <td class="px-3 py-1.5 border border-gray-200 text-center" style="${colW}">${sfVal}</td>
-                </tr>`;
+            const ts = TBL.slate;
+            // Group rows by cat+label for rowspan on Category and Type cells
+            // Build groups: [{cat, label, rows:[]}]
+            const groups = [];
+            rows.forEach(r => {
+                const last = groups[groups.length - 1];
+                if (last && last.cat === r.cat && last.label === r.label) {
+                    last.rows.push(r);
+                } else {
+                    groups.push({ cat: r.cat, label: r.label, rows: [r] });
+                }
+            });
+            // For cat-level rowspan, collect consecutive groups with same cat
+            const catGroups = [];
+            groups.forEach(g => {
+                const last = catGroups[catGroups.length - 1];
+                if (last && last.cat === g.cat) { last.groups.push(g); }
+                else catGroups.push({ cat: g.cat, groups: [g] });
             });
 
-            diffHtml += `</tbody></table></div>`;
+            let diffRowIdx = 0;
+            let diffRows = '';
+            let totReqD = 0, totFromD = 0, totSFD = 0;
+
+            catGroups.forEach(cg => {
+                const catSpan = cg.groups.reduce((sum, g) => sum + g.rows.length, 0);
+                let catEmitted = false;
+                cg.groups.forEach(g => {
+                    const typeSpan = g.rows.length;
+                    let typeEmitted = false;
+                    g.rows.forEach(({ tier, s }) => {
+                        const bg = tblRowBg(ts, diffRowIdx++);
+                        totReqD += s.requested; totFromD += s.fromTier; totSFD += s.shortfall;
+                        const col = tierColor[tier];
+                        const sfVal = s.shortfall > 0 ? `<strong style="color:#dc2626;">${s.shortfall}</strong>` : '—';
+                        const catCell = !catEmitted
+                            ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${catSpan}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${ts.cBdr};">${cg.cat}</td>`
+                            : '';
+                        const typeCell = !typeEmitted
+                            ? `<td class="px-3 py-1.5 text-xs border" rowspan="${typeSpan}" style="text-align:center;vertical-align:middle;background:${bg};border-color:${ts.cBdr};">${g.label}</td>`
+                            : '';
+                        catEmitted = true; typeEmitted = true;
+                        diffRows += `<tr style="background:${bg};">
+                            ${catCell}${typeCell}
+                            <td class="px-3 py-1.5 text-xs font-semibold border" style="text-align:center;color:${col};border-color:${ts.cBdr};">${tierLabel[tier]}</td>
+                            ${tblTd(ts, s.requested)}
+                            ${tblTd(ts, s.fromTier)}
+                            ${tblTd(ts, sfVal)}
+                        </tr>`;
+                    });
+                });
+            });
+
+            diffRows += `<tr>
+                <td class="px-3 py-1.5 text-xs font-bold border" colspan="3" style="text-align:left;background:${ts.tBg};color:${ts.tTxt};border-color:${ts.tBdr};">Total</td>
+                ${tblTotalTd(ts, totReqD)}
+                ${tblTotalTd(ts, totFromD)}
+                ${tblTotalTd(ts, totSFD || '—')}
+            </tr>`;
+
+            diffHtml += `<div class="overflow-x-auto"><table class="w-full table-fixed border-collapse" style="border:1px solid ${ts.hBdr};">
+                <colgroup><col style="width:16.66%"><col style="width:16.66%"><col style="width:16.66%"><col style="width:16.66%"><col style="width:16.66%"><col style="width:16.66%"></colgroup>
+                <thead><tr>
+                    ${tblTh(ts,'Category','left')}
+                    ${tblTh(ts,'Type')}${tblTh(ts,'Difficulty')}${tblTh(ts,'Requested')}${tblTh(ts,'From Tier')}${tblTh(ts,'Shortfall')}
+                </tr></thead>
+                <tbody>${diffRows}</tbody>
+            </table></div>`;
         }
 
         diffHtml += `</div>`;
@@ -5894,33 +5968,173 @@ function addMergerFiles() {
 }
 
 // Update the display with current merged data
+// ── Shared table style tokens ─────────────────────────────────────────────────
+const TBL = {
+    // Per-theme: [headerBg, headerText, headerBorder, totalBg, totalText, totalBorder, evenBg, oddBg, cellBorder]
+    indigo: {
+        hBg:'#4338ca', hTxt:'#ffffff', hBdr:'#4338ca',
+        tBg:'#3730a3', tTxt:'#ffffff', tBdr:'#3730a3',
+        eBg:'#f5f3ff', oBg:'#ede9fe', cBdr:'#c7d2fe'
+    },
+    red: {
+        hBg:'#b91c1c', hTxt:'#ffffff', hBdr:'#b91c1c',
+        tBg:'#991b1b', tTxt:'#ffffff', tBdr:'#991b1b',
+        eBg:'#fff1f2', oBg:'#ffe4e6', cBdr:'#fecaca'
+    },
+    orange: {
+        hBg:'#c2410c', hTxt:'#ffffff', hBdr:'#c2410c',
+        tBg:'#9a3412', tTxt:'#ffffff', tBdr:'#9a3412',
+        eBg:'#fff7ed', oBg:'#ffedd5', cBdr:'#fed7aa'
+    },
+    slate: {
+        hBg:'#334155', hTxt:'#ffffff', hBdr:'#334155',
+        tBg:'#1e293b', tTxt:'#ffffff', tBdr:'#1e293b',
+        eBg:'#f8fafc', oBg:'#f1f5f9', cBdr:'#cbd5e1'
+    },
+    teal: {
+        hBg:'#0f766e', hTxt:'#ffffff', hBdr:'#0f766e',
+        tBg:'#0d6b63', tTxt:'#ffffff', tBdr:'#0d6b63',
+        eBg:'#f0fdfa', oBg:'#ccfbf1', cBdr:'#99f6e4'
+    },
+};
+
+function tblTh(t, text, align='center', extra='') {
+    return `<th class="px-3 py-2 text-xs font-bold border" style="text-align:${align};background:${t.hBg};color:${t.hTxt};border-color:${t.hBdr};${extra}">${text}</th>`;
+}
+function tblTd(t, text, align='center', extra='') {
+    return `<td class="px-3 py-1.5 text-xs border" style="text-align:${align};border-color:${t.cBdr};${extra}">${text}</td>`;
+}
+function tblTotalTd(t, text, align='center', extra='') {
+    return `<td class="px-3 py-1.5 text-xs font-bold border" style="text-align:${align};background:${t.tBg};color:${t.tTxt};border-color:${t.tBdr};${extra}">${text}</td>`;
+}
+function tblRowBg(t, i) { return i % 2 === 0 ? t.eBg : t.oBg; }
+
+const SUMMARY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>`;
+
 function updateMergerDisplay() {
     const summaryDiv = document.getElementById('mergerSummary');
     const outputPre = document.getElementById('mergerOutput');
 
+    const mergerEmpty = document.getElementById('mergerEmptyState');
+    const mergerPre = outputPre ? outputPre.closest('pre') : null;
     if (mergedQuestions.length === 0) {
         summaryDiv.innerHTML = `
-            <p class="font-semibold mb-1" style="color:var(--text);">Summary</p>
-            <p>No files loaded yet. Click "Merge" to start.</p>
+            <p class="text-sm font-semibold mb-1 flex items-center gap-2" style="color:var(--text);">${SUMMARY_ICON}Summary</p>
+            <p class="text-xs" style="color:var(--text-muted);">No files loaded yet. Click "Merge" to start.</p>
         `;
         outputPre.textContent = '';
+        if (mergerEmpty) mergerEmpty.classList.remove('hidden');
+        if (mergerPre) mergerPre.classList.add('hidden');
         renderMissingCorrectWarning('mergerMissingCorrectWarning', []);
         return;
     }
+    if (mergerEmpty) mergerEmpty.classList.add('hidden');
+    if (mergerPre) mergerPre.classList.remove('hidden');
 
-    let summaryHtml = `
-        <p class="font-semibold mb-1" style="color:var(--text);">Summary</p>
-        <p class="font-semibold text-green-700 mb-2">Total Questions: ${mergedQuestions.length}</p>
-        <p class="font-semibold mb-1" style="color:var(--text);">Files Loaded:</p>
-        <ul class="list-disc list-inside ml-4">
-    `;
+    // ── Build comprehensive summary table ────────────────────────────────
+    // Aggregate: per category → per type → per difficulty → count
+    const cats = [...new Set(mergedQuestions.map(q => q.category || 'Uncategorized'))].sort();
+    const types = ['multiple_choice', 'true_false', 'matching'];
+    const typeLabel = { multiple_choice: 'MCQ', true_false: 'T/F', matching: 'Matching' };
+    const diffs = ['easy', 'medium', 'hard', 'unset'];
+    const diffLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard', unset: 'Unset' };
 
-    mergerFileStats.forEach(stat => {
-        summaryHtml += `<li>${stat.name}: ${stat.count} questions</li>`;
+    // data[cat][type][diff] = count
+    const data = {};
+    let grandTotal = 0;
+    cats.forEach(c => { data[c] = {}; types.forEach(t => { data[c][t] = { easy:0, medium:0, hard:0, unset:0, total:0 }; }); });
+    mergedQuestions.forEach(q => {
+        const c = q.category || 'Uncategorized';
+        const t = q.type || 'multiple_choice';
+        const d = q.difficulty || 'unset';
+        if (!data[c]) { data[c] = {}; types.forEach(tt => { data[c][tt] = { easy:0, medium:0, hard:0, unset:0, total:0 }; }); }
+        if (!data[c][t]) data[c][t] = { easy:0, medium:0, hard:0, unset:0, total:0 };
+        if (data[c][t][d] !== undefined) data[c][t][d]++;
+        data[c][t].total++;
+        grandTotal++;
     });
 
-    summaryHtml += `
-            </ul>
+    // Column totals
+    const colTotals = { easy:0, medium:0, hard:0, unset:0, total:0 };
+    mergedQuestions.forEach(q => {
+        const d = q.difficulty || 'unset';
+        if (colTotals[d] !== undefined) colTotals[d]++;
+        colTotals.total++;
+    });
+
+    const t = TBL.teal;
+    let rows = '';
+    let rowIdx = 0;
+
+    cats.forEach(cat => {
+        // How many type rows does this category span?
+        const activeTypes = types.filter(tp => data[cat][tp].total > 0);
+        const catSpan = activeTypes.length || 1;
+        let catCellEmitted = false;
+
+        activeTypes.forEach((tp, tpIdx) => {
+            const d = data[cat][tp];
+            const bg = tblRowBg(t, rowIdx++);
+            const catCell = !catCellEmitted
+                ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${catSpan}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${t.cBdr};">${cat}</td>`
+                : '';
+            catCellEmitted = true;
+            rows += `<tr style="background:${bg};">
+                ${catCell}
+                <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">${typeLabel[tp]}</td>
+                ${diffs.map(df => `<td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">${d[df] || '—'}</td>`).join('')}
+                <td class="px-3 py-1.5 text-xs font-bold border" style="text-align:center;border-color:${t.cBdr};">${d.total}</td>
+            </tr>`;
+        });
+
+        if (activeTypes.length === 0) {
+            const bg = tblRowBg(t, rowIdx++);
+            rows += `<tr style="background:${bg};">
+                <td class="px-3 py-1.5 text-xs font-semibold border" style="text-align:left;border-color:${t.cBdr};">${cat}</td>
+                <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">—</td>
+                ${diffs.map(() => `<td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">—</td>`).join('')}
+                <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">—</td>
+            </tr>`;
+        }
+    });
+
+    // Total row
+    rows += `<tr>
+        ${tblTotalTd(t, 'Total', 'left', 'font-weight:bold;')}
+        ${tblTotalTd(t, '')}
+        ${diffs.map(df => tblTotalTd(t, colTotals[df] || '—')).join('')}
+        ${tblTotalTd(t, grandTotal)}
+    </tr>`;
+
+    // Files loaded list
+    const filesList = mergerFileStats.map(s => `<li>${s.name}: <strong>${s.count}</strong> question${s.count !== 1 ? 's' : ''}</li>`).join('');
+
+    let summaryHtml = `
+        <p class="text-sm font-semibold mb-2 flex items-center gap-2" style="color:var(--text);">${SUMMARY_ICON}Summary</p>
+        <p class="text-xs mb-3" style="color:var(--text-muted);">Files merged: <strong>${mergerFileStats.length}</strong> &nbsp;·&nbsp; Total questions: <strong>${grandTotal}</strong></p>
+        <ul class="text-xs mb-3 list-disc list-inside" style="color:var(--text-muted);">${filesList}</ul>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse" style="table-layout:fixed;width:100%;">
+                <colgroup>
+                    <col style="width:22%">
+                    <col style="width:12%">
+                    <col style="width:11%">
+                    <col style="width:11%">
+                    <col style="width:11%">
+                    <col style="width:11%">
+                    <col style="width:11%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        ${tblTh(t,'Category','left')}
+                        ${tblTh(t,'Type')}
+                        ${diffs.map(df => tblTh(t, diffLabel[df])).join('')}
+                        ${tblTh(t,'Total')}
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
     `;
 
     summaryDiv.innerHTML = summaryHtml;
@@ -5928,15 +6142,9 @@ function updateMergerDisplay() {
 
     const preview = mergedQuestions.slice(0, 50);
     let previewText = JSON.stringify(preview, null, 2);
-    
-    if (mergedQuestions.length > 50) {
-        previewText += `\n\n... and ${mergedQuestions.length - 50} more questions`;
-    }
-
+    if (mergedQuestions.length > 50) previewText += `\n\n... and ${mergedQuestions.length - 50} more questions`;
     outputPre.textContent = previewText;
-    if (window.Prism) {
-        Prism.highlightElement(outputPre);
-    }
+    if (window.Prism) Prism.highlightElement(outputPre);
 }
 
 // Clear all merged data

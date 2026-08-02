@@ -986,7 +986,11 @@
                                 <button id="wqJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                             </div>
                             <div id="wqOutputContainer" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3">
-                                <pre class="text-xs"><code id="wqOutput"></code></pre>
+                                <div id="wqEmptyState" class="empty-state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <p>No questions yet.<br>Add or paste questions to preview output here.</p>
+                                </div>
+                                <pre class="text-xs hidden"><code id="wqOutput"></code></pre>
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 <button id="wqExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
@@ -1049,7 +1053,11 @@
                             </div>
                             <!-- JSON/TXT/GIFT output -->
                             <div id="convertFileTextOutputWrap" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3">
-                                <pre class="text-xs"><code id="convertFileOutput"></code></pre>
+                                <div id="convertFileEmptyState" class="empty-state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                    <p>No output yet.<br>Upload a file and click Convert.</p>
+                                </div>
+                                <pre class="text-xs hidden"><code id="convertFileOutput"></code></pre>
                             </div>
                             <!-- CSV table output -->
                             <div id="convertFileCsvOutputWrap" class="border border-gray-300 rounded overflow-auto max-h-96 bg-white dark:bg-slate-800 hidden mb-3">
@@ -1100,7 +1108,7 @@
                                 <button id="addMergerFilesBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium flex-1">Merge</button>
                                 <button id="clearMergerBtn"    class="bg-red-500  hover:bg-red-700  text-white px-4 py-2 rounded text-sm font-medium flex-1">Clear</button>
                             </div>
-                            <div id="mergerSummary" class="text-sm" style="color:var(--text-muted);">
+                            <div id="mergerSummary" class="text-sm p-3 border border-gray-200 rounded surface" style="color:var(--text-muted);">
                                 <p class="font-semibold mb-1 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>Summary</p>
                                 <p>No files loaded yet. Click "Merge" to start.</p>
                             </div>
@@ -1117,10 +1125,14 @@
                                 <button id="mergerJumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                             </div>
                             <div id="mergerOutputContainer" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3">
-                                <pre class="text-xs"><code class="language-json" id="mergerOutput"></code></pre>
+                                <div id="mergerEmptyState" class="empty-state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                                    <p>No files merged yet.<br>Select JSON files and click Merge.</p>
+                                </div>
+                                <pre class="text-xs hidden"><code class="language-json" id="mergerOutput"></code></pre>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <button id="downloadMergedBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Download JSON</button>
+                                <button id="downloadMergedBtn" class="w-full bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Download JSON</button>
                             </div>
                         </div>
                     </div>
