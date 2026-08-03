@@ -19,12 +19,18 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.8.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.8.0': [
+        'Added: Manage a Bank: new bank health/validation panel — flags duplicate questions (case/whitespace-insensitive text match), missing correct answers, empty question text, multiple choice questions with too few or duplicate choices, and matching pairs missing a premise or answer. Shows a green "no issues" message when the bank is clean.',
+        'Added: Keyboard shortcuts: Alt+1..5 to jump between tabs, Ctrl/Cmd+Enter to submit the Add Question form from any field, Escape to cancel the open question editor, and ? to open a new shortcuts help modal (also linked from the footer)',
+        'Changed: Undo is now a shared, capped 5-step stack instead of one snapshot per feature with a 5-second timeout — clearing a bank, bulk-deleting questions, changing category, and deleting all exam-bank questions can each be undone even after several of them happen in a row; Ctrl/Cmd+Z now works uniformly across all of them',
+        'Fixed: Manage a Bank → Change Category undo previously restored a snapshot that shared question objects with the live bank, so the category change was never actually undone; the snapshot is now a proper per-question clone',
+    ],
     '2.7.0': [
         'Security: Added a shared escapeHtml() helper and applied it throughout Manage a Bank, Design a Test, Convert a File, and Merge JSONs rendering, closing a stored-XSS path where question/category/choice/correct-answer text loaded from a bank file could execute as HTML',
         'Security: Manage a Bank → Change Category now escapes the typed category name before it\'s shown in the Undo toast, closing a second stored-XSS path (a crafted category name could otherwise execute)',
