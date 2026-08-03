@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.8.0] - 2026-08-03
 ### Added
-- Manage a Bank: new bank health/validation panel — flags duplicate questions (case/whitespace-insensitive text match), missing correct answers, empty question text, multiple choice questions with too few or duplicate choices, and matching pairs missing a premise or answer. Shows a green "no issues" message when the bank is clean. Includes its own Top/Bottom jump buttons for long reports.
+- Manage a Bank: new bank health/validation panel — flags duplicate questions (case/whitespace-insensitive text match), missing correct answers, empty question text, multiple choice questions with too few or duplicate choices, and matching pairs missing a premise or answer. Shows a green "no issues" message when the bank is clean. Includes its own scroll-jump button for long reports.
 - Manage a Bank: new stats sidebar next to the question list — total count, breakdown by type, by difficulty, and by category (top 8 + "N more")
 - Keyboard shortcuts: Alt+1..5 to jump between tabs, Ctrl/Cmd+Enter to submit the Add Question form from any field, Escape to cancel the open question editor, and ? to open a new shortcuts help modal (also linked from the footer)
 ### Changed
 - Undo is now a shared, capped 5-step stack instead of one snapshot per feature with a 5-second timeout — clearing a bank, bulk-deleting questions, changing category, and deleting all exam-bank questions can each be undone even after several of them happen in a row; Ctrl/Cmd+Z now works uniformly across all of them
+- All Top/Bottom scroll button pairs (Write Questions, Convert a File, Merge JSONs, and the new Manage a Bank validation report) are now a single button that jumps to whichever end you're not at, and relabels itself ("↓ Bottom" / "↑ Top") based on scroll position — including while scrolling manually
 ### Fixed
 - Manage a Bank → Change Category undo previously restored a snapshot that shared question objects with the live bank, so the category change was never actually undone; the snapshot is now a proper per-question clone
 
