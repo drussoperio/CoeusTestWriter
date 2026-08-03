@@ -255,14 +255,27 @@ let questionManagerState = {
     compactView: localStorage.getItem('coeus-compact-view') === 'true'
 };
 const VERSION_LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-let giftResults = '';
-let bulkResults = [];
 let mergedQuestions = [];
 let mergerFileStats = [];
 let lastDeletedBank = null;
 let undoTimeoutId = null;
 let lastBankEditorSnapshot = null;
 let bankEditorUndoTimeoutId = null;
+
+// ========================================
+// HTML ESCAPING
+// ========================================
+
+// Escapes untrusted text (e.g. loaded from bank files) before inserting into innerHTML.
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    }[ch]));
+}
 
 // ========================================
 // MAIN INITIALIZATION
@@ -762,63 +775,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ── TXT→JSON output jump buttons ───────────────────────────
-    function setupTxtToJsonJumpButtons() {
-        const jumpToTop = document.getElementById('txtToJsonJumpToTop');
-        const jumpToBottom = document.getElementById('txtToJsonJumpToBottom');
-        const container = document.getElementById('txtToJsonOutputContainer');
-
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => {
-                container.scrollTop = 0;
-            });
-        }
-
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => {
-                container.scrollTop = container.scrollHeight;
-            });
-        }
-    }
-
-    // ── Plain Text→JSON output jump buttons ────────────────────
-    function setupBulkJumpButtons() {
-        const jumpToTop = document.getElementById('bulkJumpToTop');
-        const jumpToBottom = document.getElementById('bulkJumpToBottom');
-        const container = document.getElementById('bulkOutputContainer');
-
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => {
-                container.scrollTop = 0;
-            });
-        }
-
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => {
-                container.scrollTop = container.scrollHeight;
-            });
-        }
-    }
-
-    // ── Text→GIFT output jump buttons ───────────────────────────
-    function setupGiftJumpButtons() {
-        const jumpToTop = document.getElementById('giftJumpToTop');
-        const jumpToBottom = document.getElementById('giftJumpToBottom');
-        const container = document.getElementById('giftOutputContainer');
-
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => {
-                container.scrollTop = 0;
-            });
-        }
-
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => {
-                container.scrollTop = container.scrollHeight;
-            });
-        }
-    }
-
     // ── Generic output jump buttons (Top/Bottom) ─────────────────
     function setupJumpButtonsFor(topId, bottomId, containerId) {
         const jumpToTop = document.getElementById(topId);
@@ -848,270 +804,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (jumpToBottom && container) {
             jumpToBottom.addEventListener('click', () => {
                 container.scrollTop = container.scrollHeight;
-            });
-        }
-    }
-
-    // ── JSON to TXT conversion ─────────────────────────────────
-    function setupJsonToTxtConversion() {
-        const btn = document.getElementById('convertJsonToTxtButton');
-        console.log('setupJsonToTxtConversion: btn =', btn);
-        
-        if (!btn) {
-            console.warn('convertJsonToTxtButton not found in DOM');
-            return;
-        }
-        
-        const fileInput = document.getElementById('jsonFileInput');
-        const output = document.getElementById('jsonToTxtOutput');
-        const downloadBtn = document.getElementById('downloadJsonToTxtBtn');
-        const filenameInput = document.getElementById('jsonToTxtFilename');
-        let lastConvertedTxt = '';
-        let lastFileName = '';
-        
-        btn.addEventListener('click', function() {
-            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                showToast('⚠️ Please select a JSON file.', 'warning');
-                return;
-            }
-            const file = fileInput.files[0];
-            lastFileName = file.name.replace('.json', '');
-            if (filenameInput) filenameInput.value = lastFileName;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const jsonData = JSON.parse(event.target.result);
-                    renderMissingCorrectWarning('jsonToTxtMissingCorrectWarning', jsonData);
-                    const txtData = convertJsonToCsv(jsonData);
-                    lastConvertedTxt = txtData;
-                    output.textContent = txtData;
-                    showToast('✅ Conversion complete', 'success');
-                } catch (error) {
-                    showToast('❌ Error: ' + error.message, 'error');
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                if (!lastConvertedTxt) {
-                    showToast('⚠️ Please convert first.', 'warning');
-                    return;
-                }
-                const customFilename = filenameInput?.value.trim() || lastFileName || 'questions';
-                const blob = new Blob([lastConvertedTxt], { type: 'text/csv' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = customFilename + '.csv';
-                link.click();
-                URL.revokeObjectURL(link.href);
-                showToast('✅ CSV downloaded', 'success');
-            });
-        }
-
-        const clearBtn = document.getElementById('clearJsonToTxtButton');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                    showToast('⚠️ Nothing to clear', 'warning');
-                    return;
-                }
-                const dropZone = document.querySelector('#jsonToTxtContent .drop-zone');
-                fileInput.value = '';
-                output.textContent = '';
-                lastConvertedTxt = '';
-                lastFileName = '';
-                if (filenameInput) filenameInput.value = '';
-                if (dropZone) {
-                    const textDisplay = dropZone.querySelector('p');
-                    if (textDisplay) {
-                        textDisplay.className = 'text-sm text-gray-600';
-                        textDisplay.textContent = 'Drag & drop file or click to browse';
-                    }
-                }
-                showToast('🗑️ Cleared', 'success');
-            });
-        }
-    }
-
-    // ── Text to GIFT Converter ─────────────────────────────────
-    function setupGiftConverter() {
-        const btnJson = document.getElementById('giftModeJson');
-        const btnPlain = document.getElementById('giftModePlain');
-        const panelJson = document.getElementById('giftJsonPanel');
-        const panelPlain = document.getElementById('giftPlainPanel');
-        const convertBtn = document.getElementById('convertGiftBtn');
-        const clearBtn = document.getElementById('clearGiftBtn');
-        const downloadTxtBtn = document.getElementById('downloadGiftTxtBtn');
-
-        if (btnJson && btnPlain && panelJson && panelPlain) {
-            function setGiftMode(mode) {
-                const jsonActive = mode === 'json';
-                panelJson.classList.toggle('hidden', !jsonActive);
-                panelPlain.classList.toggle('hidden', jsonActive);
-                btnJson.className = `px-4 py-3 rounded font-medium flex-1 ${jsonActive ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
-                btnPlain.className = `px-4 py-3 rounded font-medium flex-1 ${!jsonActive ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
-            }
-
-            btnJson.addEventListener('click', () => setGiftMode('json'));
-            btnPlain.addEventListener('click', () => setGiftMode('plain'));
-        }
-
-        if (convertBtn) convertBtn.addEventListener('click', convertToGift);
-        
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                const jsonInput = document.getElementById('giftJsonInput');
-                const plainInput = document.getElementById('giftPlainInput');
-                if ((!jsonInput || jsonInput.value === '') && (!plainInput || plainInput.value === '')) {
-                    showToast('⚠️ Nothing to clear', 'warning');
-                    return;
-                }
-                document.getElementById('giftJsonInput').value = '';
-                document.getElementById('giftPlainSubject').value = '';
-                document.getElementById('giftPlainCategory').value = '';
-                document.getElementById('giftPlainInput').value = '';
-                document.getElementById('giftOutput').textContent = '';
-                giftResults = '';
-                showToast('🗑️ Cleared', 'success');
-            });
-        }
-        
-        if (downloadTxtBtn) {
-            downloadTxtBtn.addEventListener('click', () => {
-                if (!giftResults) {
-                    showToast('⚠️ Please convert first.', 'warning');
-                    return;
-                }
-                const filenameInput = document.getElementById('giftFilename');
-                const filename = (filenameInput?.value.trim() || 'questions') + '_gift.txt';
-                const blob = new Blob([giftResults], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast('✅ GIFT downloaded', 'success');
-            });
-        }
-    }
-
-    // ── Bulk converter buttons ─────────────────────────────────
-    function setupBulkConverter() {
-        const convertBtn = document.getElementById('convertBulkBtn');
-        const downloadBtn = document.getElementById('downloadBulkBtn');
-        const clearBtn = document.getElementById('clearBulkBtn');
-
-        if (convertBtn) convertBtn.addEventListener('click', convertBulkToJSON);
-        if (downloadBtn) downloadBtn.addEventListener('click', downloadBulkJSON);
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                const bulkInput = document.getElementById('bulkInput');
-                const bulkOutput = document.getElementById('bulkOutput');
-                if (!bulkInput || !bulkInput.value.trim()) {
-                    showToast('⚠️ Nothing to clear', 'warning');
-                    return;
-                }
-                document.getElementById('bulkSubject').value = '';
-                document.getElementById('bulkCategory').value = '';
-                bulkInput.value = '';
-                bulkOutput.textContent = '';
-                showToast('🗑️ Cleared', 'success');
-            });
-        }
-    }
-
-    // ── TXT to JSON converter ──────────────────────────────────
-    function setupTxtToJsonConverter() {
-        const btn = document.getElementById('convertTxtToJsonButton');
-        const downloadBtn = document.getElementById('downloadTxtToJsonBtn');
-        const filenameInput = document.getElementById('txtToJsonFilename');
-        let lastConvertedJson = null;
-        let lastFileName = '';
-        
-        if (btn) {
-            btn.addEventListener('click', function() {
-                const fileInput = document.getElementById('txtFileInput');
-                const output = document.getElementById('txtToJsonOutput');
-
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    showToast('⚠️ Please select a TXT file.', 'warning');
-                    return;
-                }
-
-                const file = fileInput.files[0];
-                lastFileName = file.name.replace(/\.[^/.]+$/, "");
-                if (filenameInput) filenameInput.value = lastFileName;
-                const reader = new FileReader();
-
-                reader.onload = function(event) {
-                    const text = event.target.result;
-                    try {
-                        const json = convertCsvToJson(text);
-                        lastConvertedJson = json;
-                        renderMissingCorrectWarning('txtToJsonMissingCorrectWarning', json);
-
-                        const jsonStr = JSON.stringify(json, null, 2);
-                        output.textContent = jsonStr;
-                        if (window.Prism) {
-                            Prism.highlightElement(output);
-                        }
-                        showToast('✅ Conversion complete', 'success');
-                    } catch (error) {
-                        output.textContent = "Error: " + error.message;
-                        showToast('❌ Error: ' + error.message, 'error');
-                    }
-                };
-
-                reader.readAsText(file);
-            });
-        }
-
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                if (!lastConvertedJson) {
-                    showToast('⚠️ Please convert first.', 'warning');
-                    return;
-                }
-                const customFilename = filenameInput?.value.trim() || lastFileName || 'questions';
-                const jsonStr = JSON.stringify(lastConvertedJson, null, 2);
-                const blob = new Blob([jsonStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = customFilename + '.json';
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast('✅ JSON downloaded', 'success');
-            });
-        }
-
-        const clearBtn = document.getElementById('clearTxtToJsonButton');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                const fileInput = document.getElementById('txtFileInput');
-                const output = document.getElementById('txtToJsonOutput');
-                const dropZone = document.querySelector('#txtToJsonContent .drop-zone');
-                if (!fileInput.files || fileInput.files.length === 0) {
-                    showToast('⚠️ Nothing to clear', 'warning');
-                    return;
-                }
-                fileInput.value = '';
-                output.textContent = '';
-                lastConvertedJson = null;
-                lastFileName = '';
-                if (filenameInput) filenameInput.value = '';
-                if (dropZone) {
-                    const textDisplay = dropZone.querySelector('p');
-                    if (textDisplay) {
-                        textDisplay.className = 'text-sm text-gray-600';
-                        textDisplay.textContent = 'Drag & drop file or click to browse';
-                    }
-                }
-                showToast('🗑️ Cleared', 'success');
             });
         }
     }
@@ -1250,12 +942,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (rows.length < 2) return;
             const headers = rows[0];
             headEl.innerHTML = '<tr>' + headers.map(h =>
-                `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 whitespace-nowrap bg-gray-100">${h}</th>`
+                `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 whitespace-nowrap bg-gray-100">${escapeHtml(h)}</th>`
             ).join('') + '</tr>';
 
             bodyEl.innerHTML = rows.slice(1).map((row, ri) =>
                 '<tr class="' + (ri % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-blue-50">' +
-                row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate" title="${cell.replace(/"/g,'&quot;')}">${cell || '<span class="text-gray-300">—</span>'}</td>`).join('') +
+                row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate" title="${escapeHtml(cell)}">${cell ? escapeHtml(cell) : '<span class="text-gray-300">—</span>'}</td>`).join('') +
                 '</tr>'
             ).join('');
 
@@ -1390,10 +1082,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     result.push(cur); return result;
                 });
                 if (rows.length < 2) return;
-                if (csvHead) csvHead.innerHTML = '<tr>' + rows[0].map(h => `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 whitespace-nowrap bg-gray-100">${h}</th>`).join('') + '</tr>';
+                if (csvHead) csvHead.innerHTML = '<tr>' + rows[0].map(h => `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 whitespace-nowrap bg-gray-100">${escapeHtml(h)}</th>`).join('') + '</tr>';
                 if (csvBody) csvBody.innerHTML = rows.slice(1).map((row, ri) =>
                     '<tr class="' + (ri % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-blue-50">' +
-                    row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate" title="${cell.replace(/"/g,'&quot;')}">${cell || '<span class="text-gray-300">—</span>'}</td>`).join('') +
+                    row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate" title="${escapeHtml(cell)}">${cell ? escapeHtml(cell) : '<span class="text-gray-300">—</span>'}</td>`).join('') +
                     '</tr>').join('');
             } else {
                 if (csvWrap) csvWrap.classList.add('hidden');
@@ -1964,13 +1656,10 @@ document.addEventListener('DOMContentLoaded', function () {
     setupAnswerKeyToggle();
     setupDocxInfoToggle();
     setupJumpButtons();
-    setupGiftConverter();
-    setupBulkConverter();
     setupMerger();
     setupUnusedQuestions();
     setupExclusions();
     setupCategoryButtons();
-    setupGiftJumpButtons();
     setupConvertAFile();
     setupWriteQuestions();
     setupMergerJumpButtons();
@@ -2268,11 +1957,11 @@ function renderQuestionManagerList() {
 
         html += `
             <div class="qm-category-section">
-                <div class="qm-category-header" data-category="${category}">
+                <div class="qm-category-header" data-category="${escapeHtml(category)}">
                     <span class="qm-category-chevron ${!isExpanded ? 'collapsed' : ''}">▼</span>
-                    <span class="cat-badge" style="background:${catColor}">${category}</span>
+                    <span class="cat-badge" style="background:${catColor}">${escapeHtml(category)}</span>
                     <span class="text-xs text-gray-500 ml-2">(${questions.length})</span>
-                    <button class="qm-select-category-btn ml-auto text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" data-category="${category}" style="white-space: nowrap;">Select All in Category</button>
+                    <button class="qm-select-category-btn ml-auto text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-700" data-category="${escapeHtml(category)}" style="white-space: nowrap;">Select All in Category</button>
                 </div>
                 <div class="qm-category-body ${!isExpanded ? 'hidden' : ''}">
         `;
@@ -2303,8 +1992,8 @@ function renderQuestionManagerList() {
                                     <span class="text-xs px-2 py-0.5 rounded" style="background-color: ${typeColor}40; color: ${typeColor}; font-weight: 600;">${typeLabel}</span>
                                     ${difficultyBadge(q.difficulty)}
                                 </div>
-                                <p class="${compact ? 'text-xs' : 'text-xs mt-0.5'}" style="color: var(--text); line-height: 1.4; word-break: break-word;">${preview}</p>
-                                ${compact ? '' : (q.correct ? `<p class="text-xs mt-1" style="color: var(--text-muted);">✓ ${q.correct}</p>` : '<p class="text-xs mt-1 text-red-500">⚠️ No correct answer</p>')}
+                                <p class="${compact ? 'text-xs' : 'text-xs mt-0.5'}" style="color: var(--text); line-height: 1.4; word-break: break-word;">${escapeHtml(preview)}</p>
+                                ${compact ? '' : (q.correct ? `<p class="text-xs mt-1" style="color: var(--text-muted);">✓ ${escapeHtml(q.correct)}</p>` : '<p class="text-xs mt-1 text-red-500">⚠️ No correct answer</p>')}
                             </div>
                             <button class="qm-edit-btn text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-700 text-white font-medium" data-filtered-idx="${filteredIdx}" style="white-space: nowrap;">Edit</button>
                         </div>
@@ -2350,7 +2039,7 @@ function renderQuestionManagerList() {
                             <div>
                                 <label class="block text-sm font-medium" style="color: var(--text);">Category</label>
                                 <input type="text" class="qm-edit-category mt-1 block w-full rounded border text-sm px-2 py-1.5" 
-                                    value="${(editData.category || '').replace(/"/g, '&quot;')}" data-filtered-idx="${filteredIdx}">
+                                    value="${escapeHtml(editData.category || '')}" data-filtered-idx="${filteredIdx}">
                             </div>
 
                             <div>
@@ -2364,7 +2053,7 @@ function renderQuestionManagerList() {
 
                             <div>
                                 <label class="block text-sm font-medium" style="color: var(--text);">Question</label>
-                                <textarea class="qm-edit-question mt-1 block w-full rounded border text-sm px-2 py-1.5" rows="3" data-filtered-idx="${filteredIdx}">${(editData.question || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+                                <textarea class="qm-edit-question mt-1 block w-full rounded border text-sm px-2 py-1.5" rows="3" data-filtered-idx="${filteredIdx}">${escapeHtml(editData.question || '')}</textarea>
                             </div>
 
                             ${editData.type === 'multiple_choice' ? `
@@ -2375,7 +2064,7 @@ function renderQuestionManagerList() {
                                             <div class="flex items-center gap-2">
                                                 ${i === 0 ? checkIcon : xIcon}
                                                 <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5" 
-                                                    value="${(choice || '').replace(/"/g, '&quot;')}" 
+                                                    value="${escapeHtml(choice || '')}"
                                                     data-filtered-idx="${filteredIdx}" data-choice-idx="${i}"
                                                     placeholder="${i === 0 ? 'Correct answer' : 'Wrong answer'}"
                                                     style="border:none;">
@@ -2384,7 +2073,7 @@ function renderQuestionManagerList() {
                                         <div class="flex items-center gap-2 qm-edit-choice-e-row" id="qm-edit-choice-e-${filteredIdx}" style="${hasChoiceE ? '' : 'display:none;'}">
                                             ${xIcon}
                                             <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5"
-                                                value="${(allChoices[4] || '').replace(/"/g, '&quot;')}"
+                                                value="${escapeHtml(allChoices[4] || '')}"
                                                 data-filtered-idx="${filteredIdx}" data-choice-idx="4"
                                                 placeholder="Wrong answer"
                                                 style="border:none;">
@@ -2396,14 +2085,14 @@ function renderQuestionManagerList() {
                                 <div>
                                     <label class="block text-sm font-medium mb-2" style="color: var(--text);">Column A (Premise)</label>
                                     <input type="text" placeholder="Premise" 
-                                        value="${(editData.question || '').replace(/"/g, '&quot;')}"
+                                        value="${escapeHtml(editData.question || '')}"
                                         class="w-full rounded border text-sm px-2 py-1 qm-edit-question"
                                         data-filtered-idx="${filteredIdx}">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-2" style="color: var(--text);">Column B (Correct Answer)</label>
                                     <input type="text" placeholder="Correct answer" 
-                                        value="${(editData.correct || '').replace(/"/g, '&quot;')}"
+                                        value="${escapeHtml(editData.correct || '')}"
                                         class="w-full rounded border text-sm px-2 py-1 qm-edit-correct"
                                         data-filtered-idx="${filteredIdx}">
                                 </div>
@@ -2828,7 +2517,7 @@ function updateQuestionManagerCategories() {
             <option value="diff-hard">Difficulty: Hard (${hardCount})</option>
         ` + categories.map(cat => {
             const n = questionBank.filter(q => q.category === cat).length;
-            return `<option value="${cat}">${cat} (${n})</option>`;
+            return `<option value="${escapeHtml(cat)}">${escapeHtml(cat)} (${n})</option>`;
         }).join('');
 
         filterSelect.innerHTML = optionsHtml;
@@ -3057,11 +2746,7 @@ function showToast(message, type = 'success', duration = 3000) {
     }
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    if (typeof message === 'string' && message.includes('<')) {
-        toast.innerHTML = message;
-    } else {
-        toast.textContent = message;
-    }
+    toast.textContent = message;
     stack.appendChild(toast);
     setTimeout(() => { 
         toast.style.opacity = '0'; 
@@ -3072,15 +2757,29 @@ function showToast(message, type = 'success', duration = 3000) {
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
 function saveQBankToStorage() {
-    localStorage.setItem('coeus-question-bank', JSON.stringify(questionBank));
+    try {
+        localStorage.setItem('coeus-question-bank', JSON.stringify(questionBank));
+    } catch (e) {
+        console.error('Failed to save question bank to storage:', e);
+        showToast('⚠️ Could not save question bank locally (storage full?). Your changes are only in memory.', 'warning');
+    }
 }
 
 function saveAddedQuestionsToStorage() {
-    localStorage.setItem('coeus-added-questions', JSON.stringify(addedQuestions));
+    try {
+        localStorage.setItem('coeus-added-questions', JSON.stringify(addedQuestions));
+    } catch (e) {
+        console.error('Failed to save added questions to storage:', e);
+    }
 }
 
 function saveTestBankToStorage() {
-    localStorage.setItem('coeus-test-bank', JSON.stringify(testBank));
+    try {
+        localStorage.setItem('coeus-test-bank', JSON.stringify(testBank));
+    } catch (e) {
+        console.error('Failed to save test bank to storage:', e);
+        showToast('⚠️ Could not save test bank locally (storage full?). Your changes are only in memory.', 'warning');
+    }
 }
 
 function restoreBanksFromStorage() {
@@ -3190,7 +2889,7 @@ function badgeColor(str) {
 }
 function catBadge(cat) {
     const color = badgeColor(cat);
-    return `<span class="cat-badge" style="background:${color}">${cat}</span>`;
+    return `<span class="cat-badge" style="background:${color}">${escapeHtml(cat)}</span>`;
 }
 
 // ── Status bar helpers ────────────────────────────────────────────────────────
@@ -3235,7 +2934,7 @@ function renderSidebarQuestions() {
                 ${catBadge(q.category || 'Uncategorized')}
                 <span class="text-xs" style="color:var(--text-muted);">${typeLabel}</span>
             </div>
-            <p class="text-xs" style="color:var(--text);line-height:1.4;">${(q.question || '').slice(0, 100)}${(q.question || '').length > 100 ? '…' : ''}</p>
+            <p class="text-xs" style="color:var(--text);line-height:1.4;">${escapeHtml((q.question || '').slice(0, 100))}${(q.question || '').length > 100 ? '…' : ''}</p>
         </div>`;
     }).join('');
 }
@@ -3337,7 +3036,7 @@ function updateCategoryInputs(categories) {
         
         div.innerHTML = `
             <div class="col-span-2 font-semibold mb-3">
-                ${cat}
+                ${escapeHtml(cat)}
                 ${countsText}
             </div>
 
@@ -3474,7 +3173,7 @@ function addMatchingColumnAItem(text = '') {
     rowA.className = 'flex gap-2 items-center matching-pair-item';
     rowA.setAttribute('data-pair-id', pairId);
     rowA.innerHTML = `
-        <input type="text" placeholder="Premise" value="${text.replace(/"/g, '&quot;')}"
+        <input type="text" placeholder="Premise" value="${escapeHtml(text)}"
             class="flex-1 rounded border text-sm px-2 py-1 matching-premise">
         <button type="button" class="delete-pair-btn text-red-500 text-sm px-1" data-pair-id="${pairId}">✕</button>
     `;
@@ -4182,10 +3881,10 @@ function displayTest(questions) {
         const choices = (q.displayChoices && q.displayChoices.length)
             ? q.displayChoices : (q.choices || []);
 
-        testHtml += `<p style="margin-bottom:0.15rem;padding-left:1.8em;text-indent:-1.8em;">${questionNumber}. ${String(q.question).replace(/\n/g, '<br>')}</p>`;
+        testHtml += `<p style="margin-bottom:0.15rem;padding-left:1.8em;text-indent:-1.8em;">${questionNumber}. ${escapeHtml(String(q.question)).replace(/\n/g, '<br>')}</p>`;
         choices.forEach((choice, i) => {
             const letter = String.fromCharCode(65 + i);
-            testHtml += `<p style="margin-bottom:0.1rem;padding-left:3em;text-indent:-1.5em;">${letter}. ${choice}</p>`;
+            testHtml += `<p style="margin-bottom:0.1rem;padding-left:3em;text-indent:-1.5em;">${letter}. ${escapeHtml(choice)}</p>`;
         });
         testHtml += `<div style="margin-bottom:0.5rem;"></div>`;
 
@@ -4193,7 +3892,7 @@ function displayTest(questions) {
             ? q.displayCorrectLetter
             : String.fromCharCode(65 + choices.indexOf(q.correct));
         const correctText = q.displayCorrectText || q.correct || '';
-        answerKeyHtml += `<div class="mb-1">${questionNumber}. ${correctLetter} (${correctText})</div>`;
+        answerKeyHtml += `<div class="mb-1">${questionNumber}. ${escapeHtml(correctLetter)} (${escapeHtml(correctText)})</div>`;
         questionNumber++;
     });
 
@@ -4203,10 +3902,10 @@ function displayTest(questions) {
 
     const tfs = questions.filter(q => q.type === 'true_false');
     tfs.forEach(q => {
-        testHtml += `<p style="margin-bottom:0.35rem;padding-left:1.8em;text-indent:-1.8em;">${questionNumber}. ${q.question}</p>`;
+        testHtml += `<p style="margin-bottom:0.35rem;padding-left:1.8em;text-indent:-1.8em;">${questionNumber}. ${escapeHtml(q.question)}</p>`;
         const correctLetter = q.displayCorrectLetter || (q.correct === 'True' ? 'A' : 'B');
         const correctText   = q.displayCorrectText || q.correct || '';
-        answerKeyHtml += `<div class="mb-1">${questionNumber}. ${correctLetter} (${correctText})</div>`;
+        answerKeyHtml += `<div class="mb-1">${questionNumber}. ${escapeHtml(correctLetter)} (${escapeHtml(correctText)})</div>`;
         questionNumber++;
     });
 
@@ -4236,14 +3935,17 @@ function displayTest(questions) {
         `;
         
         let tableHtml = matchingTable;
+        if (matching.length !== answerWithLetters.length) {
+            console.warn('Matching table: premise/answer count mismatch', matching.length, answerWithLetters.length);
+        }
         const maxRows = Math.max(matching.length, answerWithLetters.length);
-        
+
         for (let i = 0; i < maxRows; i++) {
             const premiseCell = i < matching.length
-                ? `${questionNumber + i}. ${matching[i].question}` : '';
+                ? `${questionNumber + i}. ${escapeHtml(matching[i].question)}` : '';
             const answerCell = i < answerWithLetters.length
-                ? `${answerWithLetters[i].letter}. ${answerWithLetters[i].text}` : '';
-            
+                ? `${answerWithLetters[i].letter}. ${escapeHtml(answerWithLetters[i].text)}` : '';
+
             tableHtml += `<tr>
                 <td style="padding:0.1rem 0.5rem 0.1rem 0;">${premiseCell}</td>
                 <td></td>
@@ -4252,13 +3954,13 @@ function displayTest(questions) {
         }
         tableHtml += `</table>`;
         testHtml += tableHtml;
-        
+
         // Add answer key - find which letter each answer was assigned
         matching.forEach((q, idx) => {
             const answerObj = answerWithLetters.find(a => a.text === q.correct);
             const answerLetter = answerObj ? answerObj.letter : 'A';
             const correctText = q.correct || '';
-            answerKeyHtml += `<div class="mb-1">${questionNumber + idx}. ${answerLetter} (${correctText})</div>`;
+            answerKeyHtml += `<div class="mb-1">${questionNumber + idx}. ${escapeHtml(answerLetter)} (${escapeHtml(correctText)})</div>`;
         });
         
         questionNumber += matching.length;
@@ -4529,7 +4231,7 @@ function updateExclusionStatus() {
     Object.keys(excludedByCategory).forEach(cat => {
         const stats = excludedByCategory[cat];
         statusHtml += `
-            <li><strong>${cat}:</strong> ${stats.total} questions (MCQ: ${stats.mc}, T/F: ${stats.tf})</li>
+            <li><strong>${escapeHtml(cat)}:</strong> ${stats.total} questions (MCQ: ${stats.mc}, T/F: ${stats.tf})</li>
         `;
     });
 
@@ -4627,7 +4329,7 @@ function displayGenerationReport() {
                 const avail = stat.mcAvailable + stat.tfAvailable + stat.mtAvailable;
                 const bg = tblRowBg(ti, rowIdx++);
                 catRows += `<tr style="background:${bg};">
-                    ${tblTd(ti, cat, 'left', 'font-weight:600;')}
+                    ${tblTd(ti, escapeHtml(cat), 'left', 'font-weight:600;')}
                     ${tblTd(ti, '—')}${tblTd(ti, '0')}${tblTd(ti, avail)}${tblTd(ti, '0')}
                 </tr>`;
             } else {
@@ -4635,7 +4337,7 @@ function displayGenerationReport() {
                     const bg = tblRowBg(ti, rowIdx++);
                     totReq += tp.req; totAvail += tp.avail; totGen += tp.gen;
                     const catCell = tpIdx === 0
-                        ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${span}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${ti.cBdr};">${cat}</td>`
+                        ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${span}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${ti.cBdr};">${escapeHtml(cat)}</td>`
                         : '';
                     catRows += `<tr style="background:${bg};">
                         ${catCell}
@@ -5735,206 +5437,6 @@ function convertJsonToCsv(jsonData) {
     return csv;
 }
 
-// ========================================
-// BULK Q TO JSON CONVERTER
-// ========================================
-
-// Convert bulk questions to JSON
-function convertBulkToJSON() {
-    const text = document.getElementById('bulkInput').value.trim();
-    const category = document.getElementById('bulkCategory').value.trim();
-
-    if (!text) {
-        showToast('⚠️ Please paste some questions first.', 'warning');
-        return;
-    }
-
-    if (!category) {
-        showToast('⚠️ Please enter a category.', 'warning');
-        return;
-    }
-
-    function cleanText(str) {
-        return str
-            .replace(/\n(?!\d+[.)]\s|[a-e][.)]\s|=?\s*(true|false)\s*$)/gi, ' ')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
-    }
-
-    const blocks = text.split(/\n(?=\d+[.)]\s)/).map(b => b.trim()).filter(b => b);
-
-    bulkResults = [];
-    let hasErrors = false;
-
-    try {
-    blocks.forEach((block, blockIdx) => {
-        const lines = block.split('\n');
-        if (!lines || lines.length === 0) {
-            hasErrors = true;
-            return;
-        }
-
-        // Check for T/F format
-        const tfLineIndex = lines.findIndex(line => line.trim().match(/^=?\s*(true|false)\s*$/i));
-
-        if (tfLineIndex !== -1) {
-            const tfQuestionLines = [];
-            for (let i = 0; i < tfLineIndex; i++) {
-                const line = lines[i].trim();
-                tfQuestionLines.push(line.replace(/^\d+[.)]\s*/, ""));
-            }
-            const tfQuestion = cleanText(tfQuestionLines.join('\n'));
-
-            const tfMatch = lines[tfLineIndex].trim().match(/^=?\s*(true|false)\s*$/i);
-            const tfWord = tfMatch[1].toLowerCase();
-            const tfCorrect = tfWord === 'true' ? 'True' : 'False';
-
-            bulkResults.push({
-                question: tfQuestion,
-                category: category,
-                type: "true_false",
-                correct: tfCorrect,
-                choices: [null, null, null, null]
-            });
-            return;
-        }
-
-        // Check for matching format: premise on one line, =answer or *answer on next
-        // BUT exclude MCQ format (=a., =b., etc.)
-        const matchingLineIndex = lines.findIndex((line, idx) => {
-            if (idx === 0) return false; // Skip the question number line
-            const trimmed = line.trim();
-            // Match =text or *text, BUT NOT =a., =b., etc. (MCQ format)
-            return trimmed.match(/^[=*]\s*(.+)$/) && !trimmed.match(/^[=*]\s*[a-e][.)]\s/i);
-        });
-
-        if (matchingLineIndex !== -1) {
-            // This is a matching question
-            const questionLines = [];
-            for (let i = 0; i < matchingLineIndex; i++) {
-                const line = lines[i].trim();
-                questionLines.push(line.replace(/^\d+[.)]\s*/, ""));
-            }
-            const premise = cleanText(questionLines.join('\n'));
-
-            const answerMatch = lines[matchingLineIndex].trim().match(/^[=*]\s*(.+)$/);
-            const answer = answerMatch ? answerMatch[1].trim() : '';
-
-            bulkResults.push({
-                question: premise,
-                category: category,
-                type: "matching",
-                correct: answer,
-                choices: [null, null, null, null]
-            });
-            return;
-        }
-
-        let question = '';
-        let choices = [];
-        let correct = "";
-
-        let questionLines = [];
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line.match(/^[*=]?[a-e][.)]\s+/i)) {
-                break;
-            } else {
-                questionLines.push(line.replace(/^\d+[.)]\s*/, ""));
-            }
-        }
-
-        question = cleanText(questionLines.join('\n'));
-
-        const firstChoiceIdx = lines.findIndex(line => line.trim().match(/^[*=]?[a-e][.)]\s+/i));
-        for (let i = firstChoiceIdx; i !== -1 && i < lines.length; i++) {
-            const line = lines[i].trim();
-            const match = line.match(/^([*=]?)([a-e])[.)]\s+(.*)$/i);
-            if (match) {
-                let isCorrect = match[1] === "*" || match[1] === "=";
-                let choiceText = match[3].trim();
-                
-                let j = i + 1;
-                while (j < lines.length && !lines[j].trim().match(/^[*=]?[a-e][.)]\s+/i)) {
-                    choiceText += ' ' + lines[j].trim();
-                    j++;
-                }
-                i = j - 1;
-
-                choiceText = cleanText(choiceText);
-                if (isCorrect) correct = choiceText;
-                choices.push(choiceText);
-            }
-        }
-
-        if (!question || choices.length === 0) {
-            hasErrors = true;
-            return;
-        }
-
-        // Detect question type: if exactly 4 lettered choices with periods, it's MCQ; otherwise matching
-        const isMultipleChoice = choices.length === 4;
-        const questionType = isMultipleChoice ? "multiple_choice" : "matching";
-
-        bulkResults.push({
-            question: question,
-            category: category,
-            type: questionType,
-            correct: correct,
-            choices: isMultipleChoice ? choices : [null, null, null, null]
-        });
-    });
-    } catch (err) {
-        showToast('⚠️ Invalid format', 'error');
-        return;
-    }
-
-    if (hasErrors && bulkResults.length > 0) {
-        showToast('⚠️ Some questions had formatting issues and were skipped.', 'warning');
-    }
-    if (bulkResults.length === 0) {
-        showToast('❌ No valid questions found. Please check the format.', 'error');
-        return;
-    }
-    const bulkOutputEl = document.getElementById('bulkOutput');
-    const jsonStr = JSON.stringify(bulkResults, null, 2);
-    bulkOutputEl.textContent = jsonStr;
-    if (window.Prism) {
-        Prism.highlightElement(bulkOutputEl);
-    }
-    renderMissingCorrectWarning('bulkMissingCorrectWarning', bulkResults);
-    showToast('✅ Conversion complete', 'success');
-    console.log('Bulk conversion complete:', bulkResults);
-}
-
-// Download bulk converted JSON
-function downloadBulkJSON() {
-    if (bulkResults.length === 0) {
-        showToast("⚠️ Please convert questions first.", "warning");
-        return;
-    }
-
-    const filenameInput = document.getElementById('bulkFilename');
-    const custom = filenameInput ? filenameInput.value.trim() : '';
-    let filename;
-    if (custom) {
-        filename = custom.endsWith('.json') ? custom : `${custom}.json`;
-    } else {
-        const subject = document.getElementById('bulkSubject').value.trim() || "quiz";
-        const category = document.getElementById('bulkCategory').value.trim() || "general";
-        filename = `${subject}_${category}.json`;
-    }
-
-    const blob = new Blob([JSON.stringify(bulkResults, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
 
 // ========================================
 // JSON MERGER
@@ -6105,10 +5607,10 @@ function updateMergerDisplay() {
                 const d = tp ? data[cat][tp] : null;
                 const bg = tblRowBg(tc, rowIdx++);
                 const fileCell = !fileEmitted
-                    ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${fileRowCount}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tc.cBdr};word-break:break-all;">${fileStat.name}</td>`
+                    ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${fileRowCount}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tc.cBdr};word-break:break-all;">${escapeHtml(fileStat.name)}</td>`
                     : '';
                 const catCell = !catEmitted
-                    ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${catSpan}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tc.cBdr};">${cat}</td>`
+                    ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${catSpan}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tc.cBdr};">${escapeHtml(cat)}</td>`
                     : '';
                 fileEmitted = true;
                 catEmitted = true;
@@ -6130,7 +5632,7 @@ function updateMergerDisplay() {
         if (fileCats.length === 0) {
             const bg = tblRowBg(tc, rowIdx++);
             rows += `<tr style="background:${bg};">
-                <td class="px-3 py-1.5 text-xs font-semibold border" style="text-align:left;border-color:${tc.cBdr};word-break:break-all;">${fileStat.name}</td>
+                <td class="px-3 py-1.5 text-xs font-semibold border" style="text-align:left;border-color:${tc.cBdr};word-break:break-all;">${escapeHtml(fileStat.name)}</td>
                 <td class="px-3 py-1.5 text-xs border" style="border-color:${tc.cBdr};" colspan="6">—</td>
             </tr>`;
             grandTotal; // already counted above (0 for this file)
@@ -6540,111 +6042,6 @@ function formatFromFileName(name) {
     return 'gift';
 }
 
-function convertToGift() {
-    const isJson = !document.getElementById('giftJsonPanel').classList.contains('hidden');
-    let questions = [];
-
-    if (isJson) {
-        const raw = document.getElementById('giftJsonInput').value.trim();
-        if (!raw) { showToast('⚠️ Please paste some JSON first.', 'warning'); return; }
-        try {
-            questions = JSON.parse(raw);
-            if (!Array.isArray(questions)) throw new Error('Not an array');
-        } catch (e) {
-            showToast('❌ Invalid JSON. Please check the format.', 'error');
-            return;
-        }
-    } else {
-        const text     = document.getElementById('giftPlainInput').value.trim();
-        const subject  = document.getElementById('giftPlainSubject').value.trim();
-        const category = document.getElementById('giftPlainCategory').value.trim();
-        if (!text) { showToast('⚠️ Please paste some questions first.', 'warning'); return; }
-        if (!category) { showToast('⚠️ Please enter a category.', 'warning'); return; }
-
-        function cleanText(str) {
-            return str
-                .replace(/\n(?!\d+[.)]\s|[a-e][.)]\s|=?\s*(true|false)\s*$)/gi, ' ')
-                .replace(/\s{2,}/g, ' ')
-                .trim();
-        }
-
-        const blocks = text.split(/\n(?=\d+[.)]\s)/).map(b => b.trim()).filter(b => b);
-        blocks.forEach(block => {
-            const lines = block.split('\n');
-            const tfLineIndex = lines.findIndex(line => line.trim().match(/^=?\s*(true|false)\s*$/i));
-
-            if (tfLineIndex !== -1) {
-                const tfQuestionLines = [];
-                for (let i = 0; i < tfLineIndex; i++) {
-                    tfQuestionLines.push(lines[i].trim().replace(/^\d+[.)]\s*/, ''));
-                }
-                const tfQuestion = cleanText(tfQuestionLines.join('\n'));
-                const tfMatch    = lines[tfLineIndex].trim().match(/^=?\s*(true|false)\s*$/i);
-                const tfCorrect  = tfMatch[1].toLowerCase() === 'true' ? 'True' : 'False';
-                questions.push({ subject, question: tfQuestion, category, type: 'true_false', correct: tfCorrect });
-                return;
-            }
-
-            // Check for matching type format: "=word" on a line by itself (no letter prefix)
-            const matchingLineIndex = lines.findIndex((line, idx) => {
-                if (idx === 0) return false;
-                const trimmed = line.trim();
-                return trimmed.match(/^=\s*\S.*$/) && !trimmed.match(/^=\s*[a-e][.)]\s+/i);
-            });
-
-            if (matchingLineIndex !== -1) {
-                const matchingQuestionLines = [];
-                for (let i = 0; i < matchingLineIndex; i++) {
-                    matchingQuestionLines.push(lines[i].trim().replace(/^\d+[.)]\s*/, ''));
-                }
-                const matchingQuestion = cleanText(matchingQuestionLines.join('\n'));
-                const matchingAnswer = lines[matchingLineIndex].trim().replace(/^=\s*/, '').trim();
-                questions.push({ subject, question: matchingQuestion, category, type: 'matching', correct: matchingAnswer, choices: [null, null, null, null] });
-                return;
-            }
-
-            const questionLines = [];
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line.match(/^[*=]?[a-e][.)]\s+/i)) break;
-                questionLines.push(line.replace(/^\d+[.)]\s*/, ''));
-            }
-            const question = cleanText(questionLines.join('\n'));
-            const choices = [];
-            let correct = '';
-
-            for (let i = lines.findIndex(l => l && l.trim().match(/^[*=]?[a-e][.)]\s+/i)); i < lines.length; i++) {
-                if (!lines[i]) continue;
-                const match = lines[i].trim().match(/^([*=]?)([a-e])[.)]\s+(.*)$/i);
-                if (match) {
-                    const isCorrect = match[1] === '*' || match[1] === '=';
-                    let choiceText  = match[3].trim();
-                    let j = i + 1;
-                    while (j < lines.length && lines[j] && !lines[j].trim().match(/^[*=]?[a-e][.)]\s+/i)) {
-                        choiceText += ' ' + lines[j].trim();
-                        j++;
-                    }
-                    i = j - 1;
-                    choiceText = cleanText(choiceText);
-                    if (isCorrect) correct = choiceText;
-                    choices.push(choiceText);
-                }
-            }
-            questions.push({ subject, question, category, type: 'multiple_choice', correct, choices });
-        });
-    }
-
-    if (questions.length === 0) { showToast('⚠️ No questions found.', 'warning'); return; }
-
-    renderMissingCorrectWarning('giftMissingCorrectWarning', questions);
-    giftResults = questionsToGift(questions);
-    const giftOutputEl = document.getElementById('giftOutput');
-    giftOutputEl.textContent = giftResults;
-    if (window.Prism) {
-        Prism.highlightElement(giftOutputEl);
-    }
-}
-
 // ========================================
 // HELPER FUNCTIONS
 // ========================================
@@ -6718,7 +6115,7 @@ function renderMissingCorrectWarning(containerId, questions) {
     const preview = missing.slice(0, 5).map(q => {
         const text = (q.question || '(untitled question)').toString().trim();
         const truncated = text.length > 60 ? text.slice(0, 60) + '…' : text;
-        return `"${truncated}"`;
+        return `"${escapeHtml(truncated)}"`;
     }).join(', ');
     const more = missing.length > 5 ? ` and ${missing.length - 5} more` : '';
 
