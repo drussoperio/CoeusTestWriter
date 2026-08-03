@@ -609,7 +609,7 @@ function deleteSelectedQuestions() {
         showToast('✅ Change undone', 'success');
     });
     const undoHtml = `<span>🗑️ Deleted ${count} question(s). <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
-    showToast(undoHtml, 'success', 5000, true);
+    showToast(undoHtml, 'warning', 5000, true);
 }
 
 function changeSelectedQuestionsCategory() {

@@ -720,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (csvEmpty) csvEmpty.classList.remove('hidden');
                 const warnEl = document.getElementById(warningId);
                 if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
-                showToast('🗑️ Cleared', 'success');
+                showToast('🗑️ Cleared', 'warning');
             });
         }
 
@@ -919,7 +919,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
                 lastResult = '';
                 cfStoredQuestions = null;
-                showToast('🗑️ Cleared', 'success');
+                showToast('🗑️ Cleared', 'warning');
             });
         }
 
@@ -1481,7 +1481,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('coeus-question-bank');
             localStorage.removeItem('coeus-added-questions');
             clearQuestionManagerState();
-            showToast('🗑️ Cleared', 'success');
+            showToast('🗑️ Cleared', 'warning');
             const qmFileInput = document.getElementById('loadQuestionBank');
             if (qmFileInput) qmFileInput.value = '';
             const qmDropZone = qmFileInput ? qmFileInput.closest('.drop-zone') : null;

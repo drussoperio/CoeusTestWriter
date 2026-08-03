@@ -427,7 +427,7 @@ function clearMerger() {
     }
     
     updateMergerDisplay();
-    showToast('🗑️ Cleared', 'success');
+    showToast('🗑️ Cleared', 'warning');
 }
 
 // Download merged JSON
