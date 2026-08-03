@@ -120,10 +120,10 @@ Generate a randomized, versioned test from a loaded JSON bank.
 - Enter MCQ, T/F, and Matching counts for each category row.
 - **Select All Available** — fills in the maximum available for every category.
 - **Clear All** — resets all inputs to zero.
-- **Smart Selection (Balanced Pick)** — enter total target counts for MCQ, T/F, and Matching; the engine distributes them as evenly as possible across all categories, respecting each category's supply. Shortfalls are reported.
+- **Smart Selection** — enter total target counts for MCQ, T/F, and Matching; the engine distributes them as evenly as possible across all categories, respecting each category's supply. Shortfalls are reported.
 - **Answer Distribution Tolerance** — controls how evenly correct-answer letters are balanced (0 = exact balance, up to ±15).
 - **Max Consecutive MC / T/F Answers** — prevents the same answer from repeating more than N times in a row.
-- **Difficulty Ratio** — set the ⚪ Unset / 🟢 Easy / 🟡 Medium / 🔴 Hard mix. Must total 100%. Unset questions are used as fallback when a tier runs short.
+- **Difficulty Ratio** — set the ⚪ Unset / 🟢 Easy / 🟡 Medium / 🔴 Hard mix. Unset questions are used as fallback when a tier runs short.
 - **Exclude Already-Used Questions** — upload a previous test's JSON to prevent repeats.
 
 **Preview Test and Answer Key** — shows the generated test with a collapsible answer key, once **Construct Test** has been run.
