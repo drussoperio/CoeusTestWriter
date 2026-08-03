@@ -1235,9 +1235,16 @@ function clearAllCategoryInputs() {
     // Snapshot current values for undo
     const snapshot = {};
     inputs.forEach(input => { snapshot[input.id] = input.value; });
-    lastDeletedBank = { type: 'categoryInputs', data: snapshot };
-    if (undoTimeoutId) clearTimeout(undoTimeoutId);
-    undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
+    pushUndo('Category inputs cleared', () => {
+        Object.entries(snapshot).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+        showToast('✅ Inputs restored', 'success');
+    });
 
     inputs.forEach(input => {
         input.value = '0';

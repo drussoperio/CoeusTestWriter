@@ -98,7 +98,7 @@ function showUndoToast(msg) {
     const btn = document.createElement('button');
     btn.textContent = 'Undo';
     btn.style.cssText = 'margin-left:auto;background:#fff;color:#333;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;font-weight:600;flex-shrink:0;pointer-events:auto;';
-    btn.addEventListener('click', function() { undoClear(); toast.remove(); });
+    btn.addEventListener('click', function() { performUndo(); toast.remove(); });
     toast.appendChild(text);
     toast.appendChild(btn);
     stack.appendChild(toast);
@@ -211,52 +211,6 @@ function restoreBanksFromStorage() {
         }
     }
     updateCategoryInputs();
-}
-
-function undoBankEditorChange() {
-    if (!lastBankEditorSnapshot) return;
-    questionBank = [...lastBankEditorSnapshot];
-    saveQBankToStorage();
-    renderQuestionManagerList();
-    showToast('✅ Change undone', 'success');
-    lastBankEditorSnapshot = null;
-    if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
-}
-
-function undoClear() {
-    if (!lastDeletedBank) return;
-    
-    if (lastDeletedBank.type === 'questionBank') {
-        questionBank = [...lastDeletedBank.data];
-        saveQBankToStorage();
-        renderQuestionManagerList();
-        showToast('✅ Question bank restored', 'success');
-    } else if (lastDeletedBank.type === 'addedQuestions') {
-        questionBank = [...questionBank, ...lastDeletedBank.data];
-        addedQuestions = [...addedQuestions, ...lastDeletedBank.data];
-        saveQBankToStorage();
-        saveAddedQuestionsToStorage();
-        renderQuestionManagerList();
-        showToast('✅ Added questions restored', 'success');
-    } else if (lastDeletedBank.type === 'testBank') {
-        testBank = [...lastDeletedBank.data];
-        saveTestBankToStorage();
-        updateCategoryInputs();
-        showToast('✅ Test bank restored', 'success');
-    } else if (lastDeletedBank.type === 'categoryInputs') {
-        const snapshot = lastDeletedBank.data;
-        Object.entries(snapshot).forEach(([id, val]) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.value = val;
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        });
-        showToast('✅ Inputs restored', 'success');
-    }
-    
-    lastDeletedBank = null;
-    if (undoTimeoutId) clearTimeout(undoTimeoutId);
 }
 
 // ── Category badge colour (deterministic hash) ────────────────────────────────

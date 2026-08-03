@@ -589,7 +589,7 @@ function deleteSelectedQuestions() {
 
     const selectedUids = questionManagerState.selectedQuestions;
 
-    lastBankEditorSnapshot = [...questionBank];
+    const snapshot = [...questionBank];
 
     // Remove them from questionBank
     const newBank = questionBank.filter(q => !selectedUids.has(q.__uid));
@@ -599,9 +599,13 @@ function deleteSelectedQuestions() {
     questionManagerState.selectedQuestions.clear();
     renderQuestionManagerList();
     updateDeleteButtonState();
-    if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
-    bankEditorUndoTimeoutId = setTimeout(() => { lastBankEditorSnapshot = null; }, 5000);
-    const undoHtml = `<span>🗑️ Deleted ${count} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
+    pushUndo(`Deleted ${count} question(s)`, () => {
+        questionBank = snapshot;
+        saveQBankToStorage();
+        renderQuestionManagerList();
+        showToast('✅ Change undone', 'success');
+    });
+    const undoHtml = `<span>🗑️ Deleted ${count} question(s). <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
     showToast(undoHtml, 'success', 5000, true);
 }
 
@@ -617,7 +621,9 @@ function changeSelectedQuestionsCategory() {
         return;
     }
 
-    lastBankEditorSnapshot = [...questionBank];
+    // Clone each question, not just the array, so mutating q.category below
+    // doesn't also corrupt the undo snapshot (they'd otherwise share objects).
+    const snapshot = questionBank.map(q => ({ ...q }));
 
     const selectedUids = questionManagerState.selectedQuestions;
     let changedCount = 0;
@@ -631,9 +637,13 @@ function changeSelectedQuestionsCategory() {
     saveQBankToStorage();
     questionManagerState.selectedQuestions.clear();
     renderQuestionManagerList();
-    if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
-    bankEditorUndoTimeoutId = setTimeout(() => { lastBankEditorSnapshot = null; }, 5000);
-    const undoHtml = `<span>✅ Changed category to "${escapeHtml(newCat)}" for ${changedCount} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
+    pushUndo(`Changed category to "${newCat}"`, () => {
+        questionBank = snapshot;
+        saveQBankToStorage();
+        renderQuestionManagerList();
+        showToast('✅ Change undone', 'success');
+    });
+    const undoHtml = `<span>✅ Changed category to "${escapeHtml(newCat)}" for ${changedCount} question(s). <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
     showToast(undoHtml, 'success', 5000, true);
 }
 

@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!examBank.length) { showToast('⚠️ Nothing to delete.', 'warning'); return; }
             const confirmed = window.confirm(`Delete all ${examBank.length} question(s) from the exam bank? This can be undone.`);
             if (!confirmed) return;
-            wqDeletedBackup = [...examBank];
+            const wqSnapshot = [...examBank];
             examBank = [];
             saveExamBankToStorage();
             refreshWqPreview();
@@ -1237,44 +1237,35 @@ document.addEventListener('DOMContentLoaded', function () {
             if (pasteSubject) pasteSubject.value = '';
             if (pasteCategory) pasteCategory.value = '';
             if (pasteDifficulty) pasteDifficulty.value = 'unset';
-            if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
-            const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
-            showToast(undoHtml, 'warning', 5000, true);
-            window.__wqUndo = () => {
-                if (!wqDeletedBackup) return;
-                examBank = [...wqDeletedBackup];
-                wqDeletedBackup = null;
+            pushUndo('Exam bank deleted', () => {
+                examBank = wqSnapshot;
                 saveExamBankToStorage();
                 refreshWqPreview();
                 showToast('↩️ Restored.', 'success');
-            };
-            wqUndoTimeout = setTimeout(() => { wqDeletedBackup = null; window.__wqUndo = null; }, 5000);
+            });
+            const undoHtml = '<span>🗑️ All questions deleted. <button onclick="performUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
+            showToast(undoHtml, 'warning', 5000, true);
         });
 
         // Delete All Questions — confirm + undo
-        let wqDeletedBackup = null, wqUndoTimeout = null;
         const clearSavedBtn = document.getElementById('wqClearSavedBtn');
         if (clearSavedBtn) {
             clearSavedBtn.addEventListener('click', () => {
                 if (!examBank.length) { showToast('⚠️ Nothing to delete.', 'warning'); return; }
                 const confirmed = window.confirm(`Delete all ${examBank.length} question(s) from the exam bank? This can be undone.`);
                 if (!confirmed) return;
-                wqDeletedBackup = [...examBank];
+                const wqSnapshot = [...examBank];
                 examBank = [];
                 saveExamBankToStorage();
                 refreshWqPreview();
-                if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
-                const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
-                showToast(undoHtml, 'warning', 5000, true);
-                window.__wqUndo = () => {
-                    if (!wqDeletedBackup) return;
-                    examBank = [...wqDeletedBackup];
-                    wqDeletedBackup = null;
+                pushUndo('Exam bank deleted', () => {
+                    examBank = wqSnapshot;
                     saveExamBankToStorage();
                     refreshWqPreview();
                     showToast('↩️ Restored.', 'success');
-                };
-                wqUndoTimeout = setTimeout(() => { wqDeletedBackup = null; window.__wqUndo = null; }, 5000);
+                });
+                const undoHtml = '<span>🗑️ All questions deleted. <button onclick="performUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
+                showToast(undoHtml, 'warning', 5000, true);
             });
         }
 
@@ -1506,15 +1497,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
             }
-            lastDeletedBank = {
-                type: 'testBank',
-                data: [...testBank]
-            };
+            const testBankSnapshot = [...testBank];
             testBank = [];
             localStorage.removeItem('coeus-test-bank');
-            if (undoTimeoutId) clearTimeout(undoTimeoutId);
-            undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
-            const undoHtml = '<span>🗑️ Cleared. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
+            pushUndo('Test bank cleared', () => {
+                testBank = testBankSnapshot;
+                saveTestBankToStorage();
+                updateCategoryInputs();
+                renderSidebarQuestions();
+                showToast('✅ Test bank restored', 'success');
+            });
+            const undoHtml = '<span>🗑️ Cleared. <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
             showToast(undoHtml, 'warning', 5000, true);
             const tgFileInput = document.getElementById('loadTestBank');
             if (tgFileInput) tgFileInput.value = '';
@@ -1548,12 +1541,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-            if (lastDeletedBank) {
+            if (hasUndo()) {
                 e.preventDefault();
-                undoClear();
-            } else if (lastBankEditorSnapshot) {
-                e.preventDefault();
-                undoBankEditorChange();
+                performUndo();
             }
         }
     });

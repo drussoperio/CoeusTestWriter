@@ -253,10 +253,6 @@ let questionManagerState = {
 const VERSION_LABELS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 let mergedQuestions = [];
 let mergerFileStats = [];
-let lastDeletedBank = null;
-let undoTimeoutId = null;
-let lastBankEditorSnapshot = null;
-let bankEditorUndoTimeoutId = null;
 
 // ========================================
 // HTML ESCAPING
