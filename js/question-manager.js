@@ -8,6 +8,7 @@ function renderQuestionManagerList() {
     if (!container) return;
 
     renderBankValidationReport('qm-validation-report', questionBank);
+    renderBankStats('qm-bank-stats', questionBank);
 
     // Step 1: Apply search filter
     let filtered = questionBank.filter(q => {

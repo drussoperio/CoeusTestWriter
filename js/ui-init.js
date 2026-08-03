@@ -1389,6 +1389,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Initialize Question Manager
     initializeQuestionManager();
+    setupJumpButtonsFor('qmValidationJumpToTop', 'qmValidationJumpToBottom', 'qmValidationReportWrap');
     
     // Initialize export dropdown
     initializeExportDropdown();

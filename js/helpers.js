@@ -148,12 +148,15 @@ function renderValidationDetail(title, items, formatItem) {
 function renderBankValidationReport(containerId, questions) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    const section = document.getElementById('qm-validation-section');
 
     const list = questions || [];
     if (list.length === 0) {
         container.innerHTML = '';
+        section?.classList.add('hidden');
         return;
     }
+    section?.classList.remove('hidden');
 
     const report = validateQuestionBank(list);
     const totalIssues = bankValidationIssueCount(report);
@@ -180,4 +183,85 @@ function renderBankValidationReport(containerId, questions) {
 
     html += `</div>`;
     container.innerHTML = html;
+}
+
+// ========================================
+// BANK STATS SIDEBAR
+// ========================================
+
+const BANK_STATS_TYPE_LABELS = { multiple_choice: 'Multiple Choice', true_false: 'True/False', matching: 'Matching' };
+const BANK_STATS_DIFFICULTY_ORDER = ['easy', 'medium', 'hard', 'unset'];
+const BANK_STATS_DIFFICULTY_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard', unset: 'Unset' };
+const BANK_STATS_MAX_CATEGORIES = 8;
+
+function statsCountBy(list, keyFn) {
+    const counts = new Map();
+    list.forEach(q => {
+        const key = keyFn(q);
+        counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+}
+
+function statsMiniTable(rows) {
+    return `<table class="w-full text-xs">
+        ${rows.map(([label, count]) => `
+            <tr>
+                <td class="py-0.5" style="color:var(--text);">${label}</td>
+                <td class="py-0.5 text-right font-medium" style="color:var(--text);">${count}</td>
+            </tr>`).join('')}
+    </table>`;
+}
+
+// Renders (or clears) the bank stats sidebar into containerId.
+function renderBankStats(containerId, questions) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const list = questions || [];
+    if (list.length === 0) {
+        container.innerHTML = `<div class="p-3 rounded border border-gray-200 bg-gray-50 text-sm text-gray-500">Load a bank to see stats.</div>`;
+        return;
+    }
+
+    const byType = statsCountBy(list, q => q.type || 'multiple_choice');
+    const typeRows = Object.keys(BANK_STATS_TYPE_LABELS)
+        .filter(t => byType.has(t))
+        .map(t => [BANK_STATS_TYPE_LABELS[t], byType.get(t)]);
+
+    const byDifficulty = statsCountBy(list, q => q.difficulty || 'unset');
+    const difficultyRows = BANK_STATS_DIFFICULTY_ORDER
+        .filter(d => byDifficulty.has(d))
+        .map(d => [BANK_STATS_DIFFICULTY_LABELS[d], byDifficulty.get(d)]);
+
+    const byCategory = statsCountBy(list, q => q.category || 'Uncategorized');
+    const sortedCategories = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
+    const shownCategories = sortedCategories.slice(0, BANK_STATS_MAX_CATEGORIES);
+    const moreCategories = sortedCategories.length - shownCategories.length;
+
+    const categoryRows = shownCategories.map(([cat, count]) => `
+        <tr>
+            <td class="py-0.5">${catBadge(cat)}</td>
+            <td class="py-0.5 text-right font-medium" style="color:var(--text);">${count}</td>
+        </tr>`).join('');
+
+    container.innerHTML = `
+        <div class="p-3 rounded border border-gray-200 surface space-y-4">
+            <div>
+                <p class="text-sm font-semibold" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Type</p>
+                ${statsMiniTable(typeRows)}
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Difficulty</p>
+                ${statsMiniTable(difficultyRows)}
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Category</p>
+                <table class="w-full text-xs">${categoryRows}</table>
+                ${moreCategories > 0 ? `<p class="text-xs mt-1" style="color:var(--text-muted);">+${moreCategories} more categor${moreCategories === 1 ? 'y' : 'ies'}</p>` : ''}
+            </div>
+        </div>`;
 }
