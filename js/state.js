@@ -31,7 +31,10 @@ const CHANGELOG = {
         'Added: Keyboard shortcuts: Alt+1..5 to jump between tabs, Ctrl/Cmd+Enter to submit the Add Question form from any field, Escape to cancel the open question editor, and ? to open a new shortcuts help modal (also linked from the footer)',
         'Changed: Undo is now a shared, capped 5-step stack instead of one snapshot per feature with a 5-second timeout — clearing a bank, bulk-deleting questions, changing category, and deleting all exam-bank questions can each be undone even after several of them happen in a row; Ctrl/Cmd+Z now works uniformly across all of them',
         'Changed: All Top/Bottom scroll button pairs (Write Questions, Convert a File, Merge JSONs, and the new Manage a Bank validation report) are now a single button that jumps to whichever end you\'re not at, and relabels itself ("↓ Bottom" / "↑ Top") based on scroll position — including while scrolling manually',
+        'Changed: Manage a Bank\'s Sort dropdown is now 4 toggle buttons (Category A→Z, Category Z→A, Difficulty Easy→Hard, Difficulty Hard→Easy); the "Default (As Loaded)" option is gone and Category A→Z is the default view',
+        'Changed: All "Cleared"/"Deleted" toasts (Clear Bank in every tab, bulk-delete undo) are now consistently orange instead of a mix of green and orange',
         'Fixed: Manage a Bank → Change Category undo previously restored a snapshot that shared question objects with the live bank, so the category change was never actually undone; the snapshot is now a proper per-question clone',
+        'Fixed: Manage a Bank\'s category sections always rendered in ascending alphabetical order regardless of the chosen sort — "By Category (Z→A)" never actually reversed the section order. Sections now follow the order the selected sort actually produces.',
     ],
     '2.7.0': [
         'Security: Added a shared escapeHtml() helper and applied it throughout Manage a Bank, Design a Test, Convert a File, and Merge JSONs rendering, closing a stored-XSS path where question/category/choice/correct-answer text loaded from a bank file could execute as HTML',
@@ -250,7 +253,7 @@ let lastSmartSelectShortfalls = null; // { mcTarget, tfTarget, mtTarget, mcShort
 let testVersionIndex = 0;
 let questionManagerState = {
     searchText: '',
-    sortBy: 'asLoaded',
+    sortBy: 'cat-asc',
     filterBy: 'all',
     selectedQuestions: new Set(),
     editingIndex: null,

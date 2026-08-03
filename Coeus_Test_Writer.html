@@ -522,14 +522,17 @@
                                     <!-- Sort & Filter Row -->
                                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <div>
-                                            <label for="qm-sort-select" class="block text-sm font-medium mb-1" style="color:var(--text);">Sort by</label>
-                                            <select id="qm-sort-select" class="w-full rounded border px-2 py-1.5 text-sm">
-                                                <option value="asLoaded">Default (As Loaded)</option>
-                                                <option value="diff-asc">By Difficulty (Easy → Hard)</option>
-                                                <option value="diff-desc">By Difficulty (Hard → Easy)</option>
-                                                <option value="cat-asc">By Category (A → Z)</option>
-                                                <option value="cat-desc">By Category (Z → A)</option>
-                                            </select>
+                                            <label class="block text-sm font-medium mb-1" style="color:var(--text);">Sort by</label>
+                                            <div class="flex flex-col gap-1">
+                                                <div class="flex gap-1">
+                                                    <button type="button" data-sort="cat-asc" class="qm-sort-btn flex-1 px-2 py-1.5 rounded text-xs font-medium">Category A→Z</button>
+                                                    <button type="button" data-sort="cat-desc" class="qm-sort-btn flex-1 px-2 py-1.5 rounded text-xs font-medium">Category Z→A</button>
+                                                </div>
+                                                <div class="flex gap-1">
+                                                    <button type="button" data-sort="diff-asc" class="qm-sort-btn flex-1 px-2 py-1.5 rounded text-xs font-medium">Difficulty Easy→Hard</button>
+                                                    <button type="button" data-sort="diff-desc" class="qm-sort-btn flex-1 px-2 py-1.5 rounded text-xs font-medium">Difficulty Hard→Easy</button>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div>
                                             <div class="flex items-center justify-between mb-1">
