@@ -382,6 +382,17 @@
             opacity: 0;
             padding: 0;
         }
+        /* ── Keyboard shortcut key badges ─────────────────────────── */
+        .shortcut-key {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8em;
+            background: var(--border);
+            color: var(--text);
+            border: 1px solid var(--text-muted);
+        }
     </style>
 </head>
 
@@ -1186,6 +1197,21 @@
     </div>
 </div>
 
+<!-- ── Keyboard Shortcuts Modal ──────────────────────────────────────── -->
+<div id="shortcutsModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.5);">
+    <div class="rounded-xl shadow-2xl w-full max-w-md mx-4 p-8 relative" style="background:var(--surface);color:var(--text);border:1px solid var(--border);">
+        <button id="closeShortcutsModal" class="absolute top-4 right-4 text-xl font-bold leading-none" style="color:var(--text-muted);" aria-label="Close">&times;</button>
+        <p class="app-title text-xl font-bold mb-4" style="color:var(--text);">Keyboard Shortcuts</p>
+        <ul class="text-sm space-y-2" style="color:var(--text-muted);">
+            <li><kbd class="shortcut-key">Alt</kbd> + <kbd class="shortcut-key">1</kbd>–<kbd class="shortcut-key">5</kbd> — Jump to a tab (Write Questions … Merge JSONs)</li>
+            <li><kbd class="shortcut-key">Ctrl</kbd>/<kbd class="shortcut-key">⌘</kbd> + <kbd class="shortcut-key">Enter</kbd> — Submit the Add Question form from any field</li>
+            <li><kbd class="shortcut-key">Esc</kbd> — Cancel the question editor in Manage a Bank</li>
+            <li><kbd class="shortcut-key">Ctrl</kbd>/<kbd class="shortcut-key">⌘</kbd> + <kbd class="shortcut-key">Z</kbd> — Undo the last destructive action (up to 5 steps back)</li>
+            <li><kbd class="shortcut-key">?</kbd> — Show this list</li>
+        </ul>
+    </div>
+</div>
+
 <!-- ── Tooltip Popover ───────────────────────────────────────────────── -->
 <div id="tipPopover" class="fixed z-[9999] hidden max-w-xs text-sm rounded-lg shadow-lg p-3 pointer-events-none" style="background:var(--surface);color:var(--text);border:1px solid var(--border);line-height:1.5;"></div>
 
@@ -1228,6 +1254,7 @@
 <footer class="py-4 text-center text-xs" style="background-color:var(--surface);border-top:1px solid var(--border);color:var(--text-muted);">
     <div class="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-3">
         <button id="openAboutModal" class="hover:underline" style="color:var(--text-muted);">About</button>
+        <button id="openShortcutsModalBtn" class="hover:underline" style="color:var(--text-muted);">⌨ Shortcuts</button>
         <a href="https://github.com/drussoperio/CoeusTestWriter" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">GitHub</a>
         <a href="https://github.com/drussoperio/CoeusTestWriter/releases/latest" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">⬇ Download Latest</a>
         <a href="https://github.com/drussoperio/CoeusTestWriter/issues/new" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">🐛 Report a Bug</a>

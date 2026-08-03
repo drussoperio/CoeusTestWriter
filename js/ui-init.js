@@ -167,6 +167,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    const shortcutsModal = document.getElementById('shortcutsModal');
+    function openShortcutsModal() {
+        shortcutsModal?.classList.remove('hidden');
+        shortcutsModal?.classList.add('flex');
+    }
+    function closeShortcutsModal() {
+        shortcutsModal?.classList.add('hidden');
+        shortcutsModal?.classList.remove('flex');
+    }
+    document.getElementById('openShortcutsModalBtn')?.addEventListener('click', openShortcutsModal);
+    document.getElementById('closeShortcutsModal')?.addEventListener('click', closeShortcutsModal);
+    shortcutsModal?.addEventListener('click', (e) => {
+        if (e.target === shortcutsModal) closeShortcutsModal();
+    });
+
     // ── Drop zone initialization helper ────────────────────────
     function initDropZone(dropZoneEl, fileInputEl, callback) {
         if (!dropZoneEl || !fileInputEl) return;
@@ -1539,12 +1554,65 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    const TAB_SHORTCUT_IDS = ['writeQuestionsTab', 'questionManagerTab', 'testGeneratorTab', 'convertFileTab', 'jsonMergerTab'];
+    function isTypingTarget(el) {
+        if (!el) return false;
+        const tag = el.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
     document.addEventListener('keydown', (e) => {
+        // Undo — works everywhere, including while a field has focus
         if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
             if (hasUndo()) {
                 e.preventDefault();
                 performUndo();
             }
+            return;
+        }
+
+        // Submit the Add Question form from any field inside it, including the textarea
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const form = document.activeElement?.closest?.('#wqQuestionForm');
+            if (form) {
+                e.preventDefault();
+                form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+            return;
+        }
+
+        // Cancel the open Manage a Bank question editor
+        if (e.key === 'Escape') {
+            if (typeof questionManagerState !== 'undefined' && questionManagerState.editingIndex !== null) {
+                const idx = questionManagerState.editingIndex;
+                questionManagerState.editingIndex = null;
+                if (questionManagerState.editFormData[idx]) delete questionManagerState.editFormData[idx];
+                renderQuestionManagerList();
+                return;
+            }
+            if (!shortcutsModal?.classList.contains('hidden')) {
+                closeShortcutsModal();
+                return;
+            }
+        }
+
+        if (isTypingTarget(e.target)) return;
+
+        // Alt+1..5 — jump to a tab
+        if (e.altKey && /^[1-5]$/.test(e.key)) {
+            const id = TAB_SHORTCUT_IDS[Number(e.key) - 1];
+            const btn = document.getElementById(id);
+            if (btn) {
+                e.preventDefault();
+                btn.click();
+            }
+            return;
+        }
+
+        // ? — show the shortcuts help modal
+        if (e.key === '?') {
+            e.preventDefault();
+            openShortcutsModal();
         }
     });
 
