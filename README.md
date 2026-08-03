@@ -9,6 +9,7 @@ A browser-based toolkit for writing, organizing, and generating exam questions. 
 - **Design a test** — generate randomized, versioned tests with answer-distribution balancing, difficulty ratios, and per-category quotas.
 - **Convert a file** — upload any supported format (JSON, CSV, GIFT TXT, plain TXT) and export to any other format.
 - **Merge JSONs** — combine multiple JSON question banks into one file.
+- **Send between tabs** — push a bank directly from one tab to another (e.g. Manage a Bank → Design a Test) without exporting and re-uploading a file.
 - **Local-only storage** — question banks and preferences persist via browser `localStorage`; nothing leaves the browser.
 
 ## Installation
@@ -83,7 +84,7 @@ Write and accumulate questions into a local exam bank, then export the whole ban
 
 **Paste Text** (sub-tab) — Bulk-add via plain numbered text (same format as Convert a File → JSON). Set Subject, Category, and Difficulty first, then paste and click **Add Question**.
 
-**Output** panel — preview the current bank as JSON, CSV, GIFT, or TXT. Export using **Export as JSON / CSV / TXT / GIFT**.
+**Download File** panel — preview the current bank as JSON, CSV, GIFT, or TXT. Export using **Export as JSON / CSV / TXT / GIFT**, or use **Send to Manage a Bank** / **Send to Design a Test** to load the bank directly into another tab without exporting a file.
 
 ---
 
@@ -91,7 +92,9 @@ Write and accumulate questions into a local exam bank, then export the whole ban
 
 Load and curate an existing JSON question bank.
 
-**Input** — Drag-and-drop or browse for a `.json` file. **Clear Bank** removes it from memory without affecting `localStorage`. Export the current bank as **JSON**, **CSV**, or **TXT**.
+**Upload File** — Drag-and-drop or browse for a `.json` file. **Clear Bank** removes it from memory without affecting `localStorage`.
+
+**Download File** — Export the current bank as **JSON**, **CSV**, **TXT**, or **GIFT**, or use **Send to Design a Test** to load it directly into the test generator.
 
 **Edit Bank** — Search, sort, and filter the loaded bank:
 - **Search** — matches question text, answers, or category.
@@ -109,7 +112,9 @@ Load and curate an existing JSON question bank.
 
 Generate a randomized, versioned test from a loaded JSON bank.
 
-**Input** — Load a `.json` bank. A warning appears if any questions lack a `correct` field.
+**Upload File** — Load a `.json` bank. A warning appears if any questions lack a `correct` field.
+
+**Download File** — Set a filename (a version letter is appended automatically, e.g. `exam_A.docx`). DOCX format details are expandable: 8.5"×13" long bond paper, 0.5" margins, Arial 11pt, auto two-column MCQ choices (override with **Force single column**). Export as **DOCX**, **JSON**, **GIFT**, **CSV**, or **TXT**, or use **Send to Manage a Bank** to load the current test bank directly into the bank editor.
 
 **Generate Test** — Configure per-category question counts:
 - Enter MCQ, T/F, and Matching counts for each category row.
@@ -121,9 +126,9 @@ Generate a randomized, versioned test from a loaded JSON bank.
 - **Difficulty Ratio** — set the ⚪ Unset / 🟢 Easy / 🟡 Medium / 🔴 Hard mix. Must total 100%. Unset questions are used as fallback when a tier runs short.
 - **Exclude Already-Used Questions** — upload a previous test's JSON to prevent repeats.
 
-**Output** — Set a filename (a version letter is appended automatically, e.g. `exam_A.docx`). DOCX format details are expandable: 8.5"×13" long bond paper, 0.5" margins, Arial 11pt, auto two-column MCQ choices (override with **Force single column**). Export as **DOCX**, **JSON**, **GIFT**, **CSV**, or **TXT**. A preview pane shows the test with a collapsible answer key.
+**Preview Test and Answer Key** — shows the generated test with a collapsible answer key, once **Construct Test** has been run.
 
-**Generation Report** — appears after generating a test:
+**Review Generation Report** — appears after generating a test:
 - **Summary** — total questions requested, selected, and any shortfall.
 - **Breakdown by Category** — per-category and per-type counts.
 - **Breakdown by Difficulty** — per-tier counts; shows "No difficulty set." when all questions are Unset.
@@ -136,9 +141,9 @@ Generate a randomized, versioned test from a loaded JSON bank.
 
 Upload any supported file and convert it to any other format in one step.
 
-- **Input** — drag-and-drop or browse for a `.json`, `.csv`, or `.txt` file (plain text or GIFT).
+- **Upload File** — drag-and-drop or browse for a `.json`, `.csv`, or `.txt` file (plain text or GIFT).
 - **Convert** — detects the input format automatically and converts.
-- **Output** — preview the result as **JSON**, **CSV**, **GIFT**, or **TXT** using the format toggles. Use ↑ Top / ↓ Bottom to navigate long output. Export using **Export as JSON / CSV / GIFT / TXT**.
+- **Download File** — preview the result as **JSON**, **CSV**, **GIFT**, or **TXT** using the format toggles. Use ↑ Top / ↓ Bottom to navigate long output. Export using **Export as JSON / CSV / GIFT / TXT**, or use **Send to Manage a Bank** / **Send to Design a Test** to load the converted questions directly into another tab.
 
 **Accepted inputs per output format:**
 
@@ -176,9 +181,9 @@ c. Atom
 
 Combine multiple Coeus JSON question banks into a single file.
 
-- Drag-and-drop or Ctrl/Cmd-click to select multiple `.json` files.
+- **Upload Files** — drag-and-drop or Ctrl/Cmd-click to select multiple `.json` files.
 - **Merge** — combines all files; a summary shows question counts per source file.
-- Set a filename and click **Merge & Download**.
+- **Download File** — set a filename and click **Download JSON**, or use **Send to Manage a Bank** / **Send to Design a Test** to load the merged bank directly into another tab.
 - A warning appears if any merged question is missing a `correct` field. Duplicate questions are not automatically removed.
 
 ---
