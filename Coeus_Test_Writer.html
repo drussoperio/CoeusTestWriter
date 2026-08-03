@@ -448,7 +448,7 @@
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
                     <div class="grid grid-cols-2 gap-6">
                         <div>
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Upload File</h3>
                             <div class="mb-4">
                                 <label for="loadQuestionBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
                                 <div class="drop-zone">
@@ -462,16 +462,19 @@
                             </div>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download File</h3>
                             <div class="mb-3 flex items-center gap-2">
                                 <label for="questionBankFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="questionBankFilename" placeholder="questionBank" class="flex-1 rounded border text-sm px-2 py-1.5">
                             </div>
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <button id="exportQuestionsJsonBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
-                                <button id="exportQuestionsCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
-                                <button id="exportQuestionsPlainBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
-                                <button id="exportQuestionsGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
+                            <div class="flex gap-2">
+                                <button id="exportQuestionsJsonBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as JSON</button>
+                                <button id="exportQuestionsCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as CSV</button>
+                                <button id="exportQuestionsPlainBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as TXT</button>
+                                <button id="exportQuestionsGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as GIFT</button>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button id="qmSendToDesignBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Design a Test</button>
                             </div>
                         </div>
                     </div>
@@ -591,22 +594,63 @@
                     </div>
                 </div>
 
-                <!-- Load bank -->
+                <!-- Upload / Download 2-col -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h2>
-                    <div class="mb-4">
-					<label for="loadTestBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
-                        <div class="drop-zone">
-                            <input type="file" id="loadTestBank" accept=".json" class="hidden">
-                            <p class="text-sm text-gray-600">Drag & drop file or click to browse</p>
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Upload File -->
+                        <div>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Upload File</h3>
+                            <div class="mb-4">
+                                <label for="loadTestBank" class="block text-sm font-medium text-gray-700 mb-2">Select JSON File:</label>
+                                <div class="drop-zone">
+                                    <input type="file" id="loadTestBank" accept=".json" class="hidden">
+                                    <p class="text-sm text-gray-600">Drag &amp; drop file or click to browse</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="loadButton" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm flex-1">Load Bank</button>
+                                <button id="clearTestBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm flex-1">Clear Bank</button>
+                            </div>
+                            <div id="bankStatus" class="mt-2 text-sm font-medium text-gray-500"></div>
+                            <div id="testBankMissingCorrectWarning" class="mt-2 text-sm font-medium text-red-600 hidden"></div>
+                        </div>
+                        <!-- Download File -->
+                        <div>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download File</h3>
+                            <div class="mb-3 flex items-center gap-2">
+                                <label class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
+                                <input type="text" id="outputFilename" value="test" class="flex-1 rounded border px-2 py-1.5 text-sm" placeholder="Filename (no extension)">
+                            </div>
+                            <div class="mb-3">
+                                <button id="docxInfoToggle" class="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                                    <span>ℹ DOCX format details</span>
+                                    <span id="docxInfoChevron">▼</span>
+                                </button>
+                                <div id="docxInfoPanel" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700 space-y-1">
+                                    <p>📄 <strong>Paper:</strong> Philippine long bond (8.5" × 13"), narrow margins (0.5" all sides)</p>
+                                    <p>🔤 <strong>Font:</strong> Arial 11pt — larger but tighter than Calibri, better readability at small sizes</p>
+                                    <p>📋 <strong>Columns:</strong> Multiple choice answers are set in <strong>two columns</strong> when all choices fit within ~3.25"; otherwise single column.</p>
+                                    <p>🔢 <strong>Numbering:</strong> Continuous across MCQ and True/False sections</p>
+                                    <div class="mt-2">
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" id="forceSingleCol" class="rounded">
+                                            <span>Force single column for all choices?</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="exportDocx" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1" title="Arial 11pt, long bond paper, auto 2-col choices">Export as DOCX</button>
+                                <button id="exportJson" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as JSON</button>
+                                <button id="exportGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as GIFT</button>
+                                <button id="exportCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as CSV</button>
+                                <button id="exportTxt" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as TXT</button>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button id="tgSendToManageBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Manage a Bank</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button id="loadButton" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm flex-1">Load Bank</button>
-                        <button id="clearTestBank" class="bg-red-500 hover:bg-red-700 text-white px-4 py-1.5 rounded text-sm flex-1">Clear Bank</button>
-                    </div>
-                    <div id="bankStatus" class="mt-2 text-sm font-medium text-gray-500"></div>
-                    <div id="testBankMissingCorrectWarning" class="mt-2 text-sm font-medium text-red-600 hidden"></div>
                 </section>
 
                 <!-- Plan a Test -->
@@ -733,65 +777,25 @@
                     </form>
                 </section>
 
-                <!-- Output -->
+                <!-- Preview Test and Answer Key -->
                 <section class="mb-4 p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h2>
-
-                    <!-- Filename + DOCX info -->
-                    <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
-                        <div class="flex gap-3 items-center flex-wrap mb-2">
-                            <label class="text-sm font-medium" style="color:var(--text);">Filename:</label>
-                            <input type="text" id="outputFilename" value="test"
-                                class="rounded border px-3 py-1.5 text-sm" style="min-width:200px;"
-                                placeholder="Filename (no extension)">
-                            <span class="text-xs" style="color:var(--text-muted);">Version letter appended automatically (e.g. test_A.docx)</span>
-                        </div>
-                        <button id="docxInfoToggle" class="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                            <span>ℹ DOCX format details</span>
-                            <span id="docxInfoChevron">▼</span>
-                        </button>
-                        <div id="docxInfoPanel" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700 space-y-1">
-                            <p>📄 <strong>Paper:</strong> Philippine long bond (8.5" × 13"), narrow margins (0.5" all sides)</p>
-                            <p>🔤 <strong>Font:</strong> Arial 11pt — larger but tighter than Calibri, better readability at small sizes</p>
-                            <p>📋 <strong>Columns:</strong> Multiple choice answers are set in <strong>two columns</strong> when all choices fit within ~3.25"; otherwise single column.</p>
-                            <p>🔢 <strong>Numbering:</strong> Continuous across MCQ and True/False sections</p>
-                            <div class="mt-2">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="forceSingleCol" class="rounded">
-                                    <span>Force single column for all choices?</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button id="exportDocx" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm" title="Arial 11pt, long bond paper, auto 2-col choices">Export as DOCX</button>
-                        <button id="exportJson" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
-                        <button id="exportGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
-                        <button id="exportCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
-                        <button id="exportTxt"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
-                    </div>
+                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Preview Test and Answer Key</h2>
 
                     <!-- Empty state -->
                     <div id="testEmptyState" class="empty-state">
                         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                         </svg>
-                        <p>No test generated yet.<br>Load a bank and click <strong>Generate Test</strong>.</p>
+                        <p>No test generated yet.<br>Load a bank and click <strong>Construct Test</strong>.</p>
                     </div>
 
-                    <div id="output" class="mt-4 border-t pt-4 hidden">
-                        <!-- Jump to Top/Bottom buttons -->
-						<h3 class="text-base font-semibold mb-3" style="color:var(--text);">Preview Test and Answer Key</h3>
-                        <div class="flex gap-2 mb-3 sticky top-0 z-10 bg-white dark:bg-slate-900 py-2">
+                    <div id="output" class="hidden">
+                        <div class="flex gap-2 mb-3 sticky top-0 z-10 py-2" style="background:var(--surface);">
                             <button id="jumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
                             <button id="jumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                         </div>
-                        
                         <div id="testPreviewContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
                             <div id="testPreview" class="mb-6"></div>
-
-                            <!-- Collapsible answer key -->
                             <div class="border-t pt-4 mt-4">
                                 <button id="answerKeyToggle" class="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 mb-2">
                                     <span id="answerKeyChevron">▶</span> Show Answer Key
@@ -801,11 +805,12 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
                 </section>
 
                 <!-- Generation Report -->
                 <section class="p-4 border border-gray-200 rounded surface">
-                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Generation Report</h2>
+                    <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Review Generation Report</h2>
                     <div id="generationReport" class="rounded text-sm text-gray-600">
                         Generate a test to see the detailed breakdown.
                     </div>
@@ -848,7 +853,7 @@
                     <div class="grid grid-cols-2 gap-6">
                         <!-- Left: Input -->
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Upload File</h3>
                             <!-- Sub-tabs -->
                             <div class="flex gap-2 mb-4">
                                 <button id="wqAddSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Add Questions</button>
@@ -969,7 +974,7 @@
 
                         <!-- Right: Output -->
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download File</h3>
                             <div class="mb-2 flex items-center gap-2">
                                 <label for="wqFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="wqFilename" placeholder="exambank" class="flex-1 rounded border text-sm px-2 py-1.5">
@@ -992,11 +997,15 @@
                                 </div>
                                 <pre class="text-xs hidden"><code id="wqOutput"></code></pre>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button id="wqExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
-                                <button id="wqExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
-                                <button id="wqExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
-                                <button id="wqExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
+                            <div class="flex gap-2">
+                                <button id="wqExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as JSON</button>
+                                <button id="wqExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as CSV</button>
+                                <button id="wqExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as TXT</button>
+                                <button id="wqExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as GIFT</button>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button id="wqSendToManageBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Manage a Bank</button>
+                                <button id="wqSendToDesignBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Design a Test</button>
                             </div>
                         </div>
                     </div>
@@ -1021,7 +1030,7 @@
                     <div class="grid grid-cols-2 gap-6">
                         <!-- Left: Input -->
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Upload File</h3>
                             <label for="convertFileInput" class="block text-sm font-medium mb-2" style="color:var(--text);">Select File (JSON, CSV, GIFT TXT, or plain TXT):</label>
                             <div class="drop-zone mb-4">
                                 <input type="file" id="convertFileInput" accept=".json,.csv,.txt" class="hidden">
@@ -1034,7 +1043,7 @@
                         </div>
                         <!-- Right: Output -->
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download File</h3>
                             <div id="convertFileMissingCorrectWarning" class="mb-3 text-sm font-medium text-red-600 hidden"></div>
                             <div class="mb-2 flex items-center gap-2">
                                 <label for="convertFileFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
@@ -1066,11 +1075,15 @@
                                     <tbody id="convertFileCsvTableBody"></tbody>
                                 </table>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button id="convertFileExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as JSON</button>
-                                <button id="convertFileExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as CSV</button>
-                                <button id="convertFileExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as GIFT</button>
-                                <button id="convertFileExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Export as TXT</button>
+                            <div class="flex gap-2">
+                                <button id="convertFileExportJsonBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as JSON</button>
+                                <button id="convertFileExportCsvBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as CSV</button>
+                                <button id="convertFileExportGiftBtn"  class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as GIFT</button>
+                                <button id="convertFileExportTxtBtn"   class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as TXT</button>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button id="cfSendToManageBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Manage a Bank</button>
+                                <button id="cfSendToDesignBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Design a Test</button>
                             </div>
                         </div>
                     </div>
@@ -1098,7 +1111,7 @@
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
                     <div class="grid grid-cols-2 gap-6">
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Input</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Upload Files</h3>
                             <label for="mergerFileInput" class="block text-sm font-medium mb-2" style="color:var(--text);">Select JSON Files:</label>
                             <div class="drop-zone mb-4">
                                 <input type="file" id="mergerFileInput" accept=".json" multiple class="hidden">
@@ -1114,7 +1127,7 @@
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Output</h3>
+                            <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download File</h3>
                             <div class="mb-2 flex items-center gap-2">
                                 <label for="mergerOutputFilename" class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
                                 <input type="text" id="mergerOutputFilename" placeholder="merged" class="flex-1 rounded border text-sm px-2 py-1.5">
@@ -1131,8 +1144,12 @@
                                 </div>
                                 <pre class="text-xs hidden"><code class="language-json" id="mergerOutput"></code></pre>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button id="downloadMergedBtn" class="w-full bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm">Download JSON</button>
+                            <div class="flex gap-2">
+                                <button id="downloadMergedBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Download JSON</button>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button id="mergerSendToManageBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Manage a Bank</button>
+                                <button id="mergerSendToDesignBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Design a Test</button>
                             </div>
                         </div>
                     </div>

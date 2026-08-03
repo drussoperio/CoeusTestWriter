@@ -19,14 +19,29 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.6.7';
+const APP_VERSION = '2.6.11';
 
 // Changelog entries — add a new array entry for each version
 const CHANGELOG = {
+    '2.6.11': [
+        'Fixed: DOCX format details panel in Design a Test — removed conflicting hidden class that prevented it from opening',
+    ],
+    '2.6.10': [
+        'Fixed: Export buttons now sit side-by-side as their own row spanning full column width; Send buttons form a separate row below, also spanning full column width',
+    ],
+    '2.6.9': [
+        'Changed: Export and Send buttons now sit side-by-side, together spanning the full column width, across all tabs',
+        'Fixed: Plan a Test category-list empty state now matches the standard empty-state size/style used elsewhere',
+    ],
+    '2.6.8': [
+        'Changed: Design a Test — Upload/Download two-column layout matching other tabs',
+        'Changed: Preview Test and Answer Key extracted as its own section with eye icon',
+        'Changed: Download File section now contains only filename, DOCX format details, export and send buttons; shading removed from filename row',
+        'Changed: Site-wide — Input renamed to Upload File (Upload Files in Merge JSONs), Output renamed to Download File, Generation Report renamed to Review Generation Report',
+        'Changed: All export and send buttons expanded to full column width',
+    ],
     '2.6.7': [
-        'Fixed: Merge JSONs — Summary heading icon now persists after merging',
-        'Added: Merge JSONs — comprehensive summary table (Category, Type, Difficulty, Total)',
-        'Changed: All report tables — header and total rows are darkest + bold; body rows alternate two lighter shades; identical adjacent cells merged via rowspan; font size unified to text-xs',
+        'Added: Send to Manage a Bank and Send to Design a Test buttons (orange) in Write Questions, Convert a File, and Merge JSONs output panels — loads questions directly into the target tab without requiring a file export',
     ],
 	'2.6.6': [
 		'Added: Empty state placeholders for Write Questions output, Convert a File output, and Merge JSONs output panels',
@@ -695,6 +710,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (exportJsonButton) exportJsonButton.addEventListener('click', () => exportTestAsJson());
         if (exportGiftButton) exportGiftButton.addEventListener('click', () => exportTestAsGift());
         if (exportCsvButton) exportCsvButton.addEventListener('click', () => exportTestAsCsv());
+        document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage'));
     }
 
     // ── Collapsible answer key ─────────────────────────────────
@@ -1532,6 +1548,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('convertFileExportCsvBtn')?.addEventListener('click',  () => doConvertAndExport('csv'));
         document.getElementById('convertFileExportGiftBtn')?.addEventListener('click', () => doConvertAndExport('gift'));
         document.getElementById('convertFileExportTxtBtn')?.addEventListener('click',  () => doConvertAndExport('text'));
+        document.getElementById('cfSendToManageBtn')?.addEventListener('click', () => sendToBank(cfStoredQuestions, 'manage'));
+        document.getElementById('cfSendToDesignBtn')?.addEventListener('click', () => sendToBank(cfStoredQuestions, 'design'));
     }
 
     // ── Write Questions tab ────────────────────────────────────
@@ -1744,6 +1762,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('wqExportCsvBtn')?.addEventListener('click',  () => wqExport('csv'));
         document.getElementById('wqExportTxtBtn')?.addEventListener('click',  () => wqExport('txt'));
         document.getElementById('wqExportGiftBtn')?.addEventListener('click', () => wqExport('gift'));
+        document.getElementById('wqSendToManageBtn')?.addEventListener('click', () => sendToBank(examBank, 'manage'));
+        document.getElementById('wqSendToDesignBtn')?.addEventListener('click', () => sendToBank(examBank, 'design'));
 
         // Paste & Convert
         function showPasteWarning(msg) {
@@ -1869,6 +1889,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (addBtn) addBtn.addEventListener('click', addMergerFiles);
         if (clearBtn) clearBtn.addEventListener('click', clearMerger);
         if (downloadBtn) downloadBtn.addEventListener('click', downloadMergedJSON);
+        document.getElementById('mergerSendToManageBtn')?.addEventListener('click', () => sendToBank(mergedQuestions, 'manage'));
+        document.getElementById('mergerSendToDesignBtn')?.addEventListener('click', () => sendToBank(mergedQuestions, 'design'));
     }
 
     // ── Unused questions buttons ───────────────────────────────
@@ -2023,6 +2045,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Toggle Choice E in Add Question form
+    document.getElementById('qmSendToDesignBtn')?.addEventListener('click', () => sendToBank(questionBank, 'design'));
+
     const toggleChoiceEBtn = document.getElementById('toggleChoiceEBtn');
     if (toggleChoiceEBtn) {
         toggleChoiceEBtn.addEventListener('click', () => {
@@ -3262,7 +3286,7 @@ function updateCategoryInputs(categories) {
     categoryInputs.innerHTML = '';
 
     if (!categories || categories.length === 0) {
-        categoryInputs.innerHTML = '<div class="flex flex-col items-center justify-center py-10 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p class="text-sm font-medium">No categories available.</p><p class="text-xs mt-1">Please load a test bank to get started.</p></div>';
+        categoryInputs.innerHTML = '<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p>No categories available.<br>Please load a test bank to get started.</p></div>';
         return;
     }
 
@@ -5947,7 +5971,8 @@ function addMergerFiles() {
                 
                 mergerFileStats.push({
                     name: file.name,
-                    count: data.length
+                    count: data.length,
+                    questions: data
                 });
 
                 filesProcessed++;
@@ -6031,105 +6056,116 @@ function updateMergerDisplay() {
     if (mergerEmpty) mergerEmpty.classList.add('hidden');
     if (mergerPre) mergerPre.classList.remove('hidden');
 
-    // ── Build comprehensive summary table ────────────────────────────────
-    // Aggregate: per category → per type → per difficulty → count
-    const cats = [...new Set(mergedQuestions.map(q => q.category || 'Uncategorized'))].sort();
+    // ── Build comprehensive summary table ─────────────────────────────────
     const types = ['multiple_choice', 'true_false', 'matching'];
     const typeLabel = { multiple_choice: 'MCQ', true_false: 'T/F', matching: 'Matching' };
     const diffs = ['easy', 'medium', 'hard', 'unset'];
     const diffLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard', unset: 'Unset' };
 
-    // data[cat][type][diff] = count
-    const data = {};
-    let grandTotal = 0;
-    cats.forEach(c => { data[c] = {}; types.forEach(t => { data[c][t] = { easy:0, medium:0, hard:0, unset:0, total:0 }; }); });
-    mergedQuestions.forEach(q => {
-        const c = q.category || 'Uncategorized';
-        const t = q.type || 'multiple_choice';
-        const d = q.difficulty || 'unset';
-        if (!data[c]) { data[c] = {}; types.forEach(tt => { data[c][tt] = { easy:0, medium:0, hard:0, unset:0, total:0 }; }); }
-        if (!data[c][t]) data[c][t] = { easy:0, medium:0, hard:0, unset:0, total:0 };
-        if (data[c][t][d] !== undefined) data[c][t][d]++;
-        data[c][t].total++;
-        grandTotal++;
-    });
-
-    // Column totals
-    const colTotals = { easy:0, medium:0, hard:0, unset:0, total:0 };
-    mergedQuestions.forEach(q => {
-        const d = q.difficulty || 'unset';
-        if (colTotals[d] !== undefined) colTotals[d]++;
-        colTotals.total++;
-    });
-
-    const t = TBL.teal;
+    const tc = TBL.teal;
     let rows = '';
     let rowIdx = 0;
+    let grandTotal = 0;
+    const colTotals = { easy:0, medium:0, hard:0, unset:0, total:0 };
 
-    cats.forEach(cat => {
-        // How many type rows does this category span?
-        const activeTypes = types.filter(tp => data[cat][tp].total > 0);
-        const catSpan = activeTypes.length || 1;
-        let catCellEmitted = false;
+    mergerFileStats.forEach(fileStat => {
+        const fileQs = fileStat.questions || [];
+        const fileCats = [...new Set(fileQs.map(q => q.category || 'Uncategorized'))].sort();
 
-        activeTypes.forEach((tp, tpIdx) => {
-            const d = data[cat][tp];
-            const bg = tblRowBg(t, rowIdx++);
-            const catCell = !catCellEmitted
-                ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${catSpan}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${t.cBdr};">${cat}</td>`
-                : '';
-            catCellEmitted = true;
-            rows += `<tr style="background:${bg};">
-                ${catCell}
-                <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">${typeLabel[tp]}</td>
-                ${diffs.map(df => `<td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">${d[df] || '—'}</td>`).join('')}
-                <td class="px-3 py-1.5 text-xs font-bold border" style="text-align:center;border-color:${t.cBdr};">${d.total}</td>
-            </tr>`;
+        // Aggregate per-cat/type/diff for this file
+        const data = {};
+        fileCats.forEach(c => { data[c] = {}; types.forEach(tp => { data[c][tp] = { easy:0, medium:0, hard:0, unset:0, total:0 }; }); });
+        fileQs.forEach(q => {
+            const c = q.category || 'Uncategorized';
+            const tp = q.type || 'multiple_choice';
+            const d = q.difficulty || 'unset';
+            if (!data[c]) { data[c] = {}; types.forEach(tt => { data[c][tt] = { easy:0, medium:0, hard:0, unset:0, total:0 }; }); }
+            if (!data[c][tp]) data[c][tp] = { easy:0, medium:0, hard:0, unset:0, total:0 };
+            if (data[c][tp][d] !== undefined) data[c][tp][d]++;
+            data[c][tp].total++;
+            colTotals[d]++; colTotals.total++;
+            grandTotal++;
         });
 
-        if (activeTypes.length === 0) {
-            const bg = tblRowBg(t, rowIdx++);
+        // Count total type-rows for this file (for filename rowspan)
+        let fileRowCount = 0;
+        fileCats.forEach(cat => {
+            const activeTypes = types.filter(tp => data[cat][tp].total > 0);
+            fileRowCount += activeTypes.length || 1;
+        });
+
+        let fileEmitted = false;
+
+        fileCats.forEach(cat => {
+            const activeTypes = types.filter(tp => data[cat][tp].total > 0);
+            const catSpan = activeTypes.length || 1;
+            let catEmitted = false;
+
+            const renderRow = (tp) => {
+                const d = tp ? data[cat][tp] : null;
+                const bg = tblRowBg(tc, rowIdx++);
+                const fileCell = !fileEmitted
+                    ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${fileRowCount}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tc.cBdr};word-break:break-all;">${fileStat.name}</td>`
+                    : '';
+                const catCell = !catEmitted
+                    ? `<td class="px-3 py-1.5 text-xs font-semibold border" rowspan="${catSpan}" style="text-align:left;vertical-align:middle;background:${bg};border-color:${tc.cBdr};">${cat}</td>`
+                    : '';
+                fileEmitted = true;
+                catEmitted = true;
+                rows += `<tr style="background:${bg};">
+                    ${fileCell}${catCell}
+                    <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${tc.cBdr};">${tp ? typeLabel[tp] : '—'}</td>
+                    ${diffs.map(df => `<td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${tc.cBdr};">${d && d[df] ? d[df] : '—'}</td>`).join('')}
+                    <td class="px-3 py-1.5 text-xs font-bold border" style="text-align:center;border-color:${tc.cBdr};">${d ? d.total : '—'}</td>
+                </tr>`;
+            };
+
+            if (activeTypes.length === 0) {
+                renderRow(null);
+            } else {
+                activeTypes.forEach(tp => renderRow(tp));
+            }
+        });
+
+        if (fileCats.length === 0) {
+            const bg = tblRowBg(tc, rowIdx++);
             rows += `<tr style="background:${bg};">
-                <td class="px-3 py-1.5 text-xs font-semibold border" style="text-align:left;border-color:${t.cBdr};">${cat}</td>
-                <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">—</td>
-                ${diffs.map(() => `<td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">—</td>`).join('')}
-                <td class="px-3 py-1.5 text-xs border" style="text-align:center;border-color:${t.cBdr};">—</td>
+                <td class="px-3 py-1.5 text-xs font-semibold border" style="text-align:left;border-color:${tc.cBdr};word-break:break-all;">${fileStat.name}</td>
+                <td class="px-3 py-1.5 text-xs border" style="border-color:${tc.cBdr};" colspan="6">—</td>
             </tr>`;
+            grandTotal; // already counted above (0 for this file)
         }
     });
 
-    // Total row
+    // Total row — spans Filename+Category+Type cols
     rows += `<tr>
-        ${tblTotalTd(t, 'Total', 'left', 'font-weight:bold;')}
-        ${tblTotalTd(t, '')}
-        ${diffs.map(df => tblTotalTd(t, colTotals[df] || '—')).join('')}
-        ${tblTotalTd(t, grandTotal)}
+        <td class="px-3 py-1.5 text-xs font-bold border" colspan="3" style="text-align:left;background:${tc.tBg};color:${tc.tTxt};border-color:${tc.tBdr};">Total</td>
+        ${diffs.map(df => tblTotalTd(tc, colTotals[df] || '—')).join('')}
+        ${tblTotalTd(tc, grandTotal)}
     </tr>`;
-
-    // Files loaded list
-    const filesList = mergerFileStats.map(s => `<li>${s.name}: <strong>${s.count}</strong> question${s.count !== 1 ? 's' : ''}</li>`).join('');
 
     let summaryHtml = `
         <p class="text-sm font-semibold mb-2 flex items-center gap-2" style="color:var(--text);">${SUMMARY_ICON}Summary</p>
         <p class="text-xs mb-3" style="color:var(--text-muted);">Files merged: <strong>${mergerFileStats.length}</strong> &nbsp;·&nbsp; Total questions: <strong>${grandTotal}</strong></p>
-        <ul class="text-xs mb-3 list-disc list-inside" style="color:var(--text-muted);">${filesList}</ul>
         <div class="overflow-x-auto">
             <table class="w-full border-collapse" style="table-layout:fixed;width:100%;">
                 <colgroup>
-                    <col style="width:22%">
-                    <col style="width:12%">
-                    <col style="width:11%">
-                    <col style="width:11%">
-                    <col style="width:11%">
-                    <col style="width:11%">
-                    <col style="width:11%">
+                    <col style="width:18%">
+                    <col style="width:16%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                    <col style="width:10%">
                 </colgroup>
                 <thead>
                     <tr>
-                        ${tblTh(t,'Category','left')}
-                        ${tblTh(t,'Type')}
-                        ${diffs.map(df => tblTh(t, diffLabel[df])).join('')}
-                        ${tblTh(t,'Total')}
+                        ${tblTh(tc,'Filename','left')}
+                        ${tblTh(tc,'Category','left')}
+                        ${tblTh(tc,'Type')}
+                        ${diffs.map(df => tblTh(tc, diffLabel[df])).join('')}
+                        ${tblTh(tc,'Total')}
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -6626,6 +6662,48 @@ function getQuestionsMissingCorrectAnswer(questions) {
 }
 
 // Helper: Render (or clear) a warning banner listing questions missing a correct answer
+// ========================================
+// SEND TO BANK HELPER
+// ========================================
+
+function sendToBank(questions, target) {
+    if (!questions || questions.length === 0) {
+        showToast('⚠️ No questions to send.', 'warning');
+        return;
+    }
+    // Strip display-only fields
+    const clean = questions.map(q => ({
+        question:   q.question   || '',
+        category:   q.category   || 'Uncategorized',
+        type:       q.type       || 'multiple_choice',
+        difficulty: q.difficulty || 'unset',
+        correct:    q.correct    || '',
+        choices:    q.choices    || null,
+        ...(q.subject ? { subject: q.subject } : {})
+    }));
+
+    if (target === 'manage') {
+        questionBank = clean;
+        assignQuestionUids(questionBank);
+        addedQuestions = [];
+        saveQBankToStorage();
+        saveAddedQuestionsToStorage();
+        clearQuestionManagerState();
+        updateQuestionManagerCategories();
+        renderQuestionManagerList();
+        showToast(`✅ Sent ${clean.length} question(s) to Manage a Bank.`, 'success');
+        document.getElementById('questionManagerTab')?.click();
+    } else {
+        testBank = clean;
+        saveTestBankToStorage();
+        updateCategoryInputs();
+        const bankStatus = document.getElementById('bankStatus');
+        if (bankStatus) bankStatus.innerHTML = `<div class="text-green-600">Bank loaded (${clean.length} questions)</div>`;
+        showToast(`✅ Sent ${clean.length} question(s) to Design a Test.`, 'success');
+        document.getElementById('testGeneratorTab')?.click();
+    }
+}
+
 function renderMissingCorrectWarning(containerId, questions) {
     const container = document.getElementById(containerId);
     if (!container) return;
