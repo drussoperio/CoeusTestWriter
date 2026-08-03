@@ -27,7 +27,8 @@ const APP_VERSION = '2.7.0';
 const CHANGELOG = {
     '2.7.0': [
         'Security: Added a shared escapeHtml() helper and applied it throughout Manage a Bank, Design a Test, Convert a File, and Merge JSONs rendering, closing a stored-XSS path where question/category/choice/correct-answer text loaded from a bank file could execute as HTML',
-        'Security: showToast() no longer renders messages as raw HTML when they contain "<" — always uses textContent now',
+        'Security: Manage a Bank → Change Category now escapes the typed category name before it\'s shown in the Undo toast, closing a second stored-XSS path (a crafted category name could otherwise execute)',
+        'Security: showToast() now only renders HTML when a call site explicitly opts in via a new isHtml parameter, instead of guessing based on whether the message contains "<" — fixes the Design a Test / Write Questions / Manage a Bank "Undo" toasts (which intentionally include a real button) while keeping all other toasts safely text-only',
         'Security: Added Subresource Integrity (SRI) hashes and crossorigin attributes to the CDN-loaded Tailwind, docx.js, and Prism scripts/stylesheets, so a compromised CDN or tampered file can no longer execute silently',
         'Fixed: saveQBankToStorage, saveAddedQuestionsToStorage, and saveTestBankToStorage now catch localStorage quota errors and show a warning toast instead of throwing',
         'Fixed: Matching-question table generation now logs a warning if the premise and answer counts diverge instead of failing silently',

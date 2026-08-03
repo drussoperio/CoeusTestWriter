@@ -602,7 +602,7 @@ function deleteSelectedQuestions() {
     if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
     bankEditorUndoTimeoutId = setTimeout(() => { lastBankEditorSnapshot = null; }, 5000);
     const undoHtml = `<span>🗑️ Deleted ${count} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
-    showToast(undoHtml, 'success', 5000);
+    showToast(undoHtml, 'success', 5000, true);
 }
 
 function changeSelectedQuestionsCategory() {
@@ -633,8 +633,8 @@ function changeSelectedQuestionsCategory() {
     renderQuestionManagerList();
     if (bankEditorUndoTimeoutId) clearTimeout(bankEditorUndoTimeoutId);
     bankEditorUndoTimeoutId = setTimeout(() => { lastBankEditorSnapshot = null; }, 5000);
-    const undoHtml = `<span>✅ Changed category to "${newCat}" for ${changedCount} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
-    showToast(undoHtml, 'success', 5000);
+    const undoHtml = `<span>✅ Changed category to "${escapeHtml(newCat)}" for ${changedCount} question(s). <button onclick="undoBankEditorChange()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
+    showToast(undoHtml, 'success', 5000, true);
 }
 
 function updateQuestionManagerCategories() {

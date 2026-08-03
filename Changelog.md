@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.7.0] - 2026-08-03
 ### Security
 - Added a shared escapeHtml() helper and applied it throughout Manage a Bank, Design a Test, Convert a File, and Merge JSONs rendering, closing a stored-XSS path where question/category/choice/correct-answer text loaded from a bank file could execute as HTML
-- showToast() no longer renders messages as raw HTML when they contain "<" — always uses textContent now
+- Manage a Bank → Change Category now escapes the typed category name before it's shown in the Undo toast, closing a second stored-XSS path (a crafted category name could otherwise execute)
+- showToast() now only renders HTML when a call site explicitly opts in via a new isHtml parameter, instead of guessing based on whether the message contains "<" — fixes the Design a Test / Write Questions / Manage a Bank "Undo" toasts (which intentionally include a real button) while keeping all other toasts safely text-only
 - Added Subresource Integrity (SRI) hashes and crossorigin attributes to the CDN-loaded Tailwind, docx.js, and Prism scripts/stylesheets, so a compromised CDN or tampered file can no longer execute silently
 ### Fixed
 - saveQBankToStorage, saveAddedQuestionsToStorage, and saveTestBankToStorage now catch localStorage quota errors and show a warning toast instead of throwing

@@ -1239,7 +1239,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (pasteDifficulty) pasteDifficulty.value = 'unset';
             if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
             const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
-            showToast(undoHtml, 'warning', 5000);
+            showToast(undoHtml, 'warning', 5000, true);
             window.__wqUndo = () => {
                 if (!wqDeletedBackup) return;
                 examBank = [...wqDeletedBackup];
@@ -1265,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 refreshWqPreview();
                 if (wqUndoTimeout) clearTimeout(wqUndoTimeout);
                 const undoHtml = '<span>🗑️ All questions deleted. <button onclick="window.__wqUndo && window.__wqUndo()" style="background:#fff;color:#333;padding:3px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;font-size:0.8rem;">Undo</button></span>';
-                showToast(undoHtml, 'warning', 5000);
+                showToast(undoHtml, 'warning', 5000, true);
                 window.__wqUndo = () => {
                     if (!wqDeletedBackup) return;
                     examBank = [...wqDeletedBackup];
@@ -1515,7 +1515,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (undoTimeoutId) clearTimeout(undoTimeoutId);
             undoTimeoutId = setTimeout(() => { lastDeletedBank = null; }, 5000);
             const undoHtml = '<span>🗑️ Cleared. <button onclick="undoClear()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
-            showToast(undoHtml, 'warning', 5000);
+            showToast(undoHtml, 'warning', 5000, true);
             const tgFileInput = document.getElementById('loadTestBank');
             if (tgFileInput) tgFileInput.value = '';
             const tgDropZone = tgFileInput ? tgFileInput.closest('.drop-zone') : null;

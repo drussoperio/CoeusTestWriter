@@ -109,7 +109,9 @@ function showUndoToast(msg) {
     }, 5000);
 }
 
-function showToast(message, type = 'success', duration = 3000) {
+// Pass isHtml=true only for trusted, hardcoded markup (e.g. an inline Undo button) —
+// never for strings built from bank/user data. Those must go through textContent.
+function showToast(message, type = 'success', duration = 3000, isHtml = false) {
     let stack = document.getElementById('toast-stack');
     if (!stack) {
         stack = document.createElement('div');
@@ -119,7 +121,11 @@ function showToast(message, type = 'success', duration = 3000) {
     }
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.textContent = message;
+    if (isHtml) {
+        toast.innerHTML = message;
+    } else {
+        toast.textContent = message;
+    }
     stack.appendChild(toast);
     setTimeout(() => { 
         toast.style.opacity = '0'; 
