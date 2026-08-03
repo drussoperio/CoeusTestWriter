@@ -7,6 +7,8 @@ function renderQuestionManagerList() {
     const container = document.getElementById('sidebarQuestionList');
     if (!container) return;
 
+    renderBankValidationReport('qm-validation-report', questionBank);
+
     // Step 1: Apply search filter
     let filtered = questionBank.filter(q => {
         const searchLower = questionManagerState.searchText.toLowerCase();
