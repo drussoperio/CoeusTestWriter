@@ -382,6 +382,17 @@
             opacity: 0;
             padding: 0;
         }
+        /* ── Keyboard shortcut key badges ─────────────────────────── */
+        .shortcut-key {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8em;
+            background: var(--border);
+            color: var(--text);
+            border: 1px solid var(--text-muted);
+        }
     </style>
 </head>
 
@@ -487,7 +498,9 @@
                 <div id="qm-bank-editor" class="qm-inner-content active">
                     <section class="p-4 border border-gray-200 rounded surface">
                         <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Edit Bank</h2>
-                        
+
+                        <div id="qm-validation-report" class="mb-4"></div>
+
                         <!-- Search & Filter toolbar -->
                         <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
                             <!-- Search -->
@@ -591,7 +604,7 @@
                         <p>▸ <strong>Difficulty Ratio</strong> lets you control the Easy/Medium/Hard mix. If there are not enough questions, unset questions will be picked.</p>
                         <p>▸ <strong>Exclude Already-Used Questions</strong> prevents repeats across test versions — upload a previous test's JSON.</p>
                         <p>▸ The <strong>Generation Report</strong> tab shows a full breakdown including difficulty shortfalls.</p>
-                        <p>▸ Export as TXT, PDF, DOCX, or JSON.</p>
+                        <p>▸ Export as TXT, DOCX, or JSON.</p>
                     </div>
                 </div>
 
@@ -1177,10 +1190,25 @@
         <p class="text-sm mb-4" style="color:var(--text-muted);">Coeus is a browser-based exam question manager and test generator built for educators. It runs entirely client-side — no installation, no account, no internet required after load.</p>
 
         <h3 class="font-semibold mb-1" style="color:var(--text);">Built With</h3>
-        <p class="text-sm mb-4" style="color:var(--text-muted);">Vanilla JavaScript, Tailwind CSS, docx.js, jsPDF, Prism.js</p>
+        <p class="text-sm mb-4" style="color:var(--text-muted);">Vanilla JavaScript, Tailwind CSS, docx.js, Prism.js</p>
 
         <h3 class="font-semibold mb-1" style="color:var(--text);">Credits</h3>
         <p class="text-sm" style="color:var(--text-muted);">Built by <strong style="color:var(--text);">Druss Operio</strong> with the assistance of ChatGPT and Claude (Anthropic).</p>
+    </div>
+</div>
+
+<!-- ── Keyboard Shortcuts Modal ──────────────────────────────────────── -->
+<div id="shortcutsModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.5);">
+    <div class="rounded-xl shadow-2xl w-full max-w-md mx-4 p-8 relative" style="background:var(--surface);color:var(--text);border:1px solid var(--border);">
+        <button id="closeShortcutsModal" class="absolute top-4 right-4 text-xl font-bold leading-none" style="color:var(--text-muted);" aria-label="Close">&times;</button>
+        <p class="app-title text-xl font-bold mb-4" style="color:var(--text);">Keyboard Shortcuts</p>
+        <ul class="text-sm space-y-2" style="color:var(--text-muted);">
+            <li><kbd class="shortcut-key">Alt</kbd> + <kbd class="shortcut-key">1</kbd>–<kbd class="shortcut-key">5</kbd> — Jump to a tab (Write Questions … Merge JSONs)</li>
+            <li><kbd class="shortcut-key">Ctrl</kbd>/<kbd class="shortcut-key">⌘</kbd> + <kbd class="shortcut-key">Enter</kbd> — Submit the Add Question form from any field</li>
+            <li><kbd class="shortcut-key">Esc</kbd> — Cancel the question editor in Manage a Bank</li>
+            <li><kbd class="shortcut-key">Ctrl</kbd>/<kbd class="shortcut-key">⌘</kbd> + <kbd class="shortcut-key">Z</kbd> — Undo the last destructive action (up to 5 steps back)</li>
+            <li><kbd class="shortcut-key">?</kbd> — Show this list</li>
+        </ul>
     </div>
 </div>
 
@@ -1197,7 +1225,7 @@
         <ol class="text-sm space-y-2 mb-6 list-decimal list-inside" style="color:var(--text-muted);">
             <li><strong style="color:var(--text);">Write Questions</strong> — type questions one by one using the form, or paste plain numbered text. Your questions are saved automatically and can be exported as JSON, CSV, GIFT, or TXT.</li>
             <li><strong style="color:var(--text);">Manage a Bank</strong> — load an existing JSON question bank, then search, filter, sort, bulk-rename, or bulk-delete questions in the Edit Bank panel. Export the updated bank in any format.</li>
-            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category, then click <strong style="color:var(--text);">Construct Test</strong>. Export as TXT, PDF, DOCX, or JSON.</li>
+            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category, then click <strong style="color:var(--text);">Construct Test</strong>. Export as TXT, DOCX, or JSON.</li>
             <li><strong style="color:var(--text);">Convert a File</strong> — upload any supported file (JSON, CSV, GIFT TXT, plain TXT) and export it directly to any other format.</li>
             <li><strong style="color:var(--text);">Merge JSONs</strong> — combine multiple Coeus JSON banks into one unified file.</li>
         </ol>
@@ -1226,6 +1254,7 @@
 <footer class="py-4 text-center text-xs" style="background-color:var(--surface);border-top:1px solid var(--border);color:var(--text-muted);">
     <div class="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-3">
         <button id="openAboutModal" class="hover:underline" style="color:var(--text-muted);">About</button>
+        <button id="openShortcutsModalBtn" class="hover:underline" style="color:var(--text-muted);">⌨ Shortcuts</button>
         <a href="https://github.com/drussoperio/CoeusTestWriter" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">GitHub</a>
         <a href="https://github.com/drussoperio/CoeusTestWriter/releases/latest" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">⬇ Download Latest</a>
         <a href="https://github.com/drussoperio/CoeusTestWriter/issues/new" target="_blank" rel="noopener" class="hover:underline" style="color:var(--text-muted);">🐛 Report a Bug</a>
@@ -1239,6 +1268,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" integrity="sha384-MXybTpajaBV0AkcBaCPT4KIvo0FzoCiWXgcihYsw4FUkEz0Pv3JGV6tk2G8vJtDc" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" integrity="sha384-RhrmFFMb0ZCHImjFMpR/UE3VEtIVTCtNrtKQqXCzqXZNJala02N3UbVhi+qzw3CY" crossorigin="anonymous"></script>
 <script src="js/state.js"></script>
+<script src="js/undo-stack.js"></script>
 <script src="js/question-manager.js"></script>
 <script src="js/export-formats.js"></script>
 <script src="js/test-generator.js"></script>
