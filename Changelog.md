@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.11] - 2026-08-03
+### Fixed
+- DOCX format details panel in Design a Test — removed conflicting hidden class that prevented it from opening
+
+## [2.6.10] - 2026-08-03
+### Fixed
+- Export buttons now sit side-by-side as their own row spanning full column width; Send buttons form a separate row below, also spanning full column width
+
+## [2.6.9] - 2026-08-03
+### Changed
+- Export and Send buttons now sit side-by-side, together spanning the full column width, across all tabs
+### Fixed
+- Plan a Test category-list empty state now matches the standard empty-state size/style used elsewhere
+- 
+## [2.6.8] - 2026-08-03
+### Changed
+- Design a Test — Upload/Download two-column layout matching other tabs
+- Preview Test and Answer Key extracted as its own section with eye icon
+- Download File section now contains only filename, DOCX format details, export and send buttons; shading removed from filename row
+- Site-wide — Input → Upload File (Upload Files in Merge JSONs), Output → Download File, Generation Report → Review Generation Report
+- All export and send buttons expanded to full column width
+
 ## [2.6.7] - 2026-08-02
 ### Fixed
 - Merge JSONs: Summary heading icon now persists after merging (was lost when innerHTML was rewritten)
