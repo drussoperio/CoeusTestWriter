@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-08-03
+### Security
+- Added a shared escapeHtml() helper and applied it throughout Manage a Bank, Design a Test, Convert a File, and Merge JSONs rendering, closing a stored-XSS path where question/category/choice/correct-answer text loaded from a bank file could execute as HTML
+- showToast() no longer renders messages as raw HTML when they contain "<" — always uses textContent now
+- Added Subresource Integrity (SRI) hashes and crossorigin attributes to the CDN-loaded Tailwind, docx.js, and Prism scripts/stylesheets, so a compromised CDN or tampered file can no longer execute silently
+### Fixed
+- saveQBankToStorage, saveAddedQuestionsToStorage, and saveTestBankToStorage now catch localStorage quota errors and show a warning toast instead of throwing
+- Matching-question table generation now logs a warning if the premise and answer counts diverge instead of failing silently
+### Changed
+- Split main.js into logical modules under js/ (state, question-manager, export-formats, test-generator, test-export, convert-merge, helpers, ui-init) loaded via multiple &lt;script&gt; tags — no build step added, still works fully offline via file://
+- CHANGELOG object in js/state.js is now generated from this file by scripts/sync-changelog.js instead of hand-duplicated
+### Removed
+- ~600 lines of dead legacy converter code (old JSON→TXT, Text→GIFT, and bulk converters, plus their jump-button wiring) left over from before the unified Convert a File tab
+
 ## [2.6.11] - 2026-08-03
 ### Fixed
 - DOCX format details panel in Design a Test — removed conflicting hidden class that prevented it from opening
@@ -20,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export and Send buttons now sit side-by-side, together spanning the full column width, across all tabs
 ### Fixed
 - Plan a Test category-list empty state now matches the standard empty-state size/style used elsewhere
-- 
+
 ## [2.6.8] - 2026-08-03
 ### Changed
 - Design a Test — Upload/Download two-column layout matching other tabs
@@ -55,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - saveQBankToStorage does the same, so localStorage is also clean going forward
 
 ## [v2.6.3] - 2026-08-02
--Iterate all .qm-edit-difficulty (and .qm-edit-type) selects after DOM insertion and imperatively setting .value from the question data.
+### Fixed
+- Iterate all .qm-edit-difficulty (and .qm-edit-type) selects after DOM insertion and imperatively setting .value from the question data.
 
 ## [v2.6.2] - 2026-08-02
 ### Added
