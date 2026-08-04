@@ -462,7 +462,6 @@ function loadFile(fileInput, isTxt, bankType) {
                 const bankStatus = document.getElementById('bankStatus');
                 if (bankStatus) {
                     bankStatus.innerHTML = `
-                        <div class="text-green-600">Test bank loaded successfully!</div>
                         <div>Total Questions: ${testBank.length}</div>
                     `;
                 }

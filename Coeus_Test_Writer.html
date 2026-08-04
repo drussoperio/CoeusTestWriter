@@ -246,6 +246,16 @@
         #testPreview { font-family: 'DM Sans', sans-serif; font-size: 0.92rem; line-height: 1.6; }
         #testPreview p { margin: 0; padding: 0; }
 
+        /* ── Generation Report tables — borderless (zebra striping only) ── */
+        #reportCategoryTable table, #reportShortfallTable table,
+        #reportDifficultyTable table, #unusedSummary table,
+        #reportCategoryTable td, #reportShortfallTable td,
+        #reportDifficultyTable td, #unusedSummary td,
+        #reportCategoryTable th, #reportShortfallTable th,
+        #reportDifficultyTable th, #unusedSummary th {
+            border: none !important;
+        }
+
         /* ── Empty state ────────────────────────────────────────── */
         .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
         .empty-state svg { margin: 0 auto 16px; display: block; opacity: .45; }
@@ -644,7 +654,7 @@
                             <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Download File</h3>
                             <div class="mb-3 flex items-center gap-2">
                                 <label class="text-sm font-medium whitespace-nowrap" style="color:var(--text);">Filename:</label>
-                                <input type="text" id="outputFilename" value="test" class="flex-1 rounded border px-2 py-1.5 text-sm" placeholder="Filename (no extension)">
+                                <input type="text" id="outputFilename" class="flex-1 rounded border px-2 py-1.5 text-sm" placeholder="testbank">
                             </div>
                             <div class="mb-3">
                                 <button id="docxInfoToggle" class="text-xs text-blue-600 hover:underline flex items-center gap-1">
@@ -815,7 +825,7 @@
                     </div>
 
                     <div id="output" class="hidden">
-                        <h3 class="text-sm font-semibold mb-2" style="color:var(--text);">Test Preview</h3>
+                        <h3 class="text-sm font-semibold mb-2 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Test Preview</h3>
                         <div class="flex gap-2 mb-2">
                             <button id="testPreviewJumpToggle" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                         </div>
@@ -825,7 +835,7 @@
 
                         <div id="answerDistribution" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4"></div>
 
-                        <h3 class="text-sm font-semibold mb-2 mt-4" style="color:var(--text);">Answer Key</h3>
+                        <h3 class="text-sm font-semibold mb-2 mt-4 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Answer Key</h3>
                         <div class="flex gap-2 mb-2">
                             <button id="answerKeyJumpToggle" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                         </div>
