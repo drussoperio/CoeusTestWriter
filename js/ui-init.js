@@ -1472,6 +1472,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearBankBtn = document.getElementById('clearQuestionBank');
     if (clearBankBtn) {
         clearBankBtn.addEventListener('click', () => {
+            resetDropZoneDisplay(document.getElementById('loadQuestionBank'));
             if (questionBank.length === 0) {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
@@ -1482,16 +1483,6 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('coeus-added-questions');
             clearQuestionManagerState();
             showToast('🗑️ Cleared', 'warning');
-            const qmFileInput = document.getElementById('loadQuestionBank');
-            if (qmFileInput) qmFileInput.value = '';
-            const qmDropZone = qmFileInput ? qmFileInput.closest('.drop-zone') : null;
-            if (qmDropZone) {
-                const p = qmDropZone.querySelector('p');
-                if (p) {
-                    p.className = 'text-sm text-gray-600';
-                    p.textContent = 'Drag & drop file or click to browse';
-                }
-            }
             renderQuestionManagerList();
         });
     }
@@ -1501,6 +1492,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearTestBankBtn = document.getElementById('clearTestBank');
     if (clearTestBankBtn) {
         clearTestBankBtn.addEventListener('click', () => {
+            resetDropZoneDisplay(document.getElementById('loadTestBank'));
             if (testBank.length === 0) {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
@@ -1517,16 +1509,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             const undoHtml = '<span>🗑️ Cleared. <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
             showToast(undoHtml, 'warning', 5000, true);
-            const tgFileInput = document.getElementById('loadTestBank');
-            if (tgFileInput) tgFileInput.value = '';
-            const tgDropZone = tgFileInput ? tgFileInput.closest('.drop-zone') : null;
-            if (tgDropZone) {
-                const p = tgDropZone.querySelector('p');
-                if (p) {
-                    p.className = 'text-sm text-gray-600';
-                    p.textContent = 'Drag & drop file or click to browse';
-                }
-            }
             const bankStatus = document.getElementById('bankStatus');
             if (bankStatus) bankStatus.innerHTML = '';
             const summaryEl = document.getElementById('testSummary');

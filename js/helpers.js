@@ -2,6 +2,22 @@
 // HELPER FUNCTIONS, SEND TO BANK HELPER
 // ========================================
 
+// Helper: reset a file-input's value and its drop-zone's displayed text back to
+// the default prompt. Used after a Clear Bank click (always, even if the bank was
+// already empty from a failed load) and after a failed load itself, so a stale
+// filename never lingers in the drop zone.
+function resetDropZoneDisplay(fileInput) {
+    if (!fileInput) return;
+    fileInput.value = '';
+    const dropZone = fileInput.closest('.drop-zone');
+    if (!dropZone) return;
+    const p = dropZone.querySelector('p');
+    if (p) {
+        p.className = 'text-sm text-gray-600';
+        p.textContent = 'Drag & drop file or click to browse';
+    }
+}
+
 // Helper: Find questions that don't have a correct answer properly marked
 function getQuestionsMissingCorrectAnswer(questions) {
     return (questions || []).filter(q => {
