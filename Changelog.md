@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.2] - 2026-08-04
+### Changed
+- Write Questions: renamed the "Upload File" heading (a leftover mislabel — this tab doesn't upload anything) to "Add Questions", and renamed the "Add Questions" sub-tab to "Compose Question"
+### Fixed
+- The GitHub update-check now logs what it found (or why it failed) to the console on every path instead of silently swallowing everything — makes a failed/blocked check diagnosable via devtools instead of indistinguishable from "already up to date". Also hardened the release-tag parsing to strip a stray "v." prefix (some older release tags used "v.2.4.3" instead of "v2.4.3"), which could otherwise produce a garbled version number in the banner.
+
 ## [2.9.1] - 2026-08-04
 ### Added
 - update.bat (Windows) and update.sh (Mac/Linux) — double-click scripts that run `git pull origin main` from the app's own folder, for one-click updating instead of retyping the git command
