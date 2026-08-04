@@ -19,12 +19,19 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.9.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.9.0': [
+        'Fixed: Clear Bank (Manage a Bank and Design a Test) could get permanently stuck showing a failed-load filename in the drop zone: the reset code ran after an "if bank is empty, show Nothing to clear" guard, which always fired first when a load had just failed. The drop zone now always resets on Clear Bank, and a failed load resets its own drop zone immediately too.',
+        'Changed: Manage a Bank: pulled the stats and validation panels out of the cramped Edit Bank sidebar into their own standalone "Bank Stats" section (stat cards in a row + validation report below, both full width) between Upload/Download and Edit Bank; Edit Bank is back to a single column.',
+        'Changed: Design a Test: Test Preview and Answer Key are no longer nested in one shared scroll box behind a Show/Hide toggle — the Answer Key is now always visible under its own heading, in its own independently-scrollable box with its own jump button.',
+        'Changed: Design a Test: the MCQ answer distribution is now its own card, with a new T/F answer distribution card beside it (both always visible, outside the scrollable boxes).',
+        'Changed: Design a Test: the Generation Report\'s 4 tables (Breakdown by Category, Shortfall, Breakdown by Difficulty, Unused Questions) are now laid out in a 2x2 grid instead of stacked vertically, cutting down on excess whitespace.',
+    ],
     '2.8.0': [
         'Added: Manage a Bank: new bank health/validation panel — flags duplicate questions (case/whitespace-insensitive text match), missing correct answers, empty question text, multiple choice questions with too few or duplicate choices, and matching pairs missing a premise or answer. Shows a green "no issues" message when the bank is clean. Includes its own scroll-jump button for long reports.',
         'Added: Manage a Bank: new stats sidebar next to the question list — total count, breakdown by type, by difficulty, and by category (top 8 + "N more")',
