@@ -482,6 +482,8 @@ function displayTest(questions) {
     if (!questions || questions.length === 0) {
         testPreview.innerHTML = '<p class="text-gray-500">No questions selected.</p>';
         answerKeyPreview.innerHTML = '';
+        const distributionEl = document.getElementById('answerDistribution');
+        if (distributionEl) distributionEl.innerHTML = '';
         return;
     }
 
@@ -504,7 +506,7 @@ function displayTest(questions) {
         testHtml += `<p style="font-weight:600;margin-bottom:0.5rem;">${mcqRoman}. Multiple Choice Questions. Choose the letter of the best answer.</p>`;
     }
 
-    let answerKeyHtml = '<h3 class="text-lg font-semibold mb-4">Answer Key</h3>';
+    let answerKeyHtml = '';
 
     let questionNumber = 1;
 
@@ -600,19 +602,39 @@ function displayTest(questions) {
 
     testHtml += '</div>';
 
-    // ── Answer distribution stats ─────────────────────────────────────────
+    // ── Answer distribution stats — MCQ and T/F, own cards outside the scroll boxes ──
     const mcqAnswers = mcqs.map(q => q.displayCorrectLetter);
-    const counts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-    mcqAnswers.forEach(l => { if (counts[l] !== undefined) counts[l]++; });
-    const hasE = counts.E > 0;
-    let distHtml = `A: ${counts.A} | B: ${counts.B} | C: ${counts.C} | D: ${counts.D}`;
-    if (hasE) distHtml += ` | E: ${counts.E}`;
-    answerKeyHtml += `
-        <div class="mt-6 p-4 bg-gray-100 rounded">
-            <h4 class="font-semibold mb-2">Answer Distribution (MCQ only):</h4>
-            <div class="text-sm">${distHtml}</div>
-            <div class="text-xs text-gray-600 mt-1">Total MCQ: ${mcqAnswers.length} | Version: ${versionLabel}</div>
-        </div>`;
+    const mcqCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    mcqAnswers.forEach(l => { if (mcqCounts[l] !== undefined) mcqCounts[l]++; });
+    const hasE = mcqCounts.E > 0;
+    let mcqDistText = `A: ${mcqCounts.A} | B: ${mcqCounts.B} | C: ${mcqCounts.C} | D: ${mcqCounts.D}`;
+    if (hasE) mcqDistText += ` | E: ${mcqCounts.E}`;
+
+    const tfCounts = { True: 0, False: 0 };
+    tfs.forEach(q => { tfCounts[q.correct === 'True' ? 'True' : 'False']++; });
+    const tfDistText = `True: ${tfCounts.True} | False: ${tfCounts.False}`;
+
+    const distributionEl = document.getElementById('answerDistribution');
+    if (distributionEl) {
+        let distributionHtml = '';
+        if (mcqs.length > 0) {
+            distributionHtml += `
+                <div class="p-4 bg-gray-100 rounded">
+                    <h4 class="font-semibold mb-2">Answer Distribution (MCQ only)</h4>
+                    <div class="text-sm">${mcqDistText}</div>
+                    <div class="text-xs text-gray-600 mt-1">Total MCQ: ${mcqAnswers.length} | Version: ${versionLabel}</div>
+                </div>`;
+        }
+        if (tfs.length > 0) {
+            distributionHtml += `
+                <div class="p-4 bg-gray-100 rounded">
+                    <h4 class="font-semibold mb-2">Answer Distribution (T/F only)</h4>
+                    <div class="text-sm">${tfDistText}</div>
+                    <div class="text-xs text-gray-600 mt-1">Total T/F: ${tfs.length} | Version: ${versionLabel}</div>
+                </div>`;
+        }
+        distributionEl.innerHTML = distributionHtml;
+    }
 
     testPreview.innerHTML = testHtml;
     answerKeyPreview.innerHTML = answerKeyHtml;

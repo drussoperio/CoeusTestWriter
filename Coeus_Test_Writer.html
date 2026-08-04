@@ -242,10 +242,6 @@
         #docxInfoPanel { display: none; }
         #docxInfoPanel.open { display: block; }
 
-        /* ── Collapsible answer key ─────────────────────────────── */
-        #answerKeyBody { display: none; }
-        #answerKeyBody.open { display: block; }
-
         /* ── Test preview (site font, answer-key spacing) ───────── */
         #testPreview { font-family: 'DM Sans', sans-serif; font-size: 0.92rem; line-height: 1.6; }
         #testPreview p { margin: 0; padding: 0; }
@@ -819,20 +815,22 @@
                     </div>
 
                     <div id="output" class="hidden">
-                        <div class="flex gap-2 mb-3 sticky top-0 z-10 py-2" style="background:var(--surface);">
-                            <button id="jumpToTop" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↑ Top</button>
-                            <button id="jumpToBottom" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                        <h3 class="text-sm font-semibold mb-2" style="color:var(--text);">Test Preview</h3>
+                        <div class="flex gap-2 mb-2">
+                            <button id="testPreviewJumpToggle" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
                         </div>
                         <div id="testPreviewContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
-                            <div id="testPreview" class="mb-6"></div>
-                            <div class="border-t pt-4 mt-4">
-                                <button id="answerKeyToggle" class="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 mb-2">
-                                    <span id="answerKeyChevron">▶</span> Show Answer Key
-                                </button>
-                                <div id="answerKeyBody">
-                                    <div id="answerKeyPreview"></div>
-                                </div>
-                            </div>
+                            <div id="testPreview"></div>
+                        </div>
+
+                        <div id="answerDistribution" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4"></div>
+
+                        <h3 class="text-sm font-semibold mb-2 mt-4" style="color:var(--text);">Answer Key</h3>
+                        <div class="flex gap-2 mb-2">
+                            <button id="answerKeyJumpToggle" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                        </div>
+                        <div id="answerKeyContainer" class="border border-gray-300 rounded p-4 max-h-96 overflow-y-auto bg-white dark:bg-slate-800">
+                            <div id="answerKeyPreview"></div>
                         </div>
                     </div>
                 </section>

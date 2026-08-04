@@ -458,22 +458,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage'));
     }
 
-    // ── Collapsible answer key ─────────────────────────────────
-    function setupAnswerKeyToggle() {
-        const akToggle = document.getElementById('answerKeyToggle');
-        const akBody = document.getElementById('answerKeyBody');
-        const akChevron = document.getElementById('answerKeyChevron');
-        
-        if (akToggle && akBody) {
-            akToggle.addEventListener('click', () => {
-                const open = akBody.classList.toggle('open');
-                if (akChevron) akChevron.textContent = open ? '▼' : '▶';
-                const label = akToggle.querySelectorAll('span')[1];
-                if (label) label.textContent = open ? 'Hide Answer Key' : 'Show Answer Key';
-            });
-        }
-    }
-
     // ── DOCX info panel ────────────────────────────────────────
     function setupDocxInfoToggle() {
         const toggle = document.getElementById('docxInfoToggle');
@@ -484,25 +468,6 @@ document.addEventListener('DOMContentLoaded', function () {
             toggle.addEventListener('click', () => {
                 const open = panel.classList.toggle('open');
                 if (chevron) chevron.textContent = open ? '▲' : '▼';
-            });
-        }
-    }
-
-    // ── Jump to top/bottom buttons ─────────────────────────────
-    function setupJumpButtons() {
-        const jumpToTop = document.getElementById('jumpToTop');
-        const jumpToBottom = document.getElementById('jumpToBottom');
-        const container = document.getElementById('testPreviewContainer');
-        
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => {
-                container.scrollTop = 0;
-            });
-        }
-        
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => {
-                container.scrollTop = container.scrollHeight;
             });
         }
     }
@@ -1368,9 +1333,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     
     setupExportButtons();
-    setupAnswerKeyToggle();
     setupDocxInfoToggle();
-    setupJumpButtons();
+    setupJumpToggleButton('testPreviewJumpToggle', 'testPreviewContainer');
+    setupJumpToggleButton('answerKeyJumpToggle', 'answerKeyContainer');
     setupMerger();
     setupUnusedQuestions();
     setupExclusions();
@@ -1515,6 +1480,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (summaryEl) summaryEl.textContent = 'Total questions to generate: 0';
             const testPreviewEl = document.getElementById('testPreview');
             if (testPreviewEl) testPreviewEl.innerHTML = '';
+            const distributionEl = document.getElementById('answerDistribution');
+            if (distributionEl) distributionEl.innerHTML = '';
             const reportDiv = document.getElementById('generationReport');
             if (reportDiv) reportDiv.innerHTML = '';
             lastUnusedQuestions = [];
