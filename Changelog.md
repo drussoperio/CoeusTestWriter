@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.1] - 2026-08-04
+### Added
+- update.bat (Windows) and update.sh (Mac/Linux) — double-click scripts that run `git pull origin main` from the app's own folder, for one-click updating instead of retyping the git command
+- Icons added to the Test Preview and Answer Key headings
+### Fixed
+- Select All Available now also resets the Smart Selection target inputs (MCQ/T-F/Matching), which previously kept showing stale numbers after being superseded
+- Generation Report tables (Breakdown by Category, Shortfall, Breakdown by Difficulty, Unused Questions) no longer show cell borders — zebra striping only
+- Design a Test's Upload File status no longer shows a redundant "Test bank loaded successfully!" line — just the question count
+- Clear Bank (Manage a Bank and Design a Test) now also clears the Filename field, instead of leaving the previous filename behind
+### Changed
+- Design a Test's Download File filename input now shows a faint "testbank" placeholder (matching the style of every other filename field) instead of being pre-filled with the literal value "test"
+
 ## [2.9.0] - 2026-08-03
 ### Fixed
 - Clear Bank (Manage a Bank and Design a Test) could get permanently stuck showing a failed-load filename in the drop zone: the reset code ran after an "if bank is empty, show Nothing to clear" guard, which always fired first when a load had just failed. The drop zone now always resets on Clear Bank, and a failed load resets its own drop zone immediately too.

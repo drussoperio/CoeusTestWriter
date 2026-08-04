@@ -1438,6 +1438,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (clearBankBtn) {
         clearBankBtn.addEventListener('click', () => {
             resetDropZoneDisplay(document.getElementById('loadQuestionBank'));
+            const qbFilenameInput = document.getElementById('questionBankFilename');
+            if (qbFilenameInput) qbFilenameInput.value = '';
             if (questionBank.length === 0) {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
@@ -1458,6 +1460,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (clearTestBankBtn) {
         clearTestBankBtn.addEventListener('click', () => {
             resetDropZoneDisplay(document.getElementById('loadTestBank'));
+            const outputFilenameInput = document.getElementById('outputFilename');
+            if (outputFilenameInput) outputFilenameInput.value = '';
             if (testBank.length === 0) {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
@@ -1489,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const testEmptyStateEl = document.getElementById('testEmptyState');
             if (testEmptyStateEl) testEmptyStateEl.classList.remove('hidden');
             const summaryDiv = document.getElementById('generationSummary');
-            if (summaryDiv) summaryDiv.innerHTML = '';
+            if (summaryDiv) summaryDiv.innerHTML = 'Generate a test to see the detailed breakdown.';
             ['reportCategoryTable', 'reportShortfallTable', 'reportDifficultyTable'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = '';

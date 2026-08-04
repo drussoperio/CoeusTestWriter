@@ -1310,9 +1310,13 @@ function selectAllAvailableQuestions() {
     const container = document.getElementById('categoryInputs');
     if (!container) return;
 
-    // A prior Smart Select's shortfall no longer applies once the selection is
-    // replaced by a different method.
+    // A prior Smart Select's target/shortfall no longer applies once the selection
+    // is replaced by a different method.
     lastSmartSelectShortfalls = null;
+    ['balanceTargetMC', 'balanceTargetTF', 'balanceTargetMT'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '0';
+    });
 
     categories.forEach(cat => {
         const safeCat = safeIdFromCategory(cat);
