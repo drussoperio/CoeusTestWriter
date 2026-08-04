@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.9.2';
+const APP_VERSION = '2.9.3';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.9.3': [
+        'Fixed: Merge JSONs: removed an unnecessary `flex flex-col` wrapper on the Upload Files / Download File columns that was nesting the heading\'s own internal flex layout inside another flex context, causing the heading icons to render slightly lower than their text (and out of alignment with every other tab\'s headings) from initial page load.',
+    ],
     '2.9.2': [
         'Changed: Write Questions: renamed the "Upload File" heading (a leftover mislabel — this tab doesn\'t upload anything) to "Add Questions", and renamed the "Add Questions" sub-tab to "Compose Question"',
         'Fixed: The GitHub update-check now logs what it found (or why it failed) to the console on every path instead of silently swallowing everything — makes a failed/blocked check diagnosable via devtools instead of indistinguishable from "already up to date". Also hardened the release-tag parsing to strip a stray "v." prefix (some older release tags used "v.2.4.3" instead of "v2.4.3"), which could otherwise produce a garbled version number in the banner.',

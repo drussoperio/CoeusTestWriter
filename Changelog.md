@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.3] - 2026-08-04
+### Fixed
+- Merge JSONs: removed an unnecessary `flex flex-col` wrapper on the Upload Files / Download File columns that was nesting the heading's own internal flex layout inside another flex context, causing the heading icons to render slightly lower than their text (and out of alignment with every other tab's headings) from initial page load.
+
 ## [2.9.2] - 2026-08-04
 ### Changed
 - Write Questions: renamed the "Upload File" heading (a leftover mislabel — this tab doesn't upload anything) to "Add Questions", and renamed the "Add Questions" sub-tab to "Compose Question"
