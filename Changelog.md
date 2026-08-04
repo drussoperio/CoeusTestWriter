@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.9.0] - 2026-08-03
 ### Fixed
 - Clear Bank (Manage a Bank and Design a Test) could get permanently stuck showing a failed-load filename in the drop zone: the reset code ran after an "if bank is empty, show Nothing to clear" guard, which always fired first when a load had just failed. The drop zone now always resets on Clear Bank, and a failed load resets its own drop zone immediately too.
+- Clear Test Bank left the Answer Key showing stale content and Test Preview as an empty box instead of returning to the "No test generated yet" state — it now clears the Answer Key too and properly hides the output panel.
+- Design a Test's Shortfall table could report a stale Smart Select shortfall indefinitely: running Smart Select with a shortfall, then generating a completely different selection (e.g. via Select All Available), kept showing the old Smart Select shortfall in every subsequent Generation Report. It's now treated as a one-shot value for the very next report, and is also cleared immediately when Select All Available replaces the selection.
 ### Changed
 - Manage a Bank: pulled the stats and validation panels out of the cramped Edit Bank sidebar into their own standalone "Bank Stats" section (stat cards in a row + validation report below, both full width) between Upload/Download and Edit Bank; Edit Bank is back to a single column.
 - Design a Test: Test Preview and Answer Key are no longer nested in one shared scroll box behind a Show/Hide toggle — the Answer Key is now always visible under its own heading, in its own independently-scrollable box with its own jump button.
