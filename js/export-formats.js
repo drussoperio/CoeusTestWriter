@@ -485,6 +485,7 @@ function loadFile(fileInput, isTxt, bankType) {
         } catch (error) {
             console.error('Error loading file:', error);
             showToast('❌ Error: ' + error.message, 'error');
+            resetDropZoneDisplay(fileInput);
         }
     };
 

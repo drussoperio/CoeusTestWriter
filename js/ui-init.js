@@ -458,22 +458,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage'));
     }
 
-    // ── Collapsible answer key ─────────────────────────────────
-    function setupAnswerKeyToggle() {
-        const akToggle = document.getElementById('answerKeyToggle');
-        const akBody = document.getElementById('answerKeyBody');
-        const akChevron = document.getElementById('answerKeyChevron');
-        
-        if (akToggle && akBody) {
-            akToggle.addEventListener('click', () => {
-                const open = akBody.classList.toggle('open');
-                if (akChevron) akChevron.textContent = open ? '▼' : '▶';
-                const label = akToggle.querySelectorAll('span')[1];
-                if (label) label.textContent = open ? 'Hide Answer Key' : 'Show Answer Key';
-            });
-        }
-    }
-
     // ── DOCX info panel ────────────────────────────────────────
     function setupDocxInfoToggle() {
         const toggle = document.getElementById('docxInfoToggle');
@@ -484,25 +468,6 @@ document.addEventListener('DOMContentLoaded', function () {
             toggle.addEventListener('click', () => {
                 const open = panel.classList.toggle('open');
                 if (chevron) chevron.textContent = open ? '▲' : '▼';
-            });
-        }
-    }
-
-    // ── Jump to top/bottom buttons ─────────────────────────────
-    function setupJumpButtons() {
-        const jumpToTop = document.getElementById('jumpToTop');
-        const jumpToBottom = document.getElementById('jumpToBottom');
-        const container = document.getElementById('testPreviewContainer');
-        
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => {
-                container.scrollTop = 0;
-            });
-        }
-        
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => {
-                container.scrollTop = container.scrollHeight;
             });
         }
     }
@@ -1368,9 +1333,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     
     setupExportButtons();
-    setupAnswerKeyToggle();
     setupDocxInfoToggle();
-    setupJumpButtons();
+    setupJumpToggleButton('testPreviewJumpToggle', 'testPreviewContainer');
+    setupJumpToggleButton('answerKeyJumpToggle', 'answerKeyContainer');
     setupMerger();
     setupUnusedQuestions();
     setupExclusions();
@@ -1472,6 +1437,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearBankBtn = document.getElementById('clearQuestionBank');
     if (clearBankBtn) {
         clearBankBtn.addEventListener('click', () => {
+            resetDropZoneDisplay(document.getElementById('loadQuestionBank'));
             if (questionBank.length === 0) {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
@@ -1482,16 +1448,6 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('coeus-added-questions');
             clearQuestionManagerState();
             showToast('🗑️ Cleared', 'warning');
-            const qmFileInput = document.getElementById('loadQuestionBank');
-            if (qmFileInput) qmFileInput.value = '';
-            const qmDropZone = qmFileInput ? qmFileInput.closest('.drop-zone') : null;
-            if (qmDropZone) {
-                const p = qmDropZone.querySelector('p');
-                if (p) {
-                    p.className = 'text-sm text-gray-600';
-                    p.textContent = 'Drag & drop file or click to browse';
-                }
-            }
             renderQuestionManagerList();
         });
     }
@@ -1501,6 +1457,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearTestBankBtn = document.getElementById('clearTestBank');
     if (clearTestBankBtn) {
         clearTestBankBtn.addEventListener('click', () => {
+            resetDropZoneDisplay(document.getElementById('loadTestBank'));
             if (testBank.length === 0) {
                 showToast('⚠️ Nothing to clear', 'warning');
                 return;
@@ -1517,24 +1474,20 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             const undoHtml = '<span>🗑️ Cleared. <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>';
             showToast(undoHtml, 'warning', 5000, true);
-            const tgFileInput = document.getElementById('loadTestBank');
-            if (tgFileInput) tgFileInput.value = '';
-            const tgDropZone = tgFileInput ? tgFileInput.closest('.drop-zone') : null;
-            if (tgDropZone) {
-                const p = tgDropZone.querySelector('p');
-                if (p) {
-                    p.className = 'text-sm text-gray-600';
-                    p.textContent = 'Drag & drop file or click to browse';
-                }
-            }
             const bankStatus = document.getElementById('bankStatus');
             if (bankStatus) bankStatus.innerHTML = '';
             const summaryEl = document.getElementById('testSummary');
             if (summaryEl) summaryEl.textContent = 'Total questions to generate: 0';
             const testPreviewEl = document.getElementById('testPreview');
             if (testPreviewEl) testPreviewEl.innerHTML = '';
-            const reportDiv = document.getElementById('generationReport');
-            if (reportDiv) reportDiv.innerHTML = '';
+            const distributionEl = document.getElementById('answerDistribution');
+            if (distributionEl) distributionEl.innerHTML = '';
+            const summaryDiv = document.getElementById('generationSummary');
+            if (summaryDiv) summaryDiv.innerHTML = '';
+            ['reportCategoryTable', 'reportShortfallTable', 'reportDifficultyTable'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '';
+            });
             lastUnusedQuestions = [];
             const unusedSection = document.getElementById('unusedQuestionsSection');
             if (unusedSection) unusedSection.classList.add('hidden');

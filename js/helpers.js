@@ -2,6 +2,22 @@
 // HELPER FUNCTIONS, SEND TO BANK HELPER
 // ========================================
 
+// Helper: reset a file-input's value and its drop-zone's displayed text back to
+// the default prompt. Used after a Clear Bank click (always, even if the bank was
+// already empty from a failed load) and after a failed load itself, so a stale
+// filename never lingers in the drop zone.
+function resetDropZoneDisplay(fileInput) {
+    if (!fileInput) return;
+    fileInput.value = '';
+    const dropZone = fileInput.closest('.drop-zone');
+    if (!dropZone) return;
+    const p = dropZone.querySelector('p');
+    if (p) {
+        p.className = 'text-sm text-gray-600';
+        p.textContent = 'Drag & drop file or click to browse';
+    }
+}
+
 // Helper: Find questions that don't have a correct answer properly marked
 function getQuestionsMissingCorrectAnswer(questions) {
     return (questions || []).filter(q => {
@@ -246,19 +262,17 @@ function renderBankStats(containerId, questions) {
         </tr>`).join('');
 
     container.innerHTML = `
-        <div class="p-3 rounded border border-gray-200 surface space-y-4">
-            <div>
-                <p class="text-sm font-semibold" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
-            </div>
-            <div>
+        <p class="text-sm font-semibold mb-3" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Type</p>
                 ${statsMiniTable(typeRows)}
             </div>
-            <div>
+            <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Difficulty</p>
                 ${statsMiniTable(difficultyRows)}
             </div>
-            <div>
+            <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Category</p>
                 <table class="w-full text-xs">${categoryRows}</table>
                 ${moreCategories > 0 ? `<p class="text-xs mt-1" style="color:var(--text-muted);">+${moreCategories} more categor${moreCategories === 1 ? 'y' : 'ies'}</p>` : ''}
