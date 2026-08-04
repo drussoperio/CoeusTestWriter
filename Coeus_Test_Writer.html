@@ -838,18 +838,23 @@
                 <!-- Generation Report -->
                 <section class="p-4 border border-gray-200 rounded surface">
                     <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Review Generation Report</h2>
-                    <div id="generationReport" class="rounded text-sm text-gray-600">
+                    <div id="generationSummary" class="rounded text-sm text-gray-600">
                         Generate a test to see the detailed breakdown.
                     </div>
-                    <!-- Unused Questions (inside Generation Report) -->
-                    <div id="unusedQuestionsSection" class="mt-4 hidden">
-                        <h3 class="text-sm font-semibold mb-2 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>Unused Questions</h3>
-                        <div id="unusedSummary" class="rounded text-sm text-gray-600"></div>
-                        <div class="flex gap-2 mt-2">
-                            <button id="exportUnusedJson" class="bg-orange-500 hover:bg-orange-700 text-white px-4 py-1.5 rounded text-sm" disabled>Export Unused as JSON</button>
-                        </div>
-                        <div id="unusedPreview" class="hidden">
-                            <pre id="unusedPreviewContent" class="bg-gray-100 p-4 rounded border border-gray-300 max-h-64 overflow-y-auto text-xs"></pre>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                        <div class="overflow-x-auto"><div id="reportCategoryTable"></div></div>
+                        <div class="overflow-x-auto"><div id="reportShortfallTable"></div></div>
+                        <div class="overflow-x-auto"><div id="reportDifficultyTable"></div></div>
+                        <!-- Unused Questions -->
+                        <div id="unusedQuestionsSection" class="hidden">
+                            <h3 class="text-sm font-semibold mb-2 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>Unused Questions</h3>
+                            <div class="overflow-x-auto"><div id="unusedSummary" class="rounded text-sm text-gray-600"></div></div>
+                            <div class="flex gap-2 mt-2">
+                                <button id="exportUnusedJson" class="bg-orange-500 hover:bg-orange-700 text-white px-4 py-1.5 rounded text-sm" disabled>Export Unused as JSON</button>
+                            </div>
+                            <div id="unusedPreview" class="hidden">
+                                <pre id="unusedPreviewContent" class="bg-gray-100 p-4 rounded border border-gray-300 max-h-64 overflow-y-auto text-xs"></pre>
+                            </div>
                         </div>
                     </div>
                 </section>

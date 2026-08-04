@@ -1482,8 +1482,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (testPreviewEl) testPreviewEl.innerHTML = '';
             const distributionEl = document.getElementById('answerDistribution');
             if (distributionEl) distributionEl.innerHTML = '';
-            const reportDiv = document.getElementById('generationReport');
-            if (reportDiv) reportDiv.innerHTML = '';
+            const summaryDiv = document.getElementById('generationSummary');
+            if (summaryDiv) summaryDiv.innerHTML = '';
+            ['reportCategoryTable', 'reportShortfallTable', 'reportDifficultyTable'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '';
+            });
             lastUnusedQuestions = [];
             const unusedSection = document.getElementById('unusedQuestionsSection');
             if (unusedSection) unusedSection.classList.add('hidden');

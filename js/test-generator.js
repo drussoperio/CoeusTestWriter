@@ -915,12 +915,18 @@ function isQuestionExcluded(question) {
 
 // Display detailed generation report
 function displayGenerationReport() {
-    const reportDiv = document.getElementById('generationReport');
-    
+    const summaryDiv = document.getElementById('generationSummary');
+    const categoryDiv = document.getElementById('reportCategoryTable');
+    const shortfallDiv = document.getElementById('reportShortfallTable');
+
     if (!generationStats || Object.keys(generationStats).length === 0) {
-        reportDiv.innerHTML = `
+        summaryDiv.innerHTML = `
             <p class="text-sm text-gray-600">Generate a test to see the detailed breakdown.</p>
         `;
+        categoryDiv.innerHTML = '';
+        shortfallDiv.innerHTML = '';
+        const diffDiv = document.getElementById('reportDifficultyTable');
+        if (diffDiv) diffDiv.innerHTML = '';
         return;
     }
 
@@ -942,23 +948,21 @@ function displayGenerationReport() {
 
     const totalShortfall = genShortfall + ssShortfall;
 
-    // Build report HTML — Summary
-    let reportHtml = `
-        <div class="mb-4">
-            <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>Summary</h3>
-            <div class="grid grid-cols-3 gap-4 text-center">
-                <div class="p-3 bg-blue-50 border border-blue-200 rounded">
-                    <div class="text-2xl font-bold text-blue-600">${totalRequested + ssShortfall}</div>
-                    <div class="text-xs text-blue-700">Requested</div>
-                </div>
-                <div class="p-3 bg-green-50 border border-green-200 rounded">
-                    <div class="text-2xl font-bold text-green-600">${totalGenerated}</div>
-                    <div class="text-xs text-green-700">Generated</div>
-                </div>
-                <div class="p-3 ${totalShortfall > 0 ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'} rounded">
-                    <div class="text-2xl font-bold ${totalShortfall > 0 ? 'text-red-600' : 'text-gray-400'}">${totalShortfall}</div>
-                    <div class="text-xs ${totalShortfall > 0 ? 'text-red-700' : 'text-gray-500'}">Shortfall</div>
-                </div>
+    // Build report HTML — Summary (its own full-width block, above the 2x2 grid)
+    summaryDiv.innerHTML = `
+        <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>Summary</h3>
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded">
+                <div class="text-2xl font-bold text-blue-600">${totalRequested + ssShortfall}</div>
+                <div class="text-xs text-blue-700">Requested</div>
+            </div>
+            <div class="p-3 bg-green-50 border border-green-200 rounded">
+                <div class="text-2xl font-bold text-green-600">${totalGenerated}</div>
+                <div class="text-xs text-green-700">Generated</div>
+            </div>
+            <div class="p-3 ${totalShortfall > 0 ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'} rounded">
+                <div class="text-2xl font-bold ${totalShortfall > 0 ? 'text-red-600' : 'text-gray-400'}">${totalShortfall}</div>
+                <div class="text-xs ${totalShortfall > 0 ? 'text-red-700' : 'text-gray-500'}">Shortfall</div>
             </div>
         </div>
     `;
@@ -1012,20 +1016,16 @@ function displayGenerationReport() {
             ${tblTotalTd(ti,totGen)}
         </tr>`;
 
-        reportHtml += `
-            <div class="mb-4">
-                <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>Breakdown by Category</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full table-fixed border-collapse" style="border:1px solid ${ti.hBdr};">
-                        <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
-                        <thead><tr>
-                            ${tblTh(ti,'Category','left')}
-                            ${tblTh(ti,'Type')}${tblTh(ti,'Requested')}${tblTh(ti,'Available')}${tblTh(ti,'Generated')}
-                        </tr></thead>
-                        <tbody>${catRows}</tbody>
-                    </table>
-                </div>
-            </div>
+        categoryDiv.innerHTML = `
+            <h3 class="text-sm font-semibold mb-2 flex items-center gap-1" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>Breakdown by Category</h3>
+            <table class="w-full table-fixed border-collapse" style="border:1px solid ${ti.hBdr};">
+                <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+                <thead><tr>
+                    ${tblTh(ti,'Category','left')}
+                    ${tblTh(ti,'Type')}${tblTh(ti,'Requested')}${tblTh(ti,'Available')}${tblTh(ti,'Generated')}
+                </tr></thead>
+                <tbody>${catRows}</tbody>
+            </table>
         `;
     }
 
@@ -1051,16 +1051,15 @@ function displayGenerationReport() {
 
         const hasAnyShortfall = catRows.length > 0 || ssRows.length > 0;
 
-        reportHtml += `
-            <div class="mb-4">
-                <h3 class="text-sm font-semibold mb-2 flex items-center gap-1 ${hasAnyShortfall ? 'text-red-700' : ''}" style="${hasAnyShortfall ? '' : 'color:var(--text);'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                    Shortfall
-                </h3>
+        let shortfallHtml = `
+            <h3 class="text-sm font-semibold mb-2 flex items-center gap-1 ${hasAnyShortfall ? 'text-red-700' : ''}" style="${hasAnyShortfall ? '' : 'color:var(--text);'}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                Shortfall
+            </h3>
         `;
 
         if (!hasAnyShortfall) {
-            reportHtml += `<p class="text-sm text-green-600 font-medium">✅ No shortfall detected.</p>`;
+            shortfallHtml += `<p class="text-sm text-green-600 font-medium">✅ No shortfall detected.</p>`;
         } else {
             const tr = TBL.red;
             let allRows = '';
@@ -1112,24 +1111,20 @@ function displayGenerationReport() {
                 ${tblTotalTd(tr,totalSF)}
             </tr>`;
 
-            reportHtml += `
-                <div class="overflow-x-auto">
-                    <table class="w-full table-fixed border-collapse" style="border:1px solid ${tr.hBdr};">
-                        <colgroup><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"></colgroup>
-                        <thead><tr>
-                            ${tblTh(tr,'Category','left')}
-                            ${tblTh(tr,'Type')}${tblTh(tr,'Source')}${tblTh(tr,'Requested')}${tblTh(tr,'Available')}${tblTh(tr,'Shortfall')}
-                        </tr></thead>
-                        <tbody>${allRows}</tbody>
-                    </table>
-                </div>
+            shortfallHtml += `
+                <table class="w-full table-fixed border-collapse" style="border:1px solid ${tr.hBdr};">
+                    <colgroup><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"><col style="width:16.6%"></colgroup>
+                    <thead><tr>
+                        ${tblTh(tr,'Category','left')}
+                        ${tblTh(tr,'Type')}${tblTh(tr,'Source')}${tblTh(tr,'Requested')}${tblTh(tr,'Available')}${tblTh(tr,'Shortfall')}
+                    </tr></thead>
+                    <tbody>${allRows}</tbody>
+                </table>
             `;
         }
 
-        reportHtml += `</div>`;
+        shortfallDiv.innerHTML = shortfallHtml;
     }
-
-    reportDiv.innerHTML = reportHtml;
 
     // Difficulty Breakdown section — always shown
     {
@@ -1164,8 +1159,7 @@ function displayGenerationReport() {
 
         const diffIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`;
 
-        let diffHtml = `<div class="mt-4">
-            <h3 class="text-sm font-semibold mb-1 flex items-center gap-1" style="color:var(--text);">${diffIcon}Breakdown by Difficulty</h3>`;
+        let diffHtml = `<h3 class="text-sm font-semibold mb-1 flex items-center gap-1" style="color:var(--text);">${diffIcon}Breakdown by Difficulty</h3>`;
 
         if (hasDiffShortfall) {
             diffHtml += `<p class="text-xs text-red-600 mb-2">⚠️ Some difficulty tiers ran short. Unset questions were used where available. Consider adjusting the ratio or adding more questions of the needed difficulty.</p>`;
@@ -1244,8 +1238,7 @@ function displayGenerationReport() {
             </table></div>`;
         }
 
-        diffHtml += `</div>`;
-        reportDiv.innerHTML += diffHtml;
+        document.getElementById('reportDifficultyTable').innerHTML = diffHtml;
     }
 }
 
@@ -1287,8 +1280,12 @@ function clearAllCategoryInputs() {
     if (unusedSummaryEl) unusedSummaryEl.innerHTML = '';
     const exportUnusedBtn = document.getElementById('exportUnusedJson');
     if (exportUnusedBtn) exportUnusedBtn.disabled = true;
-    const reportDiv2 = document.getElementById('generationReport');
-    if (reportDiv2) reportDiv2.innerHTML = 'Generate a test to see the detailed breakdown.';
+    const summaryDiv2 = document.getElementById('generationSummary');
+    if (summaryDiv2) summaryDiv2.innerHTML = 'Generate a test to see the detailed breakdown.';
+    ['reportCategoryTable', 'reportShortfallTable', 'reportDifficultyTable'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
     const summaryEl = document.getElementById('testSummary');
     if (summaryEl) summaryEl.textContent = `Total questions to generate: 0`;
     const summaryTotal2 = document.getElementById('testSummaryTotal');
