@@ -137,17 +137,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const res = await fetch('https://api.github.com/repos/drussoperio/CoeusTestWriter/releases/latest', {
                 headers: { 'Accept': 'application/vnd.github+json' }
             });
-            if (!res.ok) return;
+            if (!res.ok) {
+                console.warn(`[update-check] GitHub API returned ${res.status} — skipping.`);
+                return;
+            }
             const data = await res.json();
-            const latest = (data.tag_name || '').replace(/^v/, '');
-            if (latest && latest !== APP_VERSION) {
+            const latest = (data.tag_name || '').replace(/^v\.?/i, '');
+            if (!latest) {
+                console.warn('[update-check] Release response had no tag_name — skipping.', data);
+                return;
+            }
+            if (latest !== APP_VERSION) {
+                console.log(`[update-check] Running v${APP_VERSION}, latest release is v${latest} — showing update banner.`);
                 const banner = document.createElement('div');
                 banner.id = 'updateBanner';
                 banner.style.cssText = 'position:fixed;bottom:60px;right:16px;z-index:9000;background:#3b82f6;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;';
                 banner.innerHTML = `<span>⬆ v${latest} available</span><a href="https://github.com/drussoperio/CoeusTestWriter/releases/latest" target="_blank" rel="noopener" style="color:#fff;font-weight:600;text-decoration:underline;">Download</a><button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;line-height:1;">&times;</button>`;
                 document.body.appendChild(banner);
+            } else {
+                console.log(`[update-check] Running v${APP_VERSION}, already latest.`);
             }
-        } catch (_) { /* network unavailable — silently skip */ }
+        } catch (err) {
+            console.warn('[update-check] Failed to check for updates (network unavailable or blocked):', err);
+        }
     })();
 
 

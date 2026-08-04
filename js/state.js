@@ -19,12 +19,16 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.9.1';
+const APP_VERSION = '2.9.2';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.9.2': [
+        'Changed: Write Questions: renamed the "Upload File" heading (a leftover mislabel — this tab doesn\'t upload anything) to "Add Questions", and renamed the "Add Questions" sub-tab to "Compose Question"',
+        'Fixed: The GitHub update-check now logs what it found (or why it failed) to the console on every path instead of silently swallowing everything — makes a failed/blocked check diagnosable via devtools instead of indistinguishable from "already up to date". Also hardened the release-tag parsing to strip a stray "v." prefix (some older release tags used "v.2.4.3" instead of "v2.4.3"), which could otherwise produce a garbled version number in the banner.',
+    ],
     '2.9.1': [
         'Added: update.bat (Windows) and update.sh (Mac/Linux) — double-click scripts that run `git pull origin main` from the app\'s own folder, for one-click updating instead of retyping the git command',
         'Added: Icons added to the Test Preview and Answer Key headings',
