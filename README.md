@@ -11,6 +11,8 @@ A browser-based toolkit for writing, organizing, and generating exam questions. 
 - **Merge JSONs** — combine multiple JSON question banks into one file.
 - **Send between tabs** — push a bank directly from one tab to another (e.g. Manage a Bank → Design a Test) without exporting and re-uploading a file.
 - **Local-only storage** — question banks and preferences persist via browser `localStorage`; nothing leaves the browser.
+- **Multi-step undo** — a shared, capped 5-step undo stack covers clearing a bank, bulk-deleting questions, changing category, and similar destructive actions; press Ctrl/Cmd+Z to step back through recent changes.
+- **Keyboard shortcuts** — Alt+1..5 to jump between tabs, Ctrl/Cmd+Enter to submit the active form, Escape to cancel an open editor, and ? to open the shortcuts help modal.
 
 ## Installation
 
@@ -36,7 +38,7 @@ No server or build step is required. CDN libraries (docx.js, Prism) are loaded f
 ### From a Release
 
 1. Download the latest `.zip` from [Releases](../../releases).
-2. Replace your existing `Coeus_Test_Writer.html` and `main.js` with the new versions.
+2. Replace your existing `Coeus_Test_Writer.html` and `js/` folder with the new versions.
 3. Your saved bank and preferences in `localStorage` are preserved automatically.
 
 ### With Git
@@ -45,7 +47,7 @@ No server or build step is required. CDN libraries (docx.js, Prism) are loaded f
 git pull origin main
 ```
 
-Then reload `Coeus_Test_Writer.html` in your browser.
+Then reload `Coeus_Test_Writer.html` in your browser. Alternatively, double-click `update.bat` (Windows) or `update.sh` (Mac/Linux) in the app's folder to run the same `git pull` without typing the command.
 
 ## Coeus JSON Question Format
 
@@ -75,7 +77,7 @@ All tabs share a common JSON array format:
 
 Write and accumulate questions into a local exam bank, then export the whole bank at once.
 
-**Add Questions** (sub-tab) — One-question-at-a-time form:
+**Compose Question** (sub-tab) — One-question-at-a-time form:
 - Set **Subject**, **Category**, **Type** (Multiple Choice / True/False / Matching), and **Difficulty**.
 - Multiple Choice: the first choice is always the correct answer (✓); choices 2–5 are wrong answers (✗). Use **+ Add Choice E** to show a fifth option.
 - True/False: select True or False.
@@ -96,9 +98,11 @@ Load and curate an existing JSON question bank.
 
 **Download File** — Export the current bank as **JSON**, **CSV**, **TXT**, or **GIFT**, or use **Send to Design a Test** to load it directly into the test generator.
 
+**Bank Stats** — a standalone section showing total question count, breakdown by type/difficulty/category, and a validation report that flags duplicate questions, missing correct answers, empty question text, and malformed multiple-choice or matching entries.
+
 **Edit Bank** — Search, sort, and filter the loaded bank:
 - **Search** — matches question text, answers, or category.
-- **Sort** — Default (As Loaded), By Difficulty (Easy→Hard / Hard→Easy), By Category (A→Z / Z→A).
+- **Sort** — 4 toggle buttons: By Category (A→Z / Z→A) and By Difficulty (Easy→Hard / Hard→Easy). Category A→Z is the default view.
 - **Filter** — All Questions, Multiple Choice Only, True/False Only, Matching Only, or any Difficulty tier. Each option shows its question count.
 - **Compact/Comfortable toggle** (▤/☰) — compact mode hides the correct-answer preview line and reduces card padding. Preference is saved in `localStorage`.
 - **Change Category** — bulk-renames the category of selected questions.
@@ -143,7 +147,7 @@ Upload any supported file and convert it to any other format in one step.
 
 - **Upload File** — drag-and-drop or browse for a `.json`, `.csv`, or `.txt` file (plain text or GIFT).
 - **Convert** — detects the input format automatically and converts.
-- **Download File** — preview the result as **JSON**, **CSV**, **GIFT**, or **TXT** using the format toggles. Use ↑ Top / ↓ Bottom to navigate long output. Export using **Export as JSON / CSV / GIFT / TXT**, or use **Send to Manage a Bank** / **Send to Design a Test** to load the converted questions directly into another tab.
+- **Download File** — preview the result as **JSON**, **CSV**, **GIFT**, or **TXT** using the format toggles. A single scroll button jumps to the far end of the output and relabels itself (↓ Bottom / ↑ Top) based on scroll position. Export using **Export as JSON / CSV / GIFT / TXT**, or use **Send to Manage a Bank** / **Send to Design a Test** to load the converted questions directly into another tab.
 
 **Accepted inputs per output format:**
 
@@ -193,8 +197,22 @@ Combine multiple Coeus JSON question banks into a single file.
 ```
 .
 ├── Coeus_Test_Writer.html   # UI/markup
-├── main.js                  # Application logic
-├── LICENSE                  # AGPL-3.0
+├── js/                      # Application logic, loaded via sequential <script> tags
+│   ├── state.js              # App version, changelog, shared state
+│   ├── undo-stack.js          # Shared multi-step undo stack
+│   ├── question-manager.js    # Bank CRUD, search/sort/filter
+│   ├── export-formats.js      # JSON/CSV/GIFT/TXT conversion
+│   ├── test-generator.js      # Test generation engine
+│   ├── test-export.js         # DOCX/JSON/GIFT/CSV/TXT test export
+│   ├── convert-merge.js       # Convert a File / Merge JSONs tabs
+│   ├── helpers.js             # Shared utilities (escaping, stats, validation)
+│   └── ui-init.js             # Event wiring, tab/UI initialization
+├── scripts/
+│   └── sync-changelog.js    # Regenerates the CHANGELOG object in js/state.js from Changelog.md
+├── update.bat                # Windows double-click updater (git pull origin main)
+├── update.sh                 # Mac/Linux double-click updater
+├── Changelog.md              # Source of truth for the in-app changelog
+├── LICENSE                   # AGPL-3.0
 └── README.md
 ```
 
