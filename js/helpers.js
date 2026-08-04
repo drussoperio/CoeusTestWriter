@@ -262,19 +262,17 @@ function renderBankStats(containerId, questions) {
         </tr>`).join('');
 
     container.innerHTML = `
-        <div class="p-3 rounded border border-gray-200 surface space-y-4">
-            <div>
-                <p class="text-sm font-semibold" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
-            </div>
-            <div>
+        <p class="text-sm font-semibold mb-3" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Type</p>
                 ${statsMiniTable(typeRows)}
             </div>
-            <div>
+            <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Difficulty</p>
                 ${statsMiniTable(difficultyRows)}
             </div>
-            <div>
+            <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Category</p>
                 <table class="w-full text-xs">${categoryRows}</table>
                 ${moreCategories > 0 ? `<p class="text-xs mt-1" style="color:var(--text-muted);">+${moreCategories} more categor${moreCategories === 1 ? 'y' : 'ies'}</p>` : ''}
