@@ -404,7 +404,7 @@ function updateMergerDisplay() {
 // Clear all merged data
 function clearMerger() {
     if (mergedQuestions.length === 0 && mergerFileStats.length === 0) {
-        showToast('⚠️ Nothing to clear.', 'info');
+        showToast('⚠️ Nothing to clear.', 'warning');
         return;
     }
 
@@ -427,7 +427,7 @@ function clearMerger() {
     }
     
     updateMergerDisplay();
-    showToast('🗑️ Cleared', 'success');
+    showToast('🗑️ Cleared', 'warning');
 }
 
 // Download merged JSON

@@ -8,6 +8,7 @@ function renderQuestionManagerList() {
     if (!container) return;
 
     renderBankValidationReport('qm-validation-report', questionBank);
+    renderBankStats('qm-bank-stats', questionBank);
 
     // Step 1: Apply search filter
     let filtered = questionBank.filter(q => {
@@ -60,10 +61,7 @@ function renderQuestionManagerList() {
         case 'cat-desc':
             filtered.sort((a, b) => (b.category || '').localeCompare(a.category || ''));
             break;
-        case 'asLoaded':
-            break;
         case 'cat-asc':
-        case 'category':
         default:
             filtered.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
             break;
@@ -97,8 +95,8 @@ function renderQuestionManagerList() {
 
     let html = '<div class="space-y-2">';
 
-    // Render each category as a collapsible section
-    Object.keys(grouped).sort().forEach(category => {
+    // Render each category as a collapsible section, in the order sortBy produced
+    groupOrder.forEach(category => {
         const questions = grouped[category];
         const catColor = badgeColor(category);
         const safeCat = safeIdFromCategory(category);
@@ -608,7 +606,7 @@ function deleteSelectedQuestions() {
         showToast('✅ Change undone', 'success');
     });
     const undoHtml = `<span>🗑️ Deleted ${count} question(s). <button onclick="performUndo()" style="background:#fff;color:#333;padding:4px 8px;border-radius:4px;cursor:pointer;margin-left:8px;border:1px solid #ccc;">Undo</button></span>`;
-    showToast(undoHtml, 'success', 5000, true);
+    showToast(undoHtml, 'warning', 5000, true);
 }
 
 function changeSelectedQuestionsCategory() {
@@ -707,14 +705,24 @@ function initializeQuestionManager() {
         });
     }
 
-    // Sort select
-    const sortSelect = document.getElementById('qm-sort-select');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-            questionManagerState.sortBy = e.target.value;
-            renderQuestionManagerList();
+    // Sort toggle buttons
+    const sortBtns = document.querySelectorAll('.qm-sort-btn');
+    function updateSortBtnStyles() {
+        sortBtns.forEach(btn => {
+            const active = btn.dataset.sort === questionManagerState.sortBy;
+            btn.className = `qm-sort-btn flex-1 px-2 py-1.5 rounded text-xs font-medium ${
+                active ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`;
         });
     }
+    sortBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            questionManagerState.sortBy = btn.dataset.sort;
+            updateSortBtnStyles();
+            renderQuestionManagerList();
+        });
+    });
+    updateSortBtnStyles();
 
     // Filter select
     const filterSelect = document.getElementById('qm-filter-select');

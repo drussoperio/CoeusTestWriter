@@ -507,37 +507,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ── Generic output jump buttons (Top/Bottom) ─────────────────
-    function setupJumpButtonsFor(topId, bottomId, containerId) {
-        const jumpToTop = document.getElementById(topId);
-        const jumpToBottom = document.getElementById(bottomId);
+    // ── Generic output jump button — single button, toggles direction ──
+    // Shows "↓ Bottom" while nearer the top (click scrolls to bottom) and
+    // "↑ Top" while nearer the bottom (click scrolls to top); relabels
+    // itself as the container is scrolled manually too.
+    function setupJumpToggleButton(buttonId, containerId) {
+        const btn = document.getElementById(buttonId);
         const container = document.getElementById(containerId);
+        if (!btn || !container) return;
 
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => { container.scrollTop = 0; });
+        function isNearTop() {
+            const maxScroll = container.scrollHeight - container.clientHeight;
+            return maxScroll <= 0 || container.scrollTop <= maxScroll / 2;
         }
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => { container.scrollTop = container.scrollHeight; });
-        }
-    }
-
-    // ── JSON Merger output jump buttons ─────────────────────────
-    function setupMergerJumpButtons() {
-        const jumpToTop = document.getElementById('mergerJumpToTop');
-        const jumpToBottom = document.getElementById('mergerJumpToBottom');
-        const container = document.getElementById('mergerOutputContainer');
-
-        if (jumpToTop && container) {
-            jumpToTop.addEventListener('click', () => {
-                container.scrollTop = 0;
-            });
+        function updateLabel() {
+            btn.textContent = isNearTop() ? '↓ Bottom' : '↑ Top';
         }
 
-        if (jumpToBottom && container) {
-            jumpToBottom.addEventListener('click', () => {
-                container.scrollTop = container.scrollHeight;
-            });
-        }
+        btn.addEventListener('click', () => {
+            container.scrollTop = isNearTop() ? container.scrollHeight : 0;
+            updateLabel();
+        });
+        container.addEventListener('scroll', updateLabel);
+        updateLabel();
     }
 
     // ── Merger buttons ────────────────────────────────────────
@@ -559,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let lastResult = '';
         let lastFileName = '';
 
-        setupJumpButtonsFor(prefix + 'JumpToTop', prefix + 'JumpToBottom', prefix + 'OutputContainer');
+        setupJumpToggleButton(prefix + 'JumpToggle', prefix + 'OutputContainer');
 
         // Sub-tab switching (Upload File / Paste Text)
         if (hasSubTabs) {
@@ -728,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (csvEmpty) csvEmpty.classList.remove('hidden');
                 const warnEl = document.getElementById(warningId);
                 if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
-                showToast('🗑️ Cleared', 'success');
+                showToast('🗑️ Cleared', 'warning');
             });
         }
 
@@ -766,7 +758,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const warnEl      = document.getElementById('convertFileMissingCorrectWarning');
         let lastResult = '', lastExt = '.json', lastFmt = 'json', convertFilePendingDownload = null;
 
-        setupJumpButtonsFor('convertFileJumpToTop', 'convertFileJumpToBottom', 'convertFileTextOutputWrap');
+        setupJumpToggleButton('convertFileJumpToggle', 'convertFileTextOutputWrap');
 
         // keep dropzone wired
         if (fileInput) {
@@ -927,7 +919,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (warnEl) { warnEl.classList.add('hidden'); warnEl.innerHTML = ''; }
                 lastResult = '';
                 cfStoredQuestions = null;
-                showToast('🗑️ Cleared', 'success');
+                showToast('🗑️ Cleared', 'warning');
             });
         }
 
@@ -1165,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        setupJumpButtonsFor('wqJumpToTop', 'wqJumpToBottom', 'wqOutputContainer');
+        setupJumpToggleButton('wqJumpToggle', 'wqOutputContainer');
 
         // Export buttons
         function wqExport(fmt) {
@@ -1385,10 +1377,11 @@ document.addEventListener('DOMContentLoaded', function () {
     setupCategoryButtons();
     setupConvertAFile();
     setupWriteQuestions();
-    setupMergerJumpButtons();
+    setupJumpToggleButton('mergerJumpToggle', 'mergerOutputContainer');
     
     // Initialize Question Manager
     initializeQuestionManager();
+    setupJumpToggleButton('qmValidationJumpToggle', 'qmValidationReportWrap');
     
     // Initialize export dropdown
     initializeExportDropdown();
@@ -1488,7 +1481,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.removeItem('coeus-question-bank');
             localStorage.removeItem('coeus-added-questions');
             clearQuestionManagerState();
-            showToast('🗑️ Cleared', 'success');
+            showToast('🗑️ Cleared', 'warning');
             const qmFileInput = document.getElementById('loadQuestionBank');
             if (qmFileInput) qmFileInput.value = '';
             const qmDropZone = qmFileInput ? qmFileInput.closest('.drop-zone') : null;
