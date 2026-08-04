@@ -1480,8 +1480,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (summaryEl) summaryEl.textContent = 'Total questions to generate: 0';
             const testPreviewEl = document.getElementById('testPreview');
             if (testPreviewEl) testPreviewEl.innerHTML = '';
+            const answerKeyPreviewEl = document.getElementById('answerKeyPreview');
+            if (answerKeyPreviewEl) answerKeyPreviewEl.innerHTML = '';
             const distributionEl = document.getElementById('answerDistribution');
             if (distributionEl) distributionEl.innerHTML = '';
+            const outputEl = document.getElementById('output');
+            if (outputEl) outputEl.classList.add('hidden');
+            const testEmptyStateEl = document.getElementById('testEmptyState');
+            if (testEmptyStateEl) testEmptyStateEl.classList.remove('hidden');
             const summaryDiv = document.getElementById('generationSummary');
             if (summaryDiv) summaryDiv.innerHTML = '';
             ['reportCategoryTable', 'reportShortfallTable', 'reportDifficultyTable'].forEach(id => {

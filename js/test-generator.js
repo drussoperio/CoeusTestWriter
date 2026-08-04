@@ -1240,6 +1240,11 @@ function displayGenerationReport() {
 
         document.getElementById('reportDifficultyTable').innerHTML = diffHtml;
     }
+
+    // Smart Select shortfall is a one-shot signal for the very next report after
+    // it's set — consume it here so it doesn't leak into unrelated later generations
+    // (e.g. running Smart Select, then generating a completely different selection).
+    lastSmartSelectShortfalls = null;
 }
 
 // Clear all question count inputs
@@ -1304,6 +1309,10 @@ function selectAllAvailableQuestions() {
     const categories = [...new Set(testBank.map(q => q.category))];
     const container = document.getElementById('categoryInputs');
     if (!container) return;
+
+    // A prior Smart Select's shortfall no longer applies once the selection is
+    // replaced by a different method.
+    lastSmartSelectShortfalls = null;
 
     categories.forEach(cat => {
         const safeCat = safeIdFromCategory(cat);
