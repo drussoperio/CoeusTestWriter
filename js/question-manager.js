@@ -930,12 +930,13 @@ function setupQmAddQuestionsForm() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const type = typeSelect.value;
+        const subject = (document.getElementById('qmAddSubject')?.value || '').trim();
         const cat = (document.getElementById('qmAddCategory')?.value || '').trim() || 'Uncategorized';
         const diff = document.getElementById('qmAddDifficulty')?.value || 'unset';
         const qText = (document.getElementById('qmAddQuestion')?.value || '').trim();
         if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
 
-        let q = { category: cat, type, difficulty: diff, question: qText };
+        let q = { subject, category: cat, type, difficulty: diff, question: qText };
 
         if (type === 'multiple_choice') {
             const rows = document.querySelectorAll('#qmAddChoicesContainer .qm-add-choice-input:not(.hidden)');
@@ -959,7 +960,7 @@ function setupQmAddQuestionsForm() {
             aInputs.forEach((a, i) => {
                 const b = bInputs[i];
                 if (a.value.trim() && b && b.value.trim()) {
-                    questionBank.push({ category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
+                    questionBank.push({ subject, category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
                     added++;
                 }
             });
@@ -997,6 +998,7 @@ function setupQmAddQuestionsForm() {
             showQmPasteWarning('');
             const text = (document.getElementById('qmPasteInput')?.value || '').trim();
             if (!text) { showQmPasteWarning('No text to convert. Paste your questions above.'); return; }
+            const subject = (document.getElementById('qmPasteSubject')?.value || '').trim();
             const category = (document.getElementById('qmPasteCategory')?.value || '').trim() || 'Uncategorized';
             const diff = document.getElementById('qmPasteDifficulty')?.value || 'unset';
             const hasNumbered = /^\d+\.\s/m.test(text);
@@ -1005,7 +1007,7 @@ function setupQmAddQuestionsForm() {
                 return;
             }
             try {
-                const qs = parsePlainTextToJson(text, '', category);
+                const qs = parsePlainTextToJson(text, subject, category);
                 if (!qs.length) {
                     showQmPasteWarning('No questions could be parsed. Check that your questions follow the plain-text format rules. See Show Tips for details.');
                     return;
