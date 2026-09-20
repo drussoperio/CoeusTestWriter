@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.17.2] - 2026-09-20
+### Changed
+- DOCX export: the 1-column vs. 2-column MCQ choice check is now based on the actual column geometry (page width, margins, font size) instead of a flat "55 characters" guess — a choice is only put in a 2-column table cell if it's estimated to actually fit on one line at that width. The question 89 case from 2.17.1 (49-char choice, previously under the flat limit) now correctly goes 1-column instead of relying solely on the table cell wrapping it.
+
 ## [2.17.1] - 2026-09-20
 ### Fixed
 - DOCX export: a two-column MCQ layout used a tab stop to fake the second column, so a choice near (but under) the length threshold for 2-column mode could still render wide enough to overflow past the tab stop and push into where the next column's text should start. The two-column layout now uses a real (borderless) table, so a longer choice wraps within its own cell instead of overlapping the other column.

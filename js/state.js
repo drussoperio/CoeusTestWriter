@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.17.1';
+const APP_VERSION = '2.17.2';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.17.2': [
+        'Changed: DOCX export: the 1-column vs. 2-column MCQ choice check is now based on the actual column geometry (page width, margins, font size) instead of a flat "55 characters" guess — a choice is only put in a 2-column table cell if it\'s estimated to actually fit on one line at that width. The question 89 case from 2.17.1 (49-char choice, previously under the flat limit) now correctly goes 1-column instead of relying solely on the table cell wrapping it.',
+    ],
     '2.17.1': [
         'Fixed: DOCX export: a two-column MCQ layout used a tab stop to fake the second column, so a choice near (but under) the length threshold for 2-column mode could still render wide enough to overflow past the tab stop and push into where the next column\'s text should start. The two-column layout now uses a real (borderless) table, so a longer choice wraps within its own cell instead of overlapping the other column.',
     ],
