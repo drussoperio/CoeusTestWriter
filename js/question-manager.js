@@ -209,8 +209,8 @@ function renderQuestionManagerList() {
                                     <div class="space-y-2" id="qm-edit-choices-${filteredIdx}">
                                         ${allChoices.slice(0, 4).map((choice, i) => `
                                             <div class="flex items-center gap-2">
-                                                ${i === 0 ? checkIcon : xIcon}
-                                                <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5" 
+                                                <button type="button" class="qm-mark-correct-btn" data-filtered-idx="${filteredIdx}" data-choice-idx="${i}" title="${i === 0 ? 'Correct answer' : 'Mark as correct answer'}" style="background:none;border:none;padding:0;cursor:pointer;line-height:0;">${i === 0 ? checkIcon : xIcon}</button>
+                                                <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5"
                                                     value="${escapeHtml(choice || '')}"
                                                     data-filtered-idx="${filteredIdx}" data-choice-idx="${i}"
                                                     placeholder="${i === 0 ? 'Correct answer' : 'Wrong answer'}"
@@ -218,7 +218,7 @@ function renderQuestionManagerList() {
                                             </div>
                                         `).join('')}
                                         <div class="flex items-center gap-2 qm-edit-choice-e-row" id="qm-edit-choice-e-${filteredIdx}" style="${hasChoiceE ? '' : 'display:none;'}">
-                                            ${xIcon}
+                                            <button type="button" class="qm-mark-correct-btn" data-filtered-idx="${filteredIdx}" data-choice-idx="4" title="Mark as correct answer" style="background:none;border:none;padding:0;cursor:pointer;line-height:0;">${xIcon}</button>
                                             <input type="text" class="qm-edit-choice flex-1 rounded shadow-sm text-sm px-2 py-1.5"
                                                 value="${escapeHtml(allChoices[4] || '')}"
                                                 data-filtered-idx="${filteredIdx}" data-choice-idx="4"
@@ -500,6 +500,73 @@ function attachQuestionManagerEventListeners(filtered) {
             renderQuestionManagerList();
         });
     });
+
+    // Mark-correct buttons (check/X icons) - click to swap a choice into the correct slot
+    document.querySelectorAll('.qm-mark-correct-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(btn.dataset.filteredIdx);
+            const choiceIdx = parseInt(btn.dataset.choiceIdx);
+            captureEditFormFromDom(idx);
+            const data = questionManagerState.editFormData[idx];
+            if (!data || !data.choices) return;
+            while (data.choices.length <= choiceIdx) data.choices.push('');
+            if (choiceIdx !== 0) {
+                const [picked] = data.choices.splice(choiceIdx, 1);
+                data.choices.unshift(picked);
+            }
+            data.correct = data.choices[0] || '';
+            renderQuestionManagerList();
+        });
+    });
+
+    // Toggle Choice E button (add/remove the 5th choice)
+    document.querySelectorAll('.qm-toggle-choice-e-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(btn.dataset.filteredIdx);
+            captureEditFormFromDom(idx);
+            const data = questionManagerState.editFormData[idx];
+            if (!data || !data.choices) return;
+            while (data.choices.length < 4) data.choices.push('');
+            const hasE = data.choices.length >= 5 && data.choices[4];
+            if (hasE) {
+                data.choices.length = 4;
+            } else {
+                data.choices[4] = '';
+            }
+            renderQuestionManagerList();
+        });
+    });
+}
+
+// Read the currently-typed values out of the edit form's DOM inputs and
+// store them into editFormData, so state survives a re-render (e.g. when
+// marking a different choice correct or toggling Choice E).
+function captureEditFormFromDom(idx) {
+    const category = document.querySelector(`.qm-edit-category[data-filtered-idx="${idx}"]`)?.value;
+    const type = document.querySelector(`.qm-edit-type[data-filtered-idx="${idx}"]`)?.value;
+    const question = document.querySelector(`.qm-edit-question[data-filtered-idx="${idx}"]`)?.value;
+
+    const existing = questionManagerState.editFormData[idx] || {};
+    const data = {
+        ...existing,
+        category: category !== undefined ? category : existing.category,
+        type: type !== undefined ? type : existing.type,
+        question: question !== undefined ? question : existing.question
+    };
+
+    if (data.type === 'multiple_choice') {
+        const choiceInputs = document.querySelectorAll(`.qm-edit-choice[data-filtered-idx="${idx}"]`);
+        if (choiceInputs.length) {
+            const choices = [];
+            choiceInputs.forEach(input => {
+                choices[parseInt(input.dataset.choiceIdx)] = input.value;
+            });
+            data.choices = choices;
+        }
+    }
+
+    questionManagerState.editFormData[idx] = data;
+    return data;
 }
 
 function saveQuestionEdit(idx, filtered) {
@@ -519,13 +586,11 @@ function saveQuestionEdit(idx, filtered) {
             choices[choiceIdx] = input.value;
         });
 
-        const correctRadio = document.querySelector(`input[name="qm-edit-correct-${idx}"]:checked`);
-        if (correctRadio) {
-            const choiceIdx = parseInt(correctRadio.value);
-            correct = choices[choiceIdx];
-        }
+        // The first choice slot is always the correct answer (see allChoices
+        // reordering in renderQuestionManagerList / markChoiceCorrect).
+        correct = choices[0] || '';
     } else if (type === 'true_false') {
-        const tfRadio = document.querySelector(`input[name="qm-edit-correct-${idx}"][class="qm-edit-tf-radio"]:checked`);
+        const tfRadio = document.querySelector(`input[name="qm-edit-correct-${idx}"].qm-edit-tf-radio:checked`);
         if (tfRadio) {
             correct = tfRadio.value;
         }
@@ -789,5 +854,104 @@ function initializeQuestionManager() {
         });
     });
 
+    setupQmAddQuestionsForm();
     renderQuestionManagerList();
+}
+
+// "Add Questions" inner tab of Manage a Bank - composes a question and
+// pushes it straight into questionBank (unlike the Write Questions tab,
+// which targets the separate examBank array).
+function setupQmAddQuestionsForm() {
+    const typeSelect = document.getElementById('qmAddType');
+    if (!typeSelect || typeSelect.dataset.qmWired) return; // avoid double-wiring on re-render
+    typeSelect.dataset.qmWired = 'true';
+
+    function updateSections() {
+        const v = typeSelect.value;
+        document.getElementById('qmAddChoicesSection')?.classList.toggle('hidden', v !== 'multiple_choice');
+        document.getElementById('qmAddTrueFalseSection')?.classList.toggle('hidden', v !== 'true_false');
+        document.getElementById('qmAddMatchingSection')?.classList.toggle('hidden', v !== 'matching');
+    }
+    typeSelect.addEventListener('change', updateSections);
+    updateSections();
+
+    const choiceEBtn = document.getElementById('qmAddToggleChoiceEBtn');
+    const choiceERow = document.getElementById('qmAddChoiceERow');
+    if (choiceEBtn && choiceERow) {
+        choiceEBtn.addEventListener('click', () => {
+            const hidden = choiceERow.classList.toggle('hidden');
+            choiceEBtn.textContent = hidden ? '+ Add Choice E' : '− Remove Choice E';
+        });
+    }
+
+    const addPairBtn = document.getElementById('qmAddMatchingPair');
+    if (addPairBtn) {
+        addPairBtn.addEventListener('click', () => {
+            const colA = document.getElementById('qmAddMatchingColumnA');
+            const colB = document.getElementById('qmAddMatchingColumnB');
+            if (!colA || !colB) return;
+            const idx = colA.children.length + 1;
+            colA.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Premise ${idx}"></div>`);
+            colB.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Answer ${idx}"></div>`);
+        });
+    }
+
+    const form = document.getElementById('qmAddQuestionForm');
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const type = typeSelect.value;
+        const cat = (document.getElementById('qmAddCategory')?.value || '').trim() || 'Uncategorized';
+        const diff = document.getElementById('qmAddDifficulty')?.value || 'unset';
+        const qText = (document.getElementById('qmAddQuestion')?.value || '').trim();
+        if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
+
+        let q = { category: cat, type, difficulty: diff, question: qText };
+
+        if (type === 'multiple_choice') {
+            const rows = document.querySelectorAll('#qmAddChoicesContainer .qm-add-choice-input:not(.hidden)');
+            const choices = [];
+            rows.forEach(r => {
+                const inp = r.querySelector('input[type="text"]');
+                if (inp && inp.value.trim()) choices.push(inp.value.trim());
+            });
+            if (choices.length < 2) { showToast('⚠️ At least 2 choices required.', 'warning'); return; }
+            q.choices = choices;
+            q.correct = choices[0];
+        } else if (type === 'true_false') {
+            const checked = document.querySelector('input[name="qmAddTfCorrect"]:checked');
+            if (!checked) { showToast('⚠️ Please select True or False.', 'warning'); return; }
+            q.choices = [null, null, null, null];
+            q.correct = checked.value;
+        } else if (type === 'matching') {
+            const aInputs = document.querySelectorAll('#qmAddMatchingColumnA input');
+            const bInputs = document.querySelectorAll('#qmAddMatchingColumnB input');
+            let added = 0;
+            aInputs.forEach((a, i) => {
+                const b = bInputs[i];
+                if (a.value.trim() && b && b.value.trim()) {
+                    questionBank.push({ category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
+                    added++;
+                }
+            });
+            if (added === 0) { showToast('⚠️ Add at least one premise/answer pair.', 'warning'); return; }
+            saveQBankToStorage();
+            renderQuestionManagerList();
+            form.reset();
+            updateSections();
+            document.getElementById('qmAddMatchingColumnA').innerHTML = '';
+            document.getElementById('qmAddMatchingColumnB').innerHTML = '';
+            showToast(`✅ Added ${added} matching question(s).`, 'success');
+            return;
+        }
+
+        questionBank.push(q);
+        saveQBankToStorage();
+        renderQuestionManagerList();
+        form.reset();
+        updateSections();
+        if (choiceERow) { choiceERow.classList.add('hidden'); const inp = choiceERow.querySelector('input[type="text"]'); if (inp) inp.value = ''; }
+        if (choiceEBtn) choiceEBtn.textContent = '+ Add Choice E';
+        showToast('✅ Question added to bank.', 'success');
+    });
 }
