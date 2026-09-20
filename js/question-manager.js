@@ -306,6 +306,19 @@ function renderQuestionManagerList() {
     updateDeleteButtonState();
     updateChangeCategoryButtonState();
     refreshQmPreview();
+    updateQmAddQuestionsGate();
+}
+
+// Add Questions requires a loaded (non-empty) bank — gates the Compose/Paste
+// form behind a message pointing back to Upload File, rather than letting
+// Add Questions be used to spin up a bank from nothing.
+function updateQmAddQuestionsGate() {
+    const gate = document.getElementById('qmAddQuestionsGate');
+    const grid = document.getElementById('qmAddQuestionsGrid');
+    if (!gate || !grid) return;
+    const hasBank = questionBank.length > 0;
+    gate.classList.toggle('hidden', hasBank);
+    grid.classList.toggle('hidden', !hasBank);
 }
 
 // Attach events to category headers for collapse/expand
