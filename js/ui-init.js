@@ -1418,46 +1418,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize export dropdown
     initializeExportDropdown();
     
-    // Setup export as plain text with filename (button renamed to Export TXT, ID updated)
-    const exportPlainTextBtn = document.getElementById('exportQuestionsPlainBtn');
-    if (exportPlainTextBtn) {
-        exportPlainTextBtn.addEventListener('click', () => {
-            if (questionBank.length === 0) {
-                showToast('⚠️ No questions to export.', 'warning');
-                return;
-            }
-            const filenameInput = document.getElementById('questionBankFilename');
-            let filename = filenameInput ? filenameInput.value.trim() : 'questions';
-            if (!filename) filename = 'questions';
-            if (!filename.endsWith('.txt')) filename += '.txt';
-            
-            let plainText = '';
-            questionBank.forEach((q, i) => {
-                plainText += `${i + 1}. ${q.question}\n`;
-                if (q.type === 'true_false') {
-                    plainText += `=${q.correct}\n\n`;
-                } else if (q.type === 'matching') {
-                    plainText += `=${q.correct}\n\n`;
-                } else if (q.type === 'multiple_choice' && q.choices && Array.isArray(q.choices)) {
-                    q.choices.forEach((c, idx) => {
-                        const letter = String.fromCharCode(97 + idx);
-                        const marker = c === q.correct ? '=' : '';
-                        plainText += `${marker}${letter}. ${c}\n`;
-                    });
-                    plainText += '\n';
-                }
-            });
-            const blob = new Blob([plainText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('✅ Exported as plain text', 'success');
-        });
-    }
-
     // Export as GIFT
     const exportGiftBtn = document.getElementById('exportQuestionsGiftBtn');
     if (exportGiftBtn) {

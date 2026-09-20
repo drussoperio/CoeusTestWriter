@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.0] - 2026-09-20
+### Added
+- Design a Test's DOCX export now includes an Answer Key section (starting on a new page), listing each question's number, correct letter, and correct answer text — matching the on-screen Answer Key. Previously only TXT export had one; DOCX had none at all.
+### Fixed
+- Manage a Bank's Export as TXT button had two separate click handlers attached (one in export-formats.js, a leftover duplicate in ui-init.js), so every click downloaded the file twice and showed two toasts. Removed the duplicate, and fixed the remaining handler's filename field, which was pulling from Design a Test's filename input instead of Manage a Bank's.
+
 ## [2.17.3] - 2026-09-20
 ### Changed
 - DOCX export: reverted the 2-column MCQ layout from 2.17.1's table-based approach back to the original tab-stop paragraphs. The 1-vs-2-column length check is now a flat 48-character limit (down from the original 55), replacing 2.17.2's computed-geometry estimate.

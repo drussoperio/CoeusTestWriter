@@ -19,12 +19,16 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.17.3';
+const APP_VERSION = '2.18.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.0': [
+        'Added: Design a Test\'s DOCX export now includes an Answer Key section (starting on a new page), listing each question\'s number, correct letter, and correct answer text — matching the on-screen Answer Key. Previously only TXT export had one; DOCX had none at all.',
+        'Fixed: Manage a Bank\'s Export as TXT button had two separate click handlers attached (one in export-formats.js, a leftover duplicate in ui-init.js), so every click downloaded the file twice and showed two toasts. Removed the duplicate, and fixed the remaining handler\'s filename field, which was pulling from Design a Test\'s filename input instead of Manage a Bank\'s.',
+    ],
     '2.17.3': [
         'Changed: DOCX export: reverted the 2-column MCQ layout from 2.17.1\'s table-based approach back to the original tab-stop paragraphs. The 1-vs-2-column length check is now a flat 48-character limit (down from the original 55), replacing 2.17.2\'s computed-geometry estimate.',
     ],

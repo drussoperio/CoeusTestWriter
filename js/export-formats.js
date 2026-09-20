@@ -71,7 +71,7 @@ function exportQuestionsAsPlainText() {
 
     const plainText = questionsToPlainText(questionBank);
 
-    const fileName = (document.getElementById('outputFilename')?.value.trim() || 'questionBank') + '.txt';
+    const fileName = (document.getElementById('questionBankFilename')?.value.trim() || 'questionBank') + '.txt';
     const blob = new Blob([plainText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

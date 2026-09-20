@@ -191,20 +191,22 @@ function exportTestAsDocx() {
     }
 
     const matching = lastGeneratedQuestions.filter(q => q.type === 'matching');
+    // Get all answers and randomly assign them letters (cycling A-E by row position).
+    // Computed once here so the Answer Key section below refers to the same
+    // shuffled letter assignment that's printed in the test itself.
+    const allAnswerTexts = matching.map(q => q.correct);
+    const shuffledAnswerTexts = shuffleArray([...allAnswerTexts]);
+    const sortedAnswers = shuffledAnswerTexts.map((text, idx) => ({
+        text,
+        letter: String.fromCharCode(65 + (idx % 5))
+    }));
+
     if (matching.length > 0) {
         allChildren.push(new Paragraph({ children: [run('')], spacing: sp }));
         allChildren.push(headerPara(
             `${mtRomanDocx}. Matching Type. Match Column A with Column B.`
         ));
 
-        // Get all answers and randomly assign them letters (cycling A-E by row position)
-        const allAnswerTexts = matching.map(q => q.correct);
-        const shuffledAnswerTexts = shuffleArray([...allAnswerTexts]);
-        const sortedAnswers = shuffledAnswerTexts.map((text, idx) => ({
-            text,
-            letter: String.fromCharCode(65 + (idx % 5))
-        }));
-        
         // Build table with two columns
         const tableRows = [];
         const maxRows = Math.max(matching.length, sortedAnswers.length);
@@ -235,6 +237,39 @@ function exportTestAsDocx() {
             rows: tableRows,
             width: { size: 100, type: WidthType.PERCENTAGE }
         }));
+    }
+
+    // ── Answer Key ───────────────────────────────────────────────────────
+    if (lastGeneratedQuestions.length > 0) {
+        allChildren.push(new Paragraph({
+            children: [bold('Answer Key')],
+            spacing:  sp,
+            pageBreakBefore: true
+        }));
+
+        let akNum = 1;
+
+        mcqs.forEach(q => {
+            const choices = q.displayChoices || q.choices || [];
+            const correctLetter = q.displayCorrectLetter || String.fromCharCode(65 + choices.indexOf(q.correct));
+            const correctText   = q.displayCorrectText || q.correct || '';
+            allChildren.push(new Paragraph({ children: [run(`${akNum}. ${correctLetter} (${correctText})`)], spacing: sp }));
+            akNum++;
+        });
+
+        tfs.forEach(q => {
+            const correctLetter = q.displayCorrectLetter || (q.correct === 'True' ? 'A' : 'B');
+            const correctText   = q.displayCorrectText || q.correct || '';
+            allChildren.push(new Paragraph({ children: [run(`${akNum}. ${correctLetter} (${correctText})`)], spacing: sp }));
+            akNum++;
+        });
+
+        matching.forEach(q => {
+            const answerObj = sortedAnswers.find(a => a.text === q.correct);
+            const answerLetter = answerObj ? answerObj.letter : 'A';
+            allChildren.push(new Paragraph({ children: [run(`${akNum}. ${answerLetter} (${q.correct || ''})`)], spacing: sp }));
+            akNum++;
+        });
     }
 
     // ── Build document ────────────────────────────────────────────────────
