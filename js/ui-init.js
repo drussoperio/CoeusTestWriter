@@ -472,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (exportJsonButton) exportJsonButton.addEventListener('click', () => exportTestAsJson());
         if (exportGiftButton) exportGiftButton.addEventListener('click', () => exportTestAsGift());
         if (exportCsvButton) exportCsvButton.addEventListener('click', () => exportTestAsCsv());
-        document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage'));
+        document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage', filenameFromInput('outputFilename')));
     }
 
     // ── DOCX info panel ────────────────────────────────────────
@@ -946,8 +946,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('convertFileExportCsvBtn')?.addEventListener('click',  () => doConvertAndExport('csv'));
         document.getElementById('convertFileExportGiftBtn')?.addEventListener('click', () => doConvertAndExport('gift'));
         document.getElementById('convertFileExportTxtBtn')?.addEventListener('click',  () => doConvertAndExport('text'));
-        document.getElementById('cfSendToManageBtn')?.addEventListener('click', () => sendToBank(cfStoredQuestions, 'manage'));
-        document.getElementById('cfSendToDesignBtn')?.addEventListener('click', () => sendToBank(cfStoredQuestions, 'design'));
+        document.getElementById('cfSendToManageBtn')?.addEventListener('click', () => sendToBank(cfStoredQuestions, 'manage', filenameFromInput('convertFileFilename')));
+        document.getElementById('cfSendToDesignBtn')?.addEventListener('click', () => sendToBank(cfStoredQuestions, 'design', filenameFromInput('convertFileFilename')));
     }
 
     // ── Write Questions tab ────────────────────────────────────
@@ -1170,8 +1170,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('wqExportCsvBtn')?.addEventListener('click',  () => wqExport('csv'));
         document.getElementById('wqExportTxtBtn')?.addEventListener('click',  () => wqExport('txt'));
         document.getElementById('wqExportGiftBtn')?.addEventListener('click', () => wqExport('gift'));
-        document.getElementById('wqSendToManageBtn')?.addEventListener('click', () => sendToBank(examBank, 'manage'));
-        document.getElementById('wqSendToDesignBtn')?.addEventListener('click', () => sendToBank(examBank, 'design'));
+        document.getElementById('wqSendToManageBtn')?.addEventListener('click', () => sendToBank(examBank, 'manage', filenameFromInput('wqFilename')));
+        document.getElementById('wqSendToDesignBtn')?.addEventListener('click', () => sendToBank(examBank, 'design', filenameFromInput('wqFilename')));
 
         // Paste & Convert
         function showPasteWarning(msg) {
@@ -1304,8 +1304,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (addBtn) addBtn.addEventListener('click', addMergerFiles);
         if (clearBtn) clearBtn.addEventListener('click', clearMerger);
         if (downloadBtn) downloadBtn.addEventListener('click', downloadMergedJSON);
-        document.getElementById('mergerSendToManageBtn')?.addEventListener('click', () => sendToBank(mergedQuestions, 'manage'));
-        document.getElementById('mergerSendToDesignBtn')?.addEventListener('click', () => sendToBank(mergedQuestions, 'design'));
+        document.getElementById('mergerSendToManageBtn')?.addEventListener('click', () => sendToBank(mergedQuestions, 'manage', filenameFromInput('mergerOutputFilename')));
+        document.getElementById('mergerSendToDesignBtn')?.addEventListener('click', () => sendToBank(mergedQuestions, 'design', filenameFromInput('mergerOutputFilename')));
     }
 
     // ── Unused questions buttons ───────────────────────────────
@@ -1458,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Toggle Choice E in Add Question form
-    document.getElementById('qmSendToDesignBtn')?.addEventListener('click', () => sendToBank(questionBank, 'design'));
+    document.getElementById('qmSendToDesignBtn')?.addEventListener('click', () => sendToBank(questionBank, 'design', filenameFromInput('questionBankFilename')));
 
     const toggleChoiceEBtn = document.getElementById('toggleChoiceEBtn');
     if (toggleChoiceEBtn) {

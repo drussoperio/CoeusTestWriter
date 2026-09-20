@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-09-20
+### Changed
+- Manage a Bank's Bank Stats "jump to question" highlight now stays visible for 3 seconds (was 1.6s), giving more time to actually spot the question before it fades.
+- Send to Manage a Bank / Send to Design a Test now shows the source tab's filename (e.g. "merged.json") in the destination's Upload File drop zone, instead of a generic "N question(s) loaded" — matches how a real file upload is displayed. Falls back to that tab's default filename placeholder if its filename field is blank.
+- Design a Test's per-category question-count rows, and the category list rebuilt after loading or replacing the test bank, are now sorted alphabetically (Manage a Bank's category filter dropdown already was).
+
 ## [2.15.1] - 2026-09-20
 ### Added
 - Warn when a multiple choice question's correct answer doesn't match any of its choices — most often caused by hand-editing a bank's JSON outside the app (e.g. in Notepad++) and updating a choice without updating "correct" to match. Reuses the existing "missing correct answer" detection and warnings, so it now shows up in Manage a Bank's Bank Stats (as a clickable, jump-to-question link), Design a Test's Upload File warning, Convert a File, and Merge JSONs — everywhere a bank gets loaded.

@@ -903,7 +903,7 @@ function jumpToQuestionInBank(uid) {
         card.style.transition = 'background-color 0.6s';
         const prevBg = card.style.backgroundColor;
         card.style.backgroundColor = '#fef08a';
-        setTimeout(() => { card.style.backgroundColor = prevBg; }, 1600);
+        setTimeout(() => { card.style.backgroundColor = prevBg; }, 3000);
     });
 }
 

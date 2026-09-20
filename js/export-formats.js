@@ -300,7 +300,7 @@ function updateCategoryInputs(categories) {
 
     // Derive from testBank when no arg provided
     if (!categories) {
-        categories = testBank.length > 0 ? [...new Set(testBank.map(q => q.category))] : [];
+        categories = testBank.length > 0 ? [...new Set(testBank.map(q => q.category))].sort() : [];
     }
 
     // Build a quick lookup of counts per category/type
@@ -457,7 +457,7 @@ function loadFile(fileInput, isTxt, bankType) {
             if (bankType === 'testBank') {
                 testBank = normalizedData;
                 saveTestBankToStorage();
-                const categories = [...new Set(testBank.map(q => q.category))];
+                const categories = [...new Set(testBank.map(q => q.category))].sort();
                 updateCategoryInputs(categories);
                 const bankStatus = document.getElementById('bankStatus');
                 if (bankStatus) {
