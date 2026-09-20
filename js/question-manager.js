@@ -306,6 +306,19 @@ function renderQuestionManagerList() {
     updateDeleteButtonState();
     updateChangeCategoryButtonState();
     refreshQmPreview();
+    updateQmAddQuestionsGate();
+}
+
+// Add Questions requires a loaded (non-empty) bank — gates the Compose/Paste
+// form behind a message pointing back to Upload File, rather than letting
+// Add Questions be used to spin up a bank from nothing.
+function updateQmAddQuestionsGate() {
+    const gate = document.getElementById('qmAddQuestionsGate');
+    const grid = document.getElementById('qmAddQuestionsGrid');
+    if (!gate || !grid) return;
+    const hasBank = questionBank.length > 0;
+    gate.classList.toggle('hidden', hasBank);
+    grid.classList.toggle('hidden', !hasBank);
 }
 
 // Attach events to category headers for collapse/expand
@@ -917,12 +930,13 @@ function setupQmAddQuestionsForm() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const type = typeSelect.value;
+        const subject = (document.getElementById('qmAddSubject')?.value || '').trim();
         const cat = (document.getElementById('qmAddCategory')?.value || '').trim() || 'Uncategorized';
         const diff = document.getElementById('qmAddDifficulty')?.value || 'unset';
         const qText = (document.getElementById('qmAddQuestion')?.value || '').trim();
         if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
 
-        let q = { category: cat, type, difficulty: diff, question: qText };
+        let q = { subject, category: cat, type, difficulty: diff, question: qText };
 
         if (type === 'multiple_choice') {
             const rows = document.querySelectorAll('#qmAddChoicesContainer .qm-add-choice-input:not(.hidden)');
@@ -946,7 +960,7 @@ function setupQmAddQuestionsForm() {
             aInputs.forEach((a, i) => {
                 const b = bInputs[i];
                 if (a.value.trim() && b && b.value.trim()) {
-                    questionBank.push({ category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
+                    questionBank.push({ subject, category: cat, type: 'matching', difficulty: diff, question: a.value.trim(), choices: [null, null, null, null], correct: b.value.trim() });
                     added++;
                 }
             });
@@ -984,6 +998,7 @@ function setupQmAddQuestionsForm() {
             showQmPasteWarning('');
             const text = (document.getElementById('qmPasteInput')?.value || '').trim();
             if (!text) { showQmPasteWarning('No text to convert. Paste your questions above.'); return; }
+            const subject = (document.getElementById('qmPasteSubject')?.value || '').trim();
             const category = (document.getElementById('qmPasteCategory')?.value || '').trim() || 'Uncategorized';
             const diff = document.getElementById('qmPasteDifficulty')?.value || 'unset';
             const hasNumbered = /^\d+\.\s/m.test(text);
@@ -992,7 +1007,7 @@ function setupQmAddQuestionsForm() {
                 return;
             }
             try {
-                const qs = parsePlainTextToJson(text, '', category);
+                const qs = parsePlainTextToJson(text, subject, category);
                 if (!qs.length) {
                     showQmPasteWarning('No questions could be parsed. Check that your questions follow the plain-text format rules. See Show Tips for details.');
                     return;
@@ -1007,6 +1022,9 @@ function setupQmAddQuestionsForm() {
                 saveQBankToStorage();
                 renderQuestionManagerList();
                 document.getElementById('qmPasteInput').value = '';
+                document.getElementById('qmPasteSubject').value = '';
+                document.getElementById('qmPasteCategory').value = '';
+                document.getElementById('qmPasteDifficulty').value = 'unset';
                 showToast(`✅ Added ${qs.length} question(s).`, 'success');
             } catch (err) {
                 showQmPasteWarning(err.message);
