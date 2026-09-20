@@ -37,13 +37,22 @@ function resetDropZoneDisplay(fileInput) {
     }
 }
 
-// Helper: Find questions that don't have a correct answer properly marked
+// Helper: Find questions that don't have a valid correct answer — either
+// nothing marked, or (for multiple choice) a correct answer that doesn't
+// match any of the choices. The latter happens easily when a bank's JSON
+// is hand-edited outside the app (e.g. in Notepad++) and a choice gets
+// edited without updating "correct" to match.
 function getQuestionsMissingCorrectAnswer(questions) {
     return (questions || []).filter(q => {
         const correct = (q.correct ?? '').toString().trim();
         if (!correct) return true;
         if (q.type === 'true_false') {
             return !/^true$|^false$/i.test(correct);
+        }
+        if (q.type === 'multiple_choice') {
+            const choices = (q.choices || []).map(c => (c || '').toString().trim()).filter(Boolean);
+            if (choices.length === 0) return false; // flagged separately as too-few-choices
+            return !choices.some(c => c.toLowerCase() === correct.toLowerCase());
         }
         return false;
     });
@@ -127,7 +136,7 @@ function renderMissingCorrectWarning(containerId, questions) {
     const more = missing.length > 5 ? ` and ${missing.length - 5} more` : '';
 
     container.classList.remove('hidden');
-    container.innerHTML = `⚠️ ${missing.length} of ${(questions || []).length} question(s) have no correct answer marked: ${preview}${more}.`;
+    container.innerHTML = `⚠️ ${missing.length} of ${(questions || []).length} question(s) have no correct answer marked, or a correct answer that doesn't match any of their choices: ${preview}${more}.`;
 }
 
 // ========================================
@@ -241,7 +250,7 @@ function renderBankValidationReport(containerId, questions) {
         html += `<div class="p-3 rounded border border-amber-200 bg-amber-50">
             <p class="text-sm font-semibold text-amber-800">⚠️ ${majorIssueCount} issue(s) found across ${list.length} question(s):</p>`;
 
-        html += renderValidationDetail('Missing correct answer', report.missingCorrect, q => questionPreviewLabel(q));
+        html += renderValidationDetail('Missing or invalid correct answer', report.missingCorrect, q => questionJumpLink(q));
 
         html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group =>
             `${group.length}× "${escapeHtml((group[0].question || '').toString().trim().slice(0, 70))}" — categories: ${escapeHtml([...new Set(group.map(q => q.category || 'Uncategorized'))].join(', '))}`

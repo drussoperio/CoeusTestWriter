@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.15.0';
+const APP_VERSION = '2.15.1';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.15.1': [
+        'Added: Warn when a multiple choice question\'s correct answer doesn\'t match any of its choices — most often caused by hand-editing a bank\'s JSON outside the app (e.g. in Notepad++) and updating a choice without updating "correct" to match. Reuses the existing "missing correct answer" detection and warnings, so it now shows up in Manage a Bank\'s Bank Stats (as a clickable, jump-to-question link), Design a Test\'s Upload File warning, Convert a File, and Merge JSONs — everywhere a bank gets loaded.',
+    ],
     '2.15.0': [
         'Changed: Write Questions and Manage a Bank: the fewer-than-4-choices check from 2.14.0 is no longer blocking on Compose Question or Paste Text — some multiple choice questions are legitimately 2-choice (e.g. a true/false-style question saved as multiple_choice), so it\'s now a non-blocking heads-up toast on add, plus a permanent record in Manage a Bank\'s Bank Stats validation report (see Added below). Leaving Correct Answer blank is still blocked — that\'s always wrong, not a judgment call.',
         'Added: Manage a Bank → Bank Stats validation report: new "fewer than 4 choices" section, styled as a minor/informational notice (blue) separate from real issues (amber) like missing correct answers or duplicates. Each listed question is a clickable link that jumps to Edit Bank, expands its category, scrolls to it, and briefly highlights it — so a whole bank\'s worth of these can be found and eyeballed at once instead of only catching them one at a time while composing.',

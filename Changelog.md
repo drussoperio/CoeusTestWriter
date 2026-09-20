@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.15.1] - 2026-09-20
+### Added
+- Warn when a multiple choice question's correct answer doesn't match any of its choices — most often caused by hand-editing a bank's JSON outside the app (e.g. in Notepad++) and updating a choice without updating "correct" to match. Reuses the existing "missing correct answer" detection and warnings, so it now shows up in Manage a Bank's Bank Stats (as a clickable, jump-to-question link), Design a Test's Upload File warning, Convert a File, and Merge JSONs — everywhere a bank gets loaded.
+
 ## [2.15.0] - 2026-09-20
 ### Changed
 - Write Questions and Manage a Bank: the fewer-than-4-choices check from 2.14.0 is no longer blocking on Compose Question or Paste Text — some multiple choice questions are legitimately 2-choice (e.g. a true/false-style question saved as multiple_choice), so it's now a non-blocking heads-up toast on add, plus a permanent record in Manage a Bank's Bank Stats validation report (see Added below). Leaving Correct Answer blank is still blocked — that's always wrong, not a judgment call.
