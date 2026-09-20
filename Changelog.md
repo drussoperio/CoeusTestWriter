@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.1] - 2026-09-20
+### Fixed
+- update.sh / update.bat now check whether the folder is actually a git repository before running `git pull`, and print a clear explanation (plus the `git clone` command to fix it) instead of a raw `fatal: not a git repository` error — this happens when the app was downloaded as a ZIP file instead of cloned with git.
+
 ## [2.11.0] - 2026-09-20
 ### Added
 - Manage a Bank → Add Questions: split into "Compose Question" and "Paste Text" sub-tabs, mirroring Write Questions — paste plain numbered text and convert it directly into the bank you're managing, instead of only being able to compose one question at a time.
