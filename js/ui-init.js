@@ -394,6 +394,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        const reshuffleTestBtn = document.getElementById('reshuffleTestBtn');
+        if (reshuffleTestBtn) {
+            reshuffleTestBtn.addEventListener('click', () => reshuffleTest());
+        }
+
         if (questionForm) {
             questionForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -1515,6 +1520,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (el) el.innerHTML = '';
             });
             lastUnusedQuestions = [];
+            lastGeneratedQuestions = [];
+            lastSelectionQuestions = [];
+            const reshuffleBtn = document.getElementById('reshuffleTestBtn');
+            if (reshuffleBtn) { reshuffleBtn.disabled = true; reshuffleBtn.style.opacity = '0.5'; reshuffleBtn.style.cursor = 'not-allowed'; }
             const unusedSection = document.getElementById('unusedQuestionsSection');
             if (unusedSection) unusedSection.classList.add('hidden');
             const unusedSummaryEl = document.getElementById('unusedSummary');

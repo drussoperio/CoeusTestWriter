@@ -253,6 +253,9 @@ function generateTest() {
         return;
     }
 
+    // A fresh selection starts its own version chain (Reshuffle Test keeps extending it)
+    testVersionIndex = 0;
+
     const randomize = true;
     const ratio = getDiffRatio();
     const ratioActive = isDiffRatioActive(ratio);
@@ -385,6 +388,21 @@ function generateTest() {
         selectedQuestions = shuffleArray(selectedQuestions);
     }
 
+    // Remember exactly which (raw, unshuffled) questions were picked, so
+    // "Reshuffle Test" can build new versions from the same set without
+    // re-rolling category selection.
+    lastSelectionQuestions = [...selectedQuestions];
+    lastUnusedQuestions = unusedQuestions;
+
+    buildAndDisplayTestVersion(selectedQuestions);
+}
+
+// Builds a "display" version of a fixed set of questions (shuffled order,
+// shuffled MC choices/matching pairs, balanced answer distribution) and
+// renders it as the Test Preview / Answer Key. Used both by a fresh
+// Construct New Test and by Reshuffle Test (same question set, new
+// shuffle) — the two share everything past question selection.
+function buildAndDisplayTestVersion(selectedQuestions) {
     // Create "display" versions with shuffled choices and computed correct letter
     const prepared = selectedQuestions.map((q, idx) => {
         if (q.type === 'multiple_choice' && Array.isArray(q.choices)) {
@@ -413,12 +431,10 @@ function generateTest() {
     });
 
     lastGeneratedQuestions = prepared;
-    lastUnusedQuestions = unusedQuestions;
-    
+
     console.log("Final selected questions (prepared):", prepared);
     console.log(`Total questions prepared: ${prepared.length}`);
-    console.log(`Unused questions: ${unusedQuestions.length}`);
-    
+
     // Apply answer distribution and balancing
     const answerToleranceSelect = document.getElementById('answerTolerance');
     const maxConsecutiveMCSelect = document.getElementById('maxConsecutiveMC');
@@ -432,7 +448,7 @@ function generateTest() {
     const nonMatching    = prepared.filter(q => q.type !== 'matching');
 
     let distributed = [];
-    
+
     try {
         // Apply distribution only to non-matching questions
         if (nonMatching.length > 0) {
@@ -446,24 +462,27 @@ function generateTest() {
         }
         throw err;
     }
-    
+
     // Combine non-matching (distributed) with matching (unchanged)
     const final = [...distributed, ...matchingOnly];
     console.log(`After distribution: ${final.length} questions`);
-    
+
     // Safety check: Did we lose any questions?
     if (final.length !== prepared.length) {
         console.error(`⚠️ WARNING: Started with ${prepared.length} questions, ended with ${final.length}!`);
         showToast(`⚠️ Expected ${prepared.length} questions but got ${final.length} — check console.`, 'warning');
     }
-    
+
     console.log("After balancing:", final);
     displayTest(final);
     displayUnusedSummary();
     displayGenerationReport();
-    
+
     // Update lastGeneratedQuestions to the final version
     lastGeneratedQuestions = final;
+
+    const reshuffleBtn = document.getElementById('reshuffleTestBtn');
+    if (reshuffleBtn) { reshuffleBtn.disabled = false; reshuffleBtn.style.opacity = ''; reshuffleBtn.style.cursor = ''; }
 
     const totalShortfall = Object.values(generationStats).reduce((sum, stat) =>
         sum + (stat.mcShortfall || 0) + (stat.tfShortfall || 0) + (stat.mtShortfall || 0), 0);
@@ -472,6 +491,17 @@ function generateTest() {
     } else {
         showToast(`✅ Test generated with ${final.length} question(s).`, 'success');
     }
+}
+
+// "Reshuffle Test" — same question set as the last generated test, new
+// random order and shuffled choices/answer key (a new "version").
+function reshuffleTest() {
+    if (!lastSelectionQuestions || lastSelectionQuestions.length === 0) {
+        showToast('⚠️ Construct a test first.', 'warning');
+        return;
+    }
+    const reshuffled = shuffleArray([...lastSelectionQuestions]);
+    buildAndDisplayTestVersion(reshuffled);
 }
 
 // Display test and answer key

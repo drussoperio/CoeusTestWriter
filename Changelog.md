@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-09-20
+### Added
+- Design a Test: new "Reshuffle Test" button next to Construct New Test (side by side, each with its own subtitle explaining what it does) — creates another version of the current test using the exact same questions, with a freshly shuffled question order and shuffled answer choices, without re-rolling which questions were picked from the bank. Previously the only way to do this was exporting the generated test as JSON and re-loading it as a new bank. Disabled until a test has been constructed; re-disables on Clear Test Bank. Versions are labeled A/B/C… (already-existing version tracking), which also carries into exported filenames.
+### Changed
+- Design a Test: "Construct Test" renamed to "Construct New Test" to distinguish it from the new "Reshuffle Test" button.
+
 ## [2.12.0] - 2026-09-20
 ### Added
 - Manage a Bank → Add Questions: Compose Question and Paste Text now both capture a Subject field, matching Write Questions.
