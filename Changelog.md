@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-09-20
+### Added
+- Design a Test: clicking Construct New Test after a test was already generated now shows a confirmation popup first (it discards the current test and starts over), with a "Don't ask me again" checkbox for anyone who really does mean to replace it every time. The button's subtitle also now says this outright.
+### Fixed
+- Manage a Bank's Edit Bank question editor: saving a question no longer includes blank wrong-answer choices (e.g. Choice E was added but left empty instead of being removed) — they're now dropped, matching how Compose Question already behaves.
+
 ## [2.16.0] - 2026-09-20
 ### Changed
 - Manage a Bank's Bank Stats "jump to question" highlight now stays visible for 3 seconds (was 1.6s), giving more time to actually spot the question before it fades.

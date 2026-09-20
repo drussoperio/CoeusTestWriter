@@ -969,7 +969,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white py-3 rounded text-base font-bold tracking-wide">Construct New Test</button>
-                                <p class="text-xs mt-1.5" style="color:var(--text-muted);">Picks a fresh set of questions from your bank based on the counts above.</p>
+                                <p class="text-xs mt-1.5" style="color:var(--text-muted);">Picks a fresh set of questions from your bank based on the counts above. Clicking this again discards any test you already generated and starts over — you'll be asked to confirm.</p>
                             </div>
                             <div>
                                 <button type="button" id="reshuffleTestBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white py-3 rounded text-base font-bold tracking-wide" disabled style="opacity:0.5;cursor:not-allowed;">Reshuffle Test</button>
@@ -1429,6 +1429,22 @@
         </div>
 
         <button id="welcomeDismissBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 rounded text-sm">I Understand &amp; Get Started</button>
+    </div>
+</div>
+
+<!-- ── Construct New Test Confirm Modal ─────────────────────────────── -->
+<div id="constructTestConfirmModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.5);">
+    <div class="rounded-xl shadow-2xl w-full max-w-md mx-4 p-6" style="background:var(--surface);color:var(--text);border:1px solid var(--border);">
+        <p class="font-bold text-base mb-2" style="color:var(--text);">Construct a brand-new test?</p>
+        <p class="text-sm mb-4" style="color:var(--text-muted);">This replaces the test you already generated with a completely new selection of questions. If you just wanted another version of the <em>current</em> test, use <strong>Reshuffle Test</strong> instead — that keeps the same questions, only this will lose it.</p>
+        <label class="flex items-center gap-2 text-sm mb-5" style="color:var(--text-muted);">
+            <input type="checkbox" id="constructTestDontAskAgain">
+            Don't ask me again
+        </label>
+        <div class="flex gap-2">
+            <button type="button" id="constructTestCancelBtn" class="flex-1 bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 rounded text-sm">Cancel</button>
+            <button type="button" id="constructTestConfirmBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white font-semibold py-2 rounded text-sm">Construct New Test</button>
+        </div>
     </div>
 </div>
 

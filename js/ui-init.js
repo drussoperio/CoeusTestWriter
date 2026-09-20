@@ -387,10 +387,34 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        // Warn before Construct New Test replaces an already-generated test
+        // (Reshuffle Test is the non-destructive way to get another version
+        // of the same test) — skippable via a "don't ask me again" checkbox.
+        const constructTestConfirmModal = document.getElementById('constructTestConfirmModal');
+        function closeConstructTestConfirm() {
+            constructTestConfirmModal?.classList.add('hidden');
+            constructTestConfirmModal?.classList.remove('flex');
+        }
+        document.getElementById('constructTestCancelBtn')?.addEventListener('click', closeConstructTestConfirm);
+        document.getElementById('constructTestConfirmBtn')?.addEventListener('click', () => {
+            if (document.getElementById('constructTestDontAskAgain')?.checked) {
+                localStorage.setItem('coeus-skip-construct-test-warning', 'true');
+            }
+            closeConstructTestConfirm();
+            generateTest();
+        });
+
         if (testForm) {
             testForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                generateTest();
+                const hasExistingTest = (typeof lastSelectionQuestions !== 'undefined') && lastSelectionQuestions.length > 0;
+                const skipWarning = localStorage.getItem('coeus-skip-construct-test-warning') === 'true';
+                if (hasExistingTest && !skipWarning && constructTestConfirmModal) {
+                    constructTestConfirmModal.classList.remove('hidden');
+                    constructTestConfirmModal.classList.add('flex');
+                } else {
+                    generateTest();
+                }
             });
         }
 

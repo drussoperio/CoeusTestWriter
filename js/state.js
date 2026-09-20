@@ -19,12 +19,16 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.16.0';
+const APP_VERSION = '2.17.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.17.0': [
+        'Added: Design a Test: clicking Construct New Test after a test was already generated now shows a confirmation popup first (it discards the current test and starts over), with a "Don\'t ask me again" checkbox for anyone who really does mean to replace it every time. The button\'s subtitle also now says this outright.',
+        'Fixed: Manage a Bank\'s Edit Bank question editor: saving a question no longer includes blank wrong-answer choices (e.g. Choice E was added but left empty instead of being removed) — they\'re now dropped, matching how Compose Question already behaves.',
+    ],
     '2.16.0': [
         'Changed: Manage a Bank\'s Bank Stats "jump to question" highlight now stays visible for 3 seconds (was 1.6s), giving more time to actually spot the question before it fades.',
         'Changed: Send to Manage a Bank / Send to Design a Test now shows the source tab\'s filename (e.g. "merged.json") in the destination\'s Upload File drop zone, instead of a generic "N question(s) loaded" — matches how a real file upload is displayed. Falls back to that tab\'s default filename placeholder if its filename field is blank.',
