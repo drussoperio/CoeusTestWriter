@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.17.1] - 2026-09-20
+### Fixed
+- DOCX export: a two-column MCQ layout used a tab stop to fake the second column, so a choice near (but under) the length threshold for 2-column mode could still render wide enough to overflow past the tab stop and push into where the next column's text should start. The two-column layout now uses a real (borderless) table, so a longer choice wraps within its own cell instead of overlapping the other column.
+
 ## [2.17.0] - 2026-09-20
 ### Added
 - Design a Test: clicking Construct New Test after a test was already generated now shows a confirmation popup first (it discards the current test and starts over), with a "Don't ask me again" checkbox for anyone who really does mean to replace it every time. The button's subtitle also now says this outright.

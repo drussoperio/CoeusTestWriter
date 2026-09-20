@@ -61,7 +61,6 @@ function exportTestAsDocx() {
     const FONT          = 'Arial';
     const FONT_SIZE     = 22;
     const TWO_COL_LIMIT = 55;
-    const HALF_W        = Math.round((PAGE_W - MARGIN * 2) / 2);
     const Q_LEFT        = Math.round(0.25 * TWIP);
     const Q_HANG        = Math.round(0.25 * TWIP);
     const CH_LEFT       = Math.round(0.25 * TWIP);
@@ -100,6 +99,13 @@ function exportTestAsDocx() {
         keepNext:  true
     });
 
+    const noBorders = {
+        top:    { style: BorderStyle.NONE, size: 0 },
+        bottom: { style: BorderStyle.NONE, size: 0 },
+        left:   { style: BorderStyle.NONE, size: 0 },
+        right:  { style: BorderStyle.NONE, size: 0 },
+    };
+
     // ── Choice builder ────────────────────────────────────────────────────
     function buildChoiceParas(choices) {
         const texts   = choices.map(c => String(c ?? '').trim());
@@ -115,9 +121,11 @@ function exportTestAsDocx() {
             }));
         }
 
-        // 2-col layout
-        const rows   = Math.ceil(texts.length / 2);
-        const result = [];
+        // 2-col layout — a real table, not a tab stop, so a choice longer
+        // than expected wraps within its own cell instead of overflowing
+        // past the tab stop and pushing into the other column's space.
+        const rows = Math.ceil(texts.length / 2);
+        const tableRows = [];
 
         for (let row = 0; row < rows; row++) {
             const li = row;
@@ -129,24 +137,23 @@ function exportTestAsDocx() {
             const rl = hasRight ? String.fromCharCode(65 + (ri % 5)) : null;
             const rt = hasRight ? texts[ri] : null;
 
-            const children = [run(ll + '. ' + lt)];
-            if (hasRight) {
-                children.push(new TextRun({ text: '\t', font: FONT, size: FONT_SIZE }));
-                children.push(run(rl + '. ' + rt));
-            }
-
-            const isLast = row === rows - 1;
-
-            result.push(new Paragraph({
-                children,
-                indent:   { left: CH_LEFT },
-                spacing:  sp,
-                keepNext: !isLast,
-                tabStops: [{ type: 'left', position: HALF_W }]
+            tableRows.push(new TableRow({
+                children: [
+                    new TableCell({
+                        children: [new Paragraph({ children: [run(ll + '. ' + lt)], spacing: sp })],
+                        borders:  noBorders,
+                        width:    { size: 50, type: WidthType.PERCENTAGE }
+                    }),
+                    new TableCell({
+                        children: [new Paragraph({ children: hasRight ? [run(rl + '. ' + rt)] : [run('')], spacing: sp })],
+                        borders:  noBorders,
+                        width:    { size: 50, type: WidthType.PERCENTAGE }
+                    })
+                ]
             }));
         }
 
-        return result;
+        return [new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } })];
     }
 
     // ── Assemble paragraphs ───────────────────────────────────────────────
@@ -182,13 +189,6 @@ function exportTestAsDocx() {
         ));
         tfs.forEach(q => allChildren.push(qPara(q.question || '')));
     }
-
-    const noBorders = {
-        top:    { style: BorderStyle.NONE, size: 0 },
-        bottom: { style: BorderStyle.NONE, size: 0 },
-        left:   { style: BorderStyle.NONE, size: 0 },
-        right:  { style: BorderStyle.NONE, size: 0 },
-    };
 
     const matching = lastGeneratedQuestions.filter(q => q.type === 'matching');
     if (matching.length > 0) {
