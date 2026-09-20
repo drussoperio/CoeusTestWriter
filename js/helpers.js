@@ -77,7 +77,17 @@ function setDropZoneLoaded(fileInput, label) {
     }
 }
 
-function sendToBank(questions, target) {
+// filename: the source tab's filename (without extension) to show in the
+// destination's drop zone, e.g. from that tab's own filename input.
+// Reads a filename input's current value, falling back to its placeholder
+// (the same default a real export from that tab would use).
+function filenameFromInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    return (el.value || '').trim() || el.placeholder || '';
+}
+
+function sendToBank(questions, target, filename) {
     if (!questions || questions.length === 0) {
         showToast('⚠️ No questions to send.', 'warning');
         return;
@@ -92,6 +102,7 @@ function sendToBank(questions, target) {
         choices:    q.choices    || null,
         ...(q.subject ? { subject: q.subject } : {})
     }));
+    const dropZoneLabel = (filename || 'questions') + '.json';
 
     if (target === 'manage') {
         questionBank = clean;
@@ -102,7 +113,7 @@ function sendToBank(questions, target) {
         clearQuestionManagerState();
         updateQuestionManagerCategories();
         renderQuestionManagerList();
-        setDropZoneLoaded(document.getElementById('loadQuestionBank'), `${clean.length} question(s) loaded`);
+        setDropZoneLoaded(document.getElementById('loadQuestionBank'), dropZoneLabel);
         showToast(`✅ Sent ${clean.length} question(s) to Manage a Bank.`, 'success');
         document.getElementById('questionManagerTab')?.click();
     } else {
@@ -111,7 +122,7 @@ function sendToBank(questions, target) {
         updateCategoryInputs();
         const bankStatus = document.getElementById('bankStatus');
         if (bankStatus) bankStatus.innerHTML = `<div class="text-green-600">Bank loaded (${clean.length} questions)</div>`;
-        setDropZoneLoaded(document.getElementById('loadTestBank'), `${clean.length} question(s) loaded`);
+        setDropZoneLoaded(document.getElementById('loadTestBank'), dropZoneLabel);
         showToast(`✅ Sent ${clean.length} question(s) to Design a Test.`, 'success');
         document.getElementById('testGeneratorTab')?.click();
     }
