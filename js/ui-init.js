@@ -1027,14 +1027,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (type !== 'multiple_choice') showWqQuestionWarning('');
 
                 let q = { subject, category: cat, type, difficulty: diff, question: qText };
+                let choiceCountWarning = null;
 
                 if (type === 'multiple_choice') {
                     const correctVal = (document.getElementById('wqCorrectChoiceInput')?.value || '').trim();
                     const wrongInputs = document.querySelectorAll('#wqChoicesContainer .wq-choice-input:not(.hidden) .wq-wrong-choice-input');
                     const wrongVals = [...wrongInputs].map(i => i.value.trim()).filter(Boolean);
-                    const err = mcqChoiceValidationError(correctVal, wrongVals);
+                    const err = mcqCorrectAnswerError(correctVal);
                     if (err) { showWqQuestionWarning(err); return; }
                     showWqQuestionWarning('');
+                    choiceCountWarning = mcqChoiceCountWarning(correctVal, wrongVals);
                     q.choices = [correctVal, ...wrongVals];
                     q.correct = correctVal;
                 } else if (type === 'true_false') {
@@ -1073,7 +1075,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const choiceEBtnEl = document.getElementById('wqToggleChoiceEBtn');
                 if (choiceERowEl) { choiceERowEl.classList.add('hidden'); choiceERowEl.querySelector('input[type="text"]').value = ''; }
                 if (choiceEBtnEl) choiceEBtnEl.textContent = '+ Add Choice E';
-                showToast('✅ Question added.', 'success');
+                if (choiceCountWarning) showToast(`⚠️ Question added. ${choiceCountWarning}`, 'warning');
+                else showToast('✅ Question added.', 'success');
             });
         }
 
@@ -1192,6 +1195,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     showPasteWarning('Format not recognized. Each question must start with a number, period, and space (e.g. "1. Question text"). See Show Tips for formatting rules.');
                     return;
                 }
+                const overflowErr = plainTextChoiceOverflowError(text);
+                if (overflowErr) {
+                    showPasteWarning(overflowErr);
+                    return;
+                }
                 try {
                     const qs = parsePlainTextToJson(text, subject, category);
                     if (!qs.length) {
@@ -1204,12 +1212,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         showPasteWarning(`${noCorrect.length} multiple choice question(s) have no correct answer marked. Prefix the correct choice with = or *.`);
                         return;
                     }
-                    // Check for MCQ with fewer than 4 choices
+                    // Non-blocking heads-up for MCQ with fewer than 4 choices — some are
+                    // legitimately 2-choice (true/false-style), so this never blocks adding.
                     const tooFewChoices = qs.filter(q => q.type === 'multiple_choice' && (q.choices || []).filter(c => (c || '').toString().trim()).length < 4);
-                    if (tooFewChoices.length) {
-                        showPasteWarning(`${tooFewChoices.length} multiple choice question(s) have fewer than 4 choices. MCQ requires 4 to 5 choices (a., b., c., d., optionally e.).`);
-                        return;
-                    }
                     qs.forEach(q => { q.difficulty = diff; });
                     examBank.push(...qs);
                     saveExamBankToStorage();
@@ -1218,7 +1223,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('wqPasteSubject').value = '';
                     document.getElementById('wqPasteCategory').value = '';
                     document.getElementById('wqPasteDifficulty').value = 'unset';
-                    showToast(`✅ Added ${qs.length} question(s).`, 'success');
+                    if (tooFewChoices.length) {
+                        showToast(`⚠️ Added ${qs.length} question(s). ${tooFewChoices.length} have fewer than 4 choices — verify if unintended.`, 'warning');
+                    } else {
+                        showToast(`✅ Added ${qs.length} question(s).`, 'success');
+                    }
                 } catch(err) {
                     showPasteWarning(err.message);
                     showToast('❌ ' + err.message, 'error');

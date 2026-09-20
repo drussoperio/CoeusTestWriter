@@ -2,15 +2,22 @@
 // HELPER FUNCTIONS, SEND TO BANK HELPER
 // ========================================
 
-// Validates a composed multiple-choice question's answer inputs.
-// Returns an error string to block on, or null if valid.
-// Requires a non-blank correct answer (leaving it blank used to silently
-// promote the first non-blank wrong answer to "correct" instead) and at
-// least 4 total choices.
-function mcqChoiceValidationError(correctVal, wrongVals) {
+// Validates a composed multiple-choice question's correct-answer input.
+// Returns an error string to BLOCK on, or null if valid. Leaving this
+// blank used to silently promote the first non-blank wrong answer to
+// "correct" instead, which is always wrong, so this stays blocking.
+function mcqCorrectAnswerError(correctVal) {
     if (!correctVal) return 'Please enter a correct answer.';
-    const total = 1 + wrongVals.length;
-    if (total < 4) return `At least 4 choices are required (currently ${total}).`;
+    return null;
+}
+
+// Non-blocking heads-up when a composed MCQ has fewer than 4 choices.
+// Some questions are legitimately 2-choice (e.g. true/false-style
+// questions saved as multiple_choice), so this never blocks adding —
+// it's surfaced again, non-urgently, in the Bank Stats validation report.
+function mcqChoiceCountWarning(correctVal, wrongVals) {
+    const total = (correctVal ? 1 : 0) + wrongVals.length;
+    if (total < 4) return `Only ${total} choice(s) — most MCQ have 4. This is fine for a true/false-style question; otherwise double-check.`;
     return null;
 }
 
@@ -156,12 +163,21 @@ function validateQuestionBank(questions) {
         return uniqueChoices.size !== choices.length;
     });
 
+    // Minor/informational only — 2-3 choices is valid (e.g. a true/false-style
+    // question saved as multiple_choice), so this is never a blocking error,
+    // just something worth a quick look.
+    const mcqShortChoices = list.filter(q => {
+        if (q.type !== 'multiple_choice') return false;
+        const choices = (q.choices || []).map(c => (c || '').toString().trim()).filter(Boolean);
+        return choices.length >= 2 && choices.length < 4;
+    });
+
     const matchingIssues = list.filter(q =>
         q.type === 'matching' &&
         (!(q.question || '').toString().trim() || !(q.correct || '').toString().trim())
     );
 
-    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, matchingIssues };
+    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqShortChoices, matchingIssues };
 }
 
 function bankValidationIssueCount(report) {
@@ -169,6 +185,7 @@ function bankValidationIssueCount(report) {
         + report.duplicateGroups.reduce((sum, g) => sum + g.length, 0)
         + report.emptyQuestion.length
         + report.mcqIssues.length
+        + report.mcqShortChoices.length
         + report.matchingIssues.length;
 }
 
@@ -176,6 +193,13 @@ function questionPreviewLabel(q) {
     const text = (q.question || '(untitled question)').toString().trim() || '(empty question)';
     const truncated = text.length > 70 ? text.slice(0, 70) + '…' : text;
     return `[${escapeHtml(q.category || 'Uncategorized')}] ${escapeHtml(truncated)}`;
+}
+
+// Same label as questionPreviewLabel, but clickable — jumps to and
+// highlights the question in Manage a Bank's Edit Bank list.
+function questionJumpLink(q) {
+    if (q.__uid == null) return questionPreviewLabel(q);
+    return `<button type="button" class="text-left underline decoration-dotted hover:text-blue-700" style="color:inherit;" onclick="jumpToQuestionInBank(${q.__uid})">${questionPreviewLabel(q)}</button>`;
 }
 
 function renderValidationDetail(title, items, formatItem) {
@@ -210,22 +234,35 @@ function renderBankValidationReport(containerId, questions) {
         return;
     }
 
-    let html = `<div class="p-3 rounded border border-amber-200 bg-amber-50">
-        <p class="text-sm font-semibold text-amber-800">⚠️ ${totalIssues} issue(s) found across ${list.length} question(s):</p>`;
+    const majorIssueCount = totalIssues - report.mcqShortChoices.length;
+    let html = '';
 
-    html += renderValidationDetail('Missing correct answer', report.missingCorrect, q => questionPreviewLabel(q));
+    if (majorIssueCount > 0) {
+        html += `<div class="p-3 rounded border border-amber-200 bg-amber-50">
+            <p class="text-sm font-semibold text-amber-800">⚠️ ${majorIssueCount} issue(s) found across ${list.length} question(s):</p>`;
 
-    html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group =>
-        `${group.length}× "${escapeHtml((group[0].question || '').toString().trim().slice(0, 70))}" — categories: ${escapeHtml([...new Set(group.map(q => q.category || 'Uncategorized'))].join(', '))}`
-    );
+        html += renderValidationDetail('Missing correct answer', report.missingCorrect, q => questionPreviewLabel(q));
 
-    html += renderValidationDetail('Empty question text', report.emptyQuestion, q => `[${escapeHtml(q.category || 'Uncategorized')}] (no question text)`);
+        html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group =>
+            `${group.length}× "${escapeHtml((group[0].question || '').toString().trim().slice(0, 70))}" — categories: ${escapeHtml([...new Set(group.map(q => q.category || 'Uncategorized'))].join(', '))}`
+        );
 
-    html += renderValidationDetail('Multiple choice with too few or duplicate choices', report.mcqIssues, q => questionPreviewLabel(q));
+        html += renderValidationDetail('Empty question text', report.emptyQuestion, q => `[${escapeHtml(q.category || 'Uncategorized')}] (no question text)`);
 
-    html += renderValidationDetail('Matching pair missing premise or answer', report.matchingIssues, q => questionPreviewLabel(q));
+        html += renderValidationDetail('Multiple choice with too few or duplicate choices', report.mcqIssues, q => questionPreviewLabel(q));
 
-    html += `</div>`;
+        html += renderValidationDetail('Matching pair missing premise or answer', report.matchingIssues, q => questionPreviewLabel(q));
+
+        html += `</div>`;
+    }
+
+    if (report.mcqShortChoices.length > 0) {
+        html += `<div class="p-3 rounded border border-blue-200 bg-blue-50 ${majorIssueCount > 0 ? 'mt-2' : ''}">
+            <p class="text-sm font-semibold text-blue-800">ℹ️ ${report.mcqShortChoices.length} multiple choice question(s) have fewer than 4 choices — often fine (e.g. true/false-style), but worth a quick check:</p>
+            ${renderValidationDetail('Fewer than 4 choices', report.mcqShortChoices, q => questionJumpLink(q))}
+        </div>`;
+    }
+
     container.innerHTML = html;
 }
 

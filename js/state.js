@@ -19,12 +19,17 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.14.0';
+const APP_VERSION = '2.15.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.15.0': [
+        'Changed: Write Questions and Manage a Bank: the fewer-than-4-choices check from 2.14.0 is no longer blocking on Compose Question or Paste Text — some multiple choice questions are legitimately 2-choice (e.g. a true/false-style question saved as multiple_choice), so it\'s now a non-blocking heads-up toast on add, plus a permanent record in Manage a Bank\'s Bank Stats validation report (see Added below). Leaving Correct Answer blank is still blocked — that\'s always wrong, not a judgment call.',
+        'Added: Manage a Bank → Bank Stats validation report: new "fewer than 4 choices" section, styled as a minor/informational notice (blue) separate from real issues (amber) like missing correct answers or duplicates. Each listed question is a clickable link that jumps to Edit Bank, expands its category, scrolls to it, and briefly highlights it — so a whole bank\'s worth of these can be found and eyeballed at once instead of only catching them one at a time while composing.',
+        'Added: Write Questions and Manage a Bank Paste Text: now warns and blocks if a pasted question has more than 5 choices (only a.–e. are supported; anything from f. onward was previously silently merged into choice e\'s text instead of becoming its own choice or raising any warning).',
+    ],
     '2.14.0': [
         'Changed: Write Questions and Manage a Bank: the "fewer than 4 choices" check from 2.13.1 is replaced with inline, blocking validation on both Compose Question (warning appears below the Question field) and Paste Text (below "Paste plain text here"), matching the existing "no correct answer marked" warning style — instead of a passive whole-bank banner that only existed in Write Questions and never stopped a bad question from being added.',
         'Fixed: Write Questions and Manage a Bank Compose Question: leaving the Correct Answer field blank silently promoted the first non-blank Wrong Answer to the correct one, because blank choice inputs were filtered out before the first surviving one was used as index 0. The correct-answer input is now read directly; submitting blank, or with fewer than 4 total choices, is blocked with an inline warning instead of silently saving bad data.',

@@ -568,6 +568,21 @@ function questionsToPlainText(questions) {
     }).join('\n');
 }
 
+// Detects plain-text MCQ blocks with more than 5 lettered choice lines.
+// The parser only recognizes a.-e.; anything from f. onward silently gets
+// merged into choice e's text instead of becoming its own choice, so this
+// is checked up front and blocked rather than let through mangled.
+// Returns a warning string, or null if every block has 5 choices or fewer.
+function plainTextChoiceOverflowError(text) {
+    const blocks = (text || '').trim().split(/\n(?=\d+[.)]\s)/).map(b => b.trim()).filter(Boolean);
+    const overflowCount = blocks.filter(block => {
+        const letterLines = (block.match(/^[*=]?[a-z][.)]\s+/gim) || []).length;
+        return letterLines > 5;
+    }).length;
+    if (overflowCount === 0) return null;
+    return `${overflowCount} question(s) have more than 5 choices. Only a. through e. (5 choices) are supported — anything past e. gets silently merged into choice e's text instead of becoming its own choice. Reduce to 5 choices or fewer.`;
+}
+
 function parsePlainTextToJson(text, subject, category) {
     function cleanText(str) {
         return str
