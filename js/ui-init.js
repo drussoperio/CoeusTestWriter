@@ -1110,7 +1110,30 @@ document.addEventListener('DOMContentLoaded', function () {
             ).join('');
             return `<div class="overflow-auto max-h-96"><table class="min-w-full text-xs border-collapse"><thead><tr>${hdr}</tr></thead><tbody>${bdy}</tbody></table></div>`;
         }
+        // Warns (across the whole exam bank, not just the form being edited)
+        // when any multiple-choice question has fewer than 4 choices.
+        function updateWqChoiceWarning() {
+            const banner = document.getElementById('wqChoiceWarning');
+            if (!banner) return;
+            const shortChoiceQuestions = examBank.filter(q => {
+                if (q.type !== 'multiple_choice') return false;
+                const choices = (q.choices || []).map(c => (c || '').toString().trim()).filter(Boolean);
+                return choices.length < 4;
+            });
+            if (shortChoiceQuestions.length === 0) {
+                banner.classList.add('hidden');
+                banner.innerHTML = '';
+                return;
+            }
+            banner.classList.remove('hidden');
+            banner.innerHTML = `<div class="p-3 rounded border border-amber-200 bg-amber-50">
+                <p class="text-sm font-semibold text-amber-800">⚠️ ${shortChoiceQuestions.length} multiple choice question(s) have fewer than 4 choices:</p>
+                ${renderValidationDetail('Fewer than 4 choices', shortChoiceQuestions, q => questionPreviewLabel(q))}
+            </div>`;
+        }
+
         function refreshWqPreview() {
+            updateWqChoiceWarning();
             const container = document.getElementById('wqOutputContainer');
             if (!container) return;
             const emptyState = document.getElementById('wqEmptyState');
