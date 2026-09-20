@@ -772,7 +772,7 @@
                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
                     <h2 class="text-lg font-semibold text-blue-900 mb-1">Design a Test</h2>
                     <p class="text-sm text-gray-700">
-                        Load a JSON question bank, choose how many questions to pull from each category, then click <strong>Construct Test</strong>.
+                        Load a JSON question bank, choose how many questions to pull from each category, then click <strong>Construct New Test</strong>. Once a test exists, <strong>Reshuffle Test</strong> creates another version with the same questions in a new order.
                         The engine randomizes question order, shuffles answer choices, and balances
                         the answer-key distribution. Export the finished test in your chosen format.
                     </p>
@@ -964,8 +964,17 @@
                             <div id="exclusionStatus" class="text-xs text-gray-600">No exclusions loaded. All questions available.</div>
                         </div>
 
-                        <!-- Row 4: Construct Test -->
-                        <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white py-3 rounded text-base font-bold tracking-wide">Construct Test</button>
+                        <!-- Row 4: Construct Test / Reshuffle Test -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <button type="submit" class="w-full bg-green-500 hover:bg-green-700 text-white py-3 rounded text-base font-bold tracking-wide">Construct New Test</button>
+                                <p class="text-xs mt-1.5" style="color:var(--text-muted);">Picks a fresh set of questions from your bank based on the counts above.</p>
+                            </div>
+                            <div>
+                                <button type="button" id="reshuffleTestBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white py-3 rounded text-base font-bold tracking-wide" disabled style="opacity:0.5;cursor:not-allowed;">Reshuffle Test</button>
+                                <p class="text-xs mt-1.5" style="color:var(--text-muted);">Keeps the same questions, but shuffles their order and answer choices into a new version. Construct a test first to enable this.</p>
+                            </div>
+                        </div>
                     </form>
                 </section>
 
@@ -978,7 +987,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                         </svg>
-                        <p>No test generated yet.<br>Load a bank and click <strong>Construct Test</strong>.</p>
+                        <p>No test generated yet.<br>Load a bank and click <strong>Construct New Test</strong>.</p>
                     </div>
 
                     <div id="output" class="hidden">
@@ -1046,6 +1055,8 @@
                         <p>▸ <strong>Matching:</strong> consecutive premise/answer pairs (premise line, then <code class="bg-gray-100 px-1 rounded">=Answer</code> line) are grouped into one matching question automatically.</p>
                     </div>
                 </div>
+
+                <div id="wqChoiceWarning" class="hidden mb-6"></div>
 
                 <!-- 2-column Input / Output -->
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
@@ -1407,7 +1418,7 @@
         <ol class="text-sm space-y-2 mb-6 list-decimal list-inside" style="color:var(--text-muted);">
             <li><strong style="color:var(--text);">Write Questions</strong> — type questions one by one using the form, or paste plain numbered text. Your questions are saved automatically and can be exported as JSON, CSV, GIFT, or TXT.</li>
             <li><strong style="color:var(--text);">Manage a Bank</strong> — load an existing JSON question bank, then search, filter, sort, bulk-rename, or bulk-delete questions in the Edit Bank panel. Export the updated bank in any format.</li>
-            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category, then click <strong style="color:var(--text);">Construct Test</strong>. Export as TXT, DOCX, or JSON.</li>
+            <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category, then click <strong style="color:var(--text);">Construct New Test</strong>. Use <strong style="color:var(--text);">Reshuffle Test</strong> to make another version with the same questions, freshly shuffled. Export as TXT, DOCX, or JSON.</li>
             <li><strong style="color:var(--text);">Convert a File</strong> — upload any supported file (JSON, CSV, GIFT TXT, plain TXT) and export it directly to any other format.</li>
             <li><strong style="color:var(--text);">Merge JSONs</strong> — combine multiple Coeus JSON banks into one unified file.</li>
         </ol>
