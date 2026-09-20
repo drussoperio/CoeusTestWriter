@@ -19,12 +19,17 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.11.1';
+const APP_VERSION = '2.12.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.12.0': [
+        'Added: Manage a Bank → Add Questions: Compose Question and Paste Text now both capture a Subject field, matching Write Questions.',
+        'Changed: Manage a Bank → Add Questions is now gated behind a loaded bank: Compose Question and Paste Text are hidden behind a message pointing back to Upload File whenever the bank is empty, instead of letting Add Questions spin up a bank from nothing.',
+        'Fixed: Write Questions and Manage a Bank: Paste Text no longer leaves the Subject, Category, and Difficulty fields (and the pasted text itself) filled in after successfully adding questions — all Paste Text and Compose Question forms now fully clear on add, matching each other.',
+    ],
     '2.11.1': [
         'Fixed: update.sh / update.bat now check whether the folder is actually a git repository before running `git pull`, and print a clear explanation (plus the `git clone` command to fix it) instead of a raw `fatal: not a git repository` error — this happens when the app was downloaded as a ZIP file instead of cloned with git.',
     ],

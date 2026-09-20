@@ -1196,6 +1196,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     examBank.push(...qs);
                     saveExamBankToStorage();
                     refreshWqPreview();
+                    document.getElementById('wqPasteInput').value = '';
+                    document.getElementById('wqPasteSubject').value = '';
+                    document.getElementById('wqPasteCategory').value = '';
+                    document.getElementById('wqPasteDifficulty').value = 'unset';
                     showToast(`✅ Added ${qs.length} question(s).`, 'success');
                 } catch(err) {
                     showPasteWarning(err.message);

@@ -1022,6 +1022,9 @@ function setupQmAddQuestionsForm() {
                 saveQBankToStorage();
                 renderQuestionManagerList();
                 document.getElementById('qmPasteInput').value = '';
+                document.getElementById('qmPasteSubject').value = '';
+                document.getElementById('qmPasteCategory').value = '';
+                document.getElementById('qmPasteDifficulty').value = 'unset';
                 showToast(`✅ Added ${qs.length} question(s).`, 'success');
             } catch (err) {
                 showQmPasteWarning(err.message);
