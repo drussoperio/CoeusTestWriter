@@ -19,12 +19,23 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.9.3';
+const APP_VERSION = '2.11.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.11.0': [
+        'Added: Manage a Bank → Add Questions: split into "Compose Question" and "Paste Text" sub-tabs, mirroring Write Questions — paste plain numbered text and convert it directly into the bank you\'re managing, instead of only being able to compose one question at a time.',
+        'Added: Manage a Bank → Add Questions: new "Preview Questions" panel showing the live bank contents with JSON/CSV/GIFT/TXT format toggles and a top/bottom scroll jump button. It\'s read-only (no export/filename/send-to controls), since those already live in the Download File section above Edit Bank.',
+    ],
+    '2.10.0': [
+        'Added: Manage a Bank: new "Add Questions" subtab alongside "Edit Bank" — compose a question (multiple choice, true/false, or matching, including the Choice E toggle) and add it straight into the bank you\'re managing, without switching to the Write Questions tab',
+        'Fixed: Manage a Bank: editing any field of a multiple-choice question — including just its category — was silently wiping its correct answer on save. `saveQuestionEdit()` looked for a radio input that\'s only ever rendered for true/false questions, so it never found a match for multiple choice and reset `correct` to blank every time.',
+        'Fixed: Manage a Bank: there was no way to actually change which choice is correct when editing a question — the check/✗ icons next to each choice were purely decorative. They\'re now clickable: click a choice\'s icon to mark it correct.',
+        'Fixed: Manage a Bank: the true/false edit form\'s correct-answer radio also failed to save, due to a malformed `[class="..."]` attribute selector that never matched the rendered multi-class attribute.',
+        'Fixed: Manage a Bank: the "Remove Choice E" button in the question editor had no click handler and did nothing when clicked.',
+    ],
     '2.9.3': [
         'Fixed: Merge JSONs: removed an unnecessary `flex flex-col` wrapper on the Upload Files / Download File columns that was nesting the heading\'s own internal flex layout inside another flex context, causing the heading icons to render slightly lower than their text (and out of alignment with every other tab\'s headings) from initial page load.',
     ],

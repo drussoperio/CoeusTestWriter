@@ -305,6 +305,7 @@ function renderQuestionManagerList() {
 	attachSelectVisibleButton();
     updateDeleteButtonState();
     updateChangeCategoryButtonState();
+    refreshQmPreview();
 }
 
 // Attach events to category headers for collapse/expand
@@ -863,8 +864,23 @@ function initializeQuestionManager() {
 // which targets the separate examBank array).
 function setupQmAddQuestionsForm() {
     const typeSelect = document.getElementById('qmAddType');
-    if (!typeSelect || typeSelect.dataset.qmWired) return; // avoid double-wiring on re-render
+    if (!typeSelect || typeSelect.dataset.qmWired) { refreshQmPreview(); return; } // avoid double-wiring on re-render
     typeSelect.dataset.qmWired = 'true';
+
+    // Compose Question / Paste Text sub-tabs
+    const addSubTab = document.getElementById('qmAddSubTab');
+    const pasteSubTab = document.getElementById('qmPasteSubTab');
+    const addPanel = document.getElementById('qmAddPanel');
+    const pastePanel = document.getElementById('qmPastePanel');
+    function activateSubTab(which) {
+        const isAdd = which === 'add';
+        if (addPanel)   { addPanel.classList.toggle('hidden', !isAdd); addPanel.classList.toggle('flex', isAdd); }
+        if (pastePanel) { pastePanel.classList.toggle('hidden', isAdd); pastePanel.classList.toggle('flex', !isAdd); }
+        if (addSubTab)   { addSubTab.classList.toggle('bg-blue-500', isAdd); addSubTab.classList.toggle('text-white', isAdd); addSubTab.classList.toggle('bg-gray-200', !isAdd); addSubTab.classList.toggle('text-gray-700', !isAdd); }
+        if (pasteSubTab) { pasteSubTab.classList.toggle('bg-blue-500', !isAdd); pasteSubTab.classList.toggle('text-white', !isAdd); pasteSubTab.classList.toggle('bg-gray-200', isAdd); pasteSubTab.classList.toggle('text-gray-700', isAdd); }
+    }
+    if (addSubTab)   addSubTab.addEventListener('click',   () => activateSubTab('add'));
+    if (pasteSubTab) pasteSubTab.addEventListener('click', () => activateSubTab('paste'));
 
     function updateSections() {
         const v = typeSelect.value;
@@ -954,4 +970,143 @@ function setupQmAddQuestionsForm() {
         if (choiceEBtn) choiceEBtn.textContent = '+ Add Choice E';
         showToast('✅ Question added to bank.', 'success');
     });
+
+    // Paste Text panel
+    function showQmPasteWarning(msg) {
+        const w = document.getElementById('qmPasteWarning');
+        if (!w) return;
+        if (msg) { w.textContent = '⚠️ ' + msg; w.classList.remove('hidden'); }
+        else { w.textContent = ''; w.classList.add('hidden'); }
+    }
+    const pasteConvertBtn = document.getElementById('qmPasteConvertBtn');
+    if (pasteConvertBtn) {
+        pasteConvertBtn.addEventListener('click', () => {
+            showQmPasteWarning('');
+            const text = (document.getElementById('qmPasteInput')?.value || '').trim();
+            if (!text) { showQmPasteWarning('No text to convert. Paste your questions above.'); return; }
+            const category = (document.getElementById('qmPasteCategory')?.value || '').trim() || 'Uncategorized';
+            const diff = document.getElementById('qmPasteDifficulty')?.value || 'unset';
+            const hasNumbered = /^\d+\.\s/m.test(text);
+            if (!hasNumbered) {
+                showQmPasteWarning('Format not recognized. Each question must start with a number, period, and space (e.g. "1. Question text"). See Show Tips for formatting rules.');
+                return;
+            }
+            try {
+                const qs = parsePlainTextToJson(text, '', category);
+                if (!qs.length) {
+                    showQmPasteWarning('No questions could be parsed. Check that your questions follow the plain-text format rules. See Show Tips for details.');
+                    return;
+                }
+                const noCorrect = qs.filter(q => q.type === 'multiple_choice' && !q.correct);
+                if (noCorrect.length) {
+                    showQmPasteWarning(`${noCorrect.length} multiple choice question(s) have no correct answer marked. Prefix the correct choice with = or *.`);
+                    return;
+                }
+                qs.forEach(q => { q.difficulty = diff; });
+                questionBank.push(...qs);
+                saveQBankToStorage();
+                renderQuestionManagerList();
+                document.getElementById('qmPasteInput').value = '';
+                showToast(`✅ Added ${qs.length} question(s).`, 'success');
+            } catch (err) {
+                showQmPasteWarning(err.message);
+                showToast('❌ ' + err.message, 'error');
+            }
+        });
+    }
+
+    // Preview format toggles
+    const previewBtns = {
+        json: document.getElementById('qmPreviewJson'),
+        csv:  document.getElementById('qmPreviewCsv'),
+        gift: document.getElementById('qmPreviewGift'),
+        txt:  document.getElementById('qmPreviewTxt'),
+    };
+    Object.entries(previewBtns).forEach(([fmt, btn]) => {
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            questionManagerState.previewFormat = fmt;
+            Object.values(previewBtns).forEach(b => { if (b) { b.classList.remove('bg-blue-500', 'text-white'); b.classList.add('bg-gray-200', 'text-gray-700'); } });
+            btn.classList.add('bg-blue-500', 'text-white'); btn.classList.remove('bg-gray-200', 'text-gray-700');
+            refreshQmPreview();
+        });
+    });
+
+    // Top/Bottom scroll jump toggle
+    const jumpBtn = document.getElementById('qmPreviewJumpToggle');
+    const jumpContainer = document.getElementById('qmPreviewOutputContainer');
+    if (jumpBtn && jumpContainer) {
+        function isNearTop() {
+            const maxScroll = jumpContainer.scrollHeight - jumpContainer.clientHeight;
+            return maxScroll <= 0 || jumpContainer.scrollTop <= maxScroll / 2;
+        }
+        function updateJumpLabel() {
+            jumpBtn.textContent = isNearTop() ? '↓ Bottom' : '↑ Top';
+        }
+        jumpBtn.addEventListener('click', () => {
+            jumpContainer.scrollTop = isNearTop() ? jumpContainer.scrollHeight : 0;
+            updateJumpLabel();
+        });
+        jumpContainer.addEventListener('scroll', updateJumpLabel);
+        updateJumpLabel();
+    }
+
+    refreshQmPreview();
+}
+
+// Parses a CSV string into rows, respecting quoted fields.
+function qmParseCsvToRows(csvStr) {
+    return csvStr.trim().split('\n').map(r => {
+        const res = []; let cur = '', inQ = false;
+        for (let i = 0; i < r.length; i++) {
+            const c = r[i];
+            if (c === '"') { inQ = !inQ; }
+            else if (c === ',' && !inQ) { res.push(cur); cur = ''; }
+            else { cur += c; }
+        }
+        res.push(cur); return res;
+    });
+}
+function qmRenderCsvTable(csvStr) {
+    const rows = qmParseCsvToRows(csvStr);
+    if (rows.length < 2) return '<p class="text-xs text-gray-400 p-2">No data</p>';
+    const hdr = rows[0].map(h => `<th class="px-3 py-2 border border-gray-300 text-left font-semibold text-gray-700 bg-gray-100 whitespace-nowrap text-xs">${h}</th>`).join('');
+    const bdy = rows.slice(1).map((row, ri) =>
+        '<tr class="' + (ri % 2 === 0 ? 'bg-white' : 'bg-gray-50') + '">' +
+        row.map(cell => `<td class="px-3 py-1.5 border border-gray-200 text-gray-700 max-w-xs truncate text-xs">${cell || ''}</td>`).join('') + '</tr>'
+    ).join('');
+    return `<div class="overflow-auto max-h-96"><table class="min-w-full text-xs border-collapse"><thead><tr>${hdr}</tr></thead><tbody>${bdy}</tbody></table></div>`;
+}
+
+// Preview panel for the "Add Questions" tab - shows the live questionBank
+// contents in the selected format. Read-only; no export/send controls
+// (those already live in the Download File section above Edit Bank).
+function refreshQmPreview() {
+    const container = document.getElementById('qmPreviewOutputContainer');
+    if (!container) return;
+    const format = questionManagerState.previewFormat || 'json';
+    const emptyState = document.getElementById('qmPreviewEmptyState');
+    const pre = container.querySelector('pre');
+    if (!questionBank.length) {
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (pre) pre.classList.add('hidden');
+        return;
+    }
+    if (emptyState) emptyState.classList.add('hidden');
+    if (pre) pre.classList.remove('hidden');
+    if (format === 'csv') {
+        container.innerHTML = qmRenderCsvTable(convertJsonToCsv(questionBank));
+    } else {
+        if (!document.getElementById('qmPreviewOutput')) {
+            container.innerHTML = '<pre class="text-xs"><code id="qmPreviewOutput"></code></pre>';
+        }
+        const out = document.getElementById('qmPreviewOutput');
+        if (!out) return;
+        let str = '';
+        if (format === 'json') str = JSON.stringify(questionBank, null, 2);
+        else if (format === 'txt') str = questionsToPlainText(questionBank);
+        else if (format === 'gift') str = questionsToGift(questionBank);
+        out.textContent = str;
+        if (window.Prism && format === 'json') Prism.highlightElement(out);
+    }
 }
