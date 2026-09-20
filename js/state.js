@@ -19,12 +19,18 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.13.1';
+const APP_VERSION = '2.14.0';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.14.0': [
+        'Changed: Write Questions and Manage a Bank: the "fewer than 4 choices" check from 2.13.1 is replaced with inline, blocking validation on both Compose Question (warning appears below the Question field) and Paste Text (below "Paste plain text here"), matching the existing "no correct answer marked" warning style — instead of a passive whole-bank banner that only existed in Write Questions and never stopped a bad question from being added.',
+        'Fixed: Write Questions and Manage a Bank Compose Question: leaving the Correct Answer field blank silently promoted the first non-blank Wrong Answer to the correct one, because blank choice inputs were filtered out before the first surviving one was used as index 0. The correct-answer input is now read directly; submitting blank, or with fewer than 4 total choices, is blocked with an inline warning instead of silently saving bad data.',
+        'Fixed: Manage a Bank: Delete Selected undercounted (capped at 1) and failed to delete anything for questions added via the Add Questions tab (Compose Question, Paste Text, or Matching), or for any question after it was edited once in Edit Bank. Both paths built a brand-new question object without the internal `__uid` used to track selection, so multiple such checkboxes collapsed to a single entry and never matched on delete. Question edits also silently dropped their `subject` and `difficulty` fields for the same reason; edits now preserve every existing field and only overwrite the ones actually changed.',
+        'Fixed: Send to Manage a Bank / Send to Design a Test (from Write Questions, Convert a File, Merge JSONs, or between Manage a Bank and Design a Test) now marks the destination tab\'s Upload File drop zone as loaded (question count, green text) instead of leaving it showing "Drag & drop file or click to browse" while a bank was actually loaded behind the scenes.',
+    ],
     '2.13.1': [
         'Added: Write Questions: new warning banner, shown whenever any multiple choice question in the exam bank has fewer than 4 choices — not just the question currently being composed. Lists each affected question and updates live as questions are added, pasted, or deleted.',
     ],

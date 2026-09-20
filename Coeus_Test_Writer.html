@@ -563,6 +563,7 @@
                                         </div>
                                         <div id="qmAddQuestionSection">
                                             <label for="qmAddQuestion" class="block text-sm font-medium" style="color:var(--text);">Question</label>
+                                            <div id="qmAddQuestionWarning" class="hidden mb-2 p-2 rounded text-xs bg-yellow-50 border border-yellow-300 text-yellow-800"></div>
                                             <textarea id="qmAddQuestion" rows="3" placeholder="Type your question here…" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
                                         </div>
                                         <div id="qmAddChoicesSection">
@@ -570,23 +571,23 @@
                                             <div id="qmAddChoicesContainer" class="space-y-2 mt-1">
                                                 <div class="flex items-center gap-2 qm-add-choice-input">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                                    <input type="text" placeholder="Correct answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                    <input type="text" id="qmAddCorrectChoiceInput" placeholder="Correct answer" class="flex-1 rounded border text-sm px-2 py-1.5">
                                                 </div>
                                                 <div class="flex items-center gap-2 qm-add-choice-input">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                    <input type="text" placeholder="Wrong answer" class="qm-add-wrong-choice-input flex-1 rounded border text-sm px-2 py-1.5">
                                                 </div>
                                                 <div class="flex items-center gap-2 qm-add-choice-input">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                    <input type="text" placeholder="Wrong answer" class="qm-add-wrong-choice-input flex-1 rounded border text-sm px-2 py-1.5">
                                                 </div>
                                                 <div class="flex items-center gap-2 qm-add-choice-input">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                    <input type="text" placeholder="Wrong answer" class="qm-add-wrong-choice-input flex-1 rounded border text-sm px-2 py-1.5">
                                                 </div>
                                                 <div id="qmAddChoiceERow" class="flex items-center gap-2 qm-add-choice-input hidden">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                    <input type="text" placeholder="Wrong answer" class="qm-add-wrong-choice-input flex-1 rounded border text-sm px-2 py-1.5">
                                                 </div>
                                             </div>
                                             <button type="button" id="qmAddToggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
@@ -1056,8 +1057,6 @@
                     </div>
                 </div>
 
-                <div id="wqChoiceWarning" class="hidden mb-6"></div>
-
                 <!-- 2-column Input / Output -->
                 <section class="mb-6 p-4 border border-gray-200 rounded surface">
                     <div class="grid grid-cols-2 gap-6">
@@ -1099,6 +1098,7 @@
                                     </div>
                                     <div id="wqQuestionSection">
                                         <label for="wqQuestion" class="block text-sm font-medium" style="color:var(--text);">Question</label>
+                                        <div id="wqQuestionWarning" class="hidden mb-2 p-2 rounded text-xs bg-yellow-50 border border-yellow-300 text-yellow-800"></div>
                                         <textarea id="wqQuestion" rows="3" placeholder="Type your question here…" class="mt-1 block w-full rounded shadow-sm text-sm px-2 py-1.5" style="border:none;"></textarea>
                                     </div>
                                     <div id="wqChoicesSection">
@@ -1106,23 +1106,23 @@
                                         <div id="wqChoicesContainer" class="space-y-2 mt-1">
                                             <div class="flex items-center gap-2 wq-choice-input">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                                <input type="text" placeholder="Correct answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
+                                                <input type="text" id="wqCorrectChoiceInput" placeholder="Correct answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
+                                                <input type="text" placeholder="Wrong answer" class="wq-wrong-choice-input flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
+                                                <input type="text" placeholder="Wrong answer" class="wq-wrong-choice-input flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div class="flex items-center gap-2 wq-choice-input">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
+                                                <input type="text" placeholder="Wrong answer" class="wq-wrong-choice-input flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                             <div id="wqChoiceERow" class="flex items-center gap-2 wq-choice-input hidden">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <input type="text" placeholder="Wrong answer" class="flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
+                                                <input type="text" placeholder="Wrong answer" class="wq-wrong-choice-input flex-1 rounded shadow-sm text-sm px-2 py-1.5" style="border:none;">
                                             </div>
                                         </div>
                                         <button type="button" id="wqToggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>

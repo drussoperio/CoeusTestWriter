@@ -2,6 +2,18 @@
 // HELPER FUNCTIONS, SEND TO BANK HELPER
 // ========================================
 
+// Validates a composed multiple-choice question's answer inputs.
+// Returns an error string to block on, or null if valid.
+// Requires a non-blank correct answer (leaving it blank used to silently
+// promote the first non-blank wrong answer to "correct" instead) and at
+// least 4 total choices.
+function mcqChoiceValidationError(correctVal, wrongVals) {
+    if (!correctVal) return 'Please enter a correct answer.';
+    const total = 1 + wrongVals.length;
+    if (total < 4) return `At least 4 choices are required (currently ${total}).`;
+    return null;
+}
+
 // Helper: reset a file-input's value and its drop-zone's displayed text back to
 // the default prompt. Used after a Clear Bank click (always, even if the bank was
 // already empty from a failed load) and after a failed load itself, so a stale
@@ -35,6 +47,20 @@ function getQuestionsMissingCorrectAnswer(questions) {
 // SEND TO BANK HELPER
 // ========================================
 
+// Marks a tab's Upload File drop-zone as "loaded" (green, showing a label)
+// without a real File object — used when a bank arrives via Send to X
+// instead of an actual file pick/drop.
+function setDropZoneLoaded(fileInput, label) {
+    if (!fileInput) return;
+    const dropZone = fileInput.closest('.drop-zone');
+    if (!dropZone) return;
+    const p = dropZone.querySelector('p');
+    if (p) {
+        p.className = 'text-sm text-green-700 font-medium';
+        p.textContent = label;
+    }
+}
+
 function sendToBank(questions, target) {
     if (!questions || questions.length === 0) {
         showToast('⚠️ No questions to send.', 'warning');
@@ -60,6 +86,7 @@ function sendToBank(questions, target) {
         clearQuestionManagerState();
         updateQuestionManagerCategories();
         renderQuestionManagerList();
+        setDropZoneLoaded(document.getElementById('loadQuestionBank'), `${clean.length} question(s) loaded`);
         showToast(`✅ Sent ${clean.length} question(s) to Manage a Bank.`, 'success');
         document.getElementById('questionManagerTab')?.click();
     } else {
@@ -68,6 +95,7 @@ function sendToBank(questions, target) {
         updateCategoryInputs();
         const bankStatus = document.getElementById('bankStatus');
         if (bankStatus) bankStatus.innerHTML = `<div class="text-green-600">Bank loaded (${clean.length} questions)</div>`;
+        setDropZoneLoaded(document.getElementById('loadTestBank'), `${clean.length} question(s) loaded`);
         showToast(`✅ Sent ${clean.length} question(s) to Design a Test.`, 'success');
         document.getElementById('testGeneratorTab')?.click();
     }
