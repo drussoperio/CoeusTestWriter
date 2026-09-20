@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.2] - 2026-09-20
+### Fixed
+- Design a Test's "DOCX format details" panel was stale: it still described the old ~3.25"-fit heuristic and Philippine-specific paper wording from before the 2.17.x column-layout changes. Updated to match the current flat 48-character 2-column threshold and general wording.
+
 ## [2.18.1] - 2026-09-20
 ### Changed
 - Design a Test's "Don't ask me again" opt-out for the Construct New Test confirmation popup is now reset whenever a new test bank is loaded (Upload File) or arrives via Send to Design a Test — so the warning is live again for the new bank instead of staying silenced from a previous one.
