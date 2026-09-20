@@ -978,6 +978,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (mc) mc.classList.toggle('hidden', v !== 'multiple_choice');
             if (tf) tf.classList.toggle('hidden', v !== 'true_false');
             if (mt) mt.classList.toggle('hidden', v !== 'matching');
+            if (v !== 'multiple_choice') document.getElementById('wqQuestionWarning')?.classList.add('hidden');
         }
         if (typeSelect) typeSelect.addEventListener('change', updateWqFormSections);
         updateWqFormSections();
@@ -1007,6 +1008,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Add Question form submit
+        function showWqQuestionWarning(msg) {
+            const w = document.getElementById('wqQuestionWarning');
+            if (!w) return;
+            if (msg) { w.textContent = '⚠️ ' + msg; w.classList.remove('hidden'); }
+            else { w.textContent = ''; w.classList.add('hidden'); }
+        }
         const form = document.getElementById('wqQuestionForm');
         if (form) {
             form.addEventListener('submit', e => {
@@ -1017,19 +1024,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 const diff    = document.getElementById('wqDifficulty')?.value || 'unset';
                 const qText   = (document.getElementById('wqQuestion')?.value || '').trim();
                 if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
+                if (type !== 'multiple_choice') showWqQuestionWarning('');
 
                 let q = { subject, category: cat, type, difficulty: diff, question: qText };
 
                 if (type === 'multiple_choice') {
-                    const rows = document.querySelectorAll('#wqChoicesContainer .wq-choice-input:not(.hidden)');
-                    const choices = [];
-                    rows.forEach(r => {
-                        const inp = r.querySelector('input[type="text"]');
-                        if (inp && inp.value.trim()) choices.push(inp.value.trim());
-                    });
-                    if (choices.length < 2) { showToast('⚠️ At least 2 choices required.', 'warning'); return; }
-                    q.choices = choices;
-                    q.correct = choices[0];
+                    const correctVal = (document.getElementById('wqCorrectChoiceInput')?.value || '').trim();
+                    const wrongInputs = document.querySelectorAll('#wqChoicesContainer .wq-choice-input:not(.hidden) .wq-wrong-choice-input');
+                    const wrongVals = [...wrongInputs].map(i => i.value.trim()).filter(Boolean);
+                    const err = mcqChoiceValidationError(correctVal, wrongVals);
+                    if (err) { showWqQuestionWarning(err); return; }
+                    showWqQuestionWarning('');
+                    q.choices = [correctVal, ...wrongVals];
+                    q.correct = correctVal;
                 } else if (type === 'true_false') {
                     const checked = document.querySelector('input[name="wqTfCorrect"]:checked');
                     if (!checked) { showToast('⚠️ Please select True or False.', 'warning'); return; }
@@ -1110,30 +1117,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ).join('');
             return `<div class="overflow-auto max-h-96"><table class="min-w-full text-xs border-collapse"><thead><tr>${hdr}</tr></thead><tbody>${bdy}</tbody></table></div>`;
         }
-        // Warns (across the whole exam bank, not just the form being edited)
-        // when any multiple-choice question has fewer than 4 choices.
-        function updateWqChoiceWarning() {
-            const banner = document.getElementById('wqChoiceWarning');
-            if (!banner) return;
-            const shortChoiceQuestions = examBank.filter(q => {
-                if (q.type !== 'multiple_choice') return false;
-                const choices = (q.choices || []).map(c => (c || '').toString().trim()).filter(Boolean);
-                return choices.length < 4;
-            });
-            if (shortChoiceQuestions.length === 0) {
-                banner.classList.add('hidden');
-                banner.innerHTML = '';
-                return;
-            }
-            banner.classList.remove('hidden');
-            banner.innerHTML = `<div class="p-3 rounded border border-amber-200 bg-amber-50">
-                <p class="text-sm font-semibold text-amber-800">⚠️ ${shortChoiceQuestions.length} multiple choice question(s) have fewer than 4 choices:</p>
-                ${renderValidationDetail('Fewer than 4 choices', shortChoiceQuestions, q => questionPreviewLabel(q))}
-            </div>`;
-        }
-
         function refreshWqPreview() {
-            updateWqChoiceWarning();
             const container = document.getElementById('wqOutputContainer');
             if (!container) return;
             const emptyState = document.getElementById('wqEmptyState');
@@ -1218,6 +1202,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     const noCorrect = qs.filter(q => q.type === 'multiple_choice' && !q.correct);
                     if (noCorrect.length) {
                         showPasteWarning(`${noCorrect.length} multiple choice question(s) have no correct answer marked. Prefix the correct choice with = or *.`);
+                        return;
+                    }
+                    // Check for MCQ with fewer than 4 choices
+                    const tooFewChoices = qs.filter(q => q.type === 'multiple_choice' && (q.choices || []).filter(c => (c || '').toString().trim()).length < 4);
+                    if (tooFewChoices.length) {
+                        showPasteWarning(`${tooFewChoices.length} multiple choice question(s) have fewer than 4 choices. MCQ requires 4 to 5 choices (a., b., c., d., optionally e.).`);
                         return;
                     }
                     qs.forEach(q => { q.difficulty = diff; });

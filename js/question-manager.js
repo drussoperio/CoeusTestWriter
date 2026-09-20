@@ -618,6 +618,7 @@ function saveQuestionEdit(idx, filtered) {
 
     if (originalIdx !== -1) {
         questionBank[originalIdx] = {
+            ...originalQuestion,
             category,
             type,
             question,
@@ -900,6 +901,7 @@ function setupQmAddQuestionsForm() {
         document.getElementById('qmAddChoicesSection')?.classList.toggle('hidden', v !== 'multiple_choice');
         document.getElementById('qmAddTrueFalseSection')?.classList.toggle('hidden', v !== 'true_false');
         document.getElementById('qmAddMatchingSection')?.classList.toggle('hidden', v !== 'matching');
+        if (v !== 'multiple_choice') document.getElementById('qmAddQuestionWarning')?.classList.add('hidden');
     }
     typeSelect.addEventListener('change', updateSections);
     updateSections();
@@ -925,6 +927,13 @@ function setupQmAddQuestionsForm() {
         });
     }
 
+    function showQmAddQuestionWarning(msg) {
+        const w = document.getElementById('qmAddQuestionWarning');
+        if (!w) return;
+        if (msg) { w.textContent = '⚠️ ' + msg; w.classList.remove('hidden'); }
+        else { w.textContent = ''; w.classList.add('hidden'); }
+    }
+
     const form = document.getElementById('qmAddQuestionForm');
     if (!form) return;
     form.addEventListener('submit', (e) => {
@@ -935,19 +944,19 @@ function setupQmAddQuestionsForm() {
         const diff = document.getElementById('qmAddDifficulty')?.value || 'unset';
         const qText = (document.getElementById('qmAddQuestion')?.value || '').trim();
         if (!qText && type !== 'matching') { showToast('⚠️ Question text is required.', 'warning'); return; }
+        if (type !== 'multiple_choice') showQmAddQuestionWarning('');
 
         let q = { subject, category: cat, type, difficulty: diff, question: qText };
 
         if (type === 'multiple_choice') {
-            const rows = document.querySelectorAll('#qmAddChoicesContainer .qm-add-choice-input:not(.hidden)');
-            const choices = [];
-            rows.forEach(r => {
-                const inp = r.querySelector('input[type="text"]');
-                if (inp && inp.value.trim()) choices.push(inp.value.trim());
-            });
-            if (choices.length < 2) { showToast('⚠️ At least 2 choices required.', 'warning'); return; }
-            q.choices = choices;
-            q.correct = choices[0];
+            const correctVal = (document.getElementById('qmAddCorrectChoiceInput')?.value || '').trim();
+            const wrongInputs = document.querySelectorAll('#qmAddChoicesContainer .qm-add-choice-input:not(.hidden) .qm-add-wrong-choice-input');
+            const wrongVals = [...wrongInputs].map(i => i.value.trim()).filter(Boolean);
+            const err = mcqChoiceValidationError(correctVal, wrongVals);
+            if (err) { showQmAddQuestionWarning(err); return; }
+            showQmAddQuestionWarning('');
+            q.choices = [correctVal, ...wrongVals];
+            q.correct = correctVal;
         } else if (type === 'true_false') {
             const checked = document.querySelector('input[name="qmAddTfCorrect"]:checked');
             if (!checked) { showToast('⚠️ Please select True or False.', 'warning'); return; }
@@ -965,6 +974,7 @@ function setupQmAddQuestionsForm() {
                 }
             });
             if (added === 0) { showToast('⚠️ Add at least one premise/answer pair.', 'warning'); return; }
+            assignQuestionUids(questionBank);
             saveQBankToStorage();
             renderQuestionManagerList();
             form.reset();
@@ -976,6 +986,7 @@ function setupQmAddQuestionsForm() {
         }
 
         questionBank.push(q);
+        assignQuestionUids(questionBank);
         saveQBankToStorage();
         renderQuestionManagerList();
         form.reset();
@@ -1017,8 +1028,14 @@ function setupQmAddQuestionsForm() {
                     showQmPasteWarning(`${noCorrect.length} multiple choice question(s) have no correct answer marked. Prefix the correct choice with = or *.`);
                     return;
                 }
+                const tooFewChoices = qs.filter(q => q.type === 'multiple_choice' && (q.choices || []).filter(c => (c || '').toString().trim()).length < 4);
+                if (tooFewChoices.length) {
+                    showQmPasteWarning(`${tooFewChoices.length} multiple choice question(s) have fewer than 4 choices. MCQ requires 4 to 5 choices (a., b., c., d., optionally e.).`);
+                    return;
+                }
                 qs.forEach(q => { q.difficulty = diff; });
                 questionBank.push(...qs);
+                assignQuestionUids(questionBank);
                 saveQBankToStorage();
                 renderQuestionManagerList();
                 document.getElementById('qmPasteInput').value = '';
