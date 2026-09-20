@@ -60,22 +60,11 @@ function exportTestAsDocx() {
     const MARGIN        = Math.round(0.5 * TWIP);
     const FONT          = 'Arial';
     const FONT_SIZE     = 22;
+    const TWO_COL_LIMIT = 48;
+    const HALF_W        = Math.round((PAGE_W - MARGIN * 2) / 2);
     const Q_LEFT        = Math.round(0.25 * TWIP);
     const Q_HANG        = Math.round(0.25 * TWIP);
     const CH_LEFT       = Math.round(0.25 * TWIP);
-
-    // How many characters of Arial at FONT_SIZE actually fit on one line
-    // of a two-column table cell, used to decide 1-col vs 2-col layout.
-    // Replaces a flat "55 characters" guess (which let a choice like
-    // "Lymph may move backward and accumulate in tissues" — 49 chars,
-    // under the old limit — still render wide enough at 11pt to spill
-    // past its column) with an estimate from the real column geometry:
-    // Arial averages ~0.52em per character, and each cell loses a bit of
-    // width to its own left/right padding.
-    const CELL_PADDING_TWIPS  = 260; // ~0.09in each side, both sides combined
-    const AVG_CHAR_WIDTH_TWIP = (FONT_SIZE / 2) * 0.52 * 20;
-    const COLUMN_WIDTH_TWIPS  = Math.round((PAGE_W - MARGIN * 2) / 2) - CELL_PADDING_TWIPS;
-    const TWO_COL_CHAR_LIMIT  = Math.floor(COLUMN_WIDTH_TWIPS / AVG_CHAR_WIDTH_TWIP);
 
     // ── Numbering ─────────────────────────────────────────────────────────
     const numberingConfig = {
@@ -120,12 +109,11 @@ function exportTestAsDocx() {
 
     // ── Choice builder ────────────────────────────────────────────────────
     function buildChoiceParas(choices) {
-        const texts = choices.map(c => String(c ?? '').trim());
-        // +3 for the "X. " letter prefix, which shares the column with the text
-        const longestWithPrefix = Math.max(0, ...texts.map(t => t.length + 3));
+        const texts   = choices.map(c => String(c ?? '').trim());
+        const longest = Math.max(0, ...texts.map(t => t.length));
 
         // 1-col layout
-        if (longestWithPrefix > TWO_COL_CHAR_LIMIT || choices.length > 5 || document.getElementById('forceSingleCol')?.checked) {
+        if (longest > TWO_COL_LIMIT || choices.length > 5 || document.getElementById('forceSingleCol')?.checked) {
             return texts.map((t, i) => new Paragraph({
                 children: [run(String.fromCharCode(65 + (i % 5)) + '. ' + t)],
                 indent:   { left: CH_LEFT },
@@ -134,11 +122,9 @@ function exportTestAsDocx() {
             }));
         }
 
-        // 2-col layout — a real table, not a tab stop, so a choice longer
-        // than expected wraps within its own cell instead of overflowing
-        // past the tab stop and pushing into the other column's space.
-        const rows = Math.ceil(texts.length / 2);
-        const tableRows = [];
+        // 2-col layout
+        const rows   = Math.ceil(texts.length / 2);
+        const result = [];
 
         for (let row = 0; row < rows; row++) {
             const li = row;
@@ -150,23 +136,24 @@ function exportTestAsDocx() {
             const rl = hasRight ? String.fromCharCode(65 + (ri % 5)) : null;
             const rt = hasRight ? texts[ri] : null;
 
-            tableRows.push(new TableRow({
-                children: [
-                    new TableCell({
-                        children: [new Paragraph({ children: [run(ll + '. ' + lt)], spacing: sp })],
-                        borders:  noBorders,
-                        width:    { size: 50, type: WidthType.PERCENTAGE }
-                    }),
-                    new TableCell({
-                        children: [new Paragraph({ children: hasRight ? [run(rl + '. ' + rt)] : [run('')], spacing: sp })],
-                        borders:  noBorders,
-                        width:    { size: 50, type: WidthType.PERCENTAGE }
-                    })
-                ]
+            const children = [run(ll + '. ' + lt)];
+            if (hasRight) {
+                children.push(new TextRun({ text: '\t', font: FONT, size: FONT_SIZE }));
+                children.push(run(rl + '. ' + rt));
+            }
+
+            const isLast = row === rows - 1;
+
+            result.push(new Paragraph({
+                children,
+                indent:   { left: CH_LEFT },
+                spacing:  sp,
+                keepNext: !isLast,
+                tabStops: [{ type: 'left', position: HALF_W }]
             }));
         }
 
-        return [new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } })];
+        return result;
     }
 
     // ── Assemble paragraphs ───────────────────────────────────────────────
