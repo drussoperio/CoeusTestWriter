@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.0';
+const APP_VERSION = '2.18.1';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.1': [
+        'Changed: Design a Test\'s "Don\'t ask me again" opt-out for the Construct New Test confirmation popup is now reset whenever a new test bank is loaded (Upload File) or arrives via Send to Design a Test — so the warning is live again for the new bank instead of staying silenced from a previous one.',
+    ],
     '2.18.0': [
         'Added: Design a Test\'s DOCX export now includes an Answer Key section (starting on a new page), listing each question\'s number, correct letter, and correct answer text — matching the on-screen Answer Key. Previously only TXT export had one; DOCX had none at all.',
         'Fixed: Manage a Bank\'s Export as TXT button had two separate click handlers attached (one in export-formats.js, a leftover duplicate in ui-init.js), so every click downloaded the file twice and showed two toasts. Removed the duplicate, and fixed the remaining handler\'s filename field, which was pulling from Design a Test\'s filename input instead of Manage a Bank\'s.',

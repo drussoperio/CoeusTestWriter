@@ -457,6 +457,10 @@ function loadFile(fileInput, isTxt, bankType) {
             if (bankType === 'testBank') {
                 testBank = normalizedData;
                 saveTestBankToStorage();
+                // A newly loaded bank means any next Construct New Test is
+                // building from scratch, not replacing a test the user was
+                // warned about — let the confirm popup show again.
+                localStorage.removeItem('coeus-skip-construct-test-warning');
                 const categories = [...new Set(testBank.map(q => q.category))].sort();
                 updateCategoryInputs(categories);
                 const bankStatus = document.getElementById('bankStatus');

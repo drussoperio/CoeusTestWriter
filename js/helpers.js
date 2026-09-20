@@ -119,6 +119,10 @@ function sendToBank(questions, target, filename) {
     } else {
         testBank = clean;
         saveTestBankToStorage();
+        // A newly arrived bank means any next Construct New Test is
+        // building from scratch, not replacing a test the user was
+        // warned about — let the confirm popup show again.
+        localStorage.removeItem('coeus-skip-construct-test-warning');
         updateCategoryInputs();
         const bankStatus = document.getElementById('bankStatus');
         if (bankStatus) bankStatus.innerHTML = `<div class="text-green-600">Bank loaded (${clean.length} questions)</div>`;

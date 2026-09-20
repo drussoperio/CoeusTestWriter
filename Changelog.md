@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.1] - 2026-09-20
+### Changed
+- Design a Test's "Don't ask me again" opt-out for the Construct New Test confirmation popup is now reset whenever a new test bank is loaded (Upload File) or arrives via Send to Design a Test — so the warning is live again for the new bank instead of staying silenced from a previous one.
+
 ## [2.18.0] - 2026-09-20
 ### Added
 - Design a Test's DOCX export now includes an Answer Key section (starting on a new page), listing each question's number, correct letter, and correct answer text — matching the on-screen Answer Key. Previously only TXT export had one; DOCX had none at all.
