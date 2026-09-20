@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-09-20
+### Added
+- Manage a Bank → Add Questions: split into "Compose Question" and "Paste Text" sub-tabs, mirroring Write Questions — paste plain numbered text and convert it directly into the bank you're managing, instead of only being able to compose one question at a time.
+- Manage a Bank → Add Questions: new "Preview Questions" panel showing the live bank contents with JSON/CSV/GIFT/TXT format toggles and a top/bottom scroll jump button. It's read-only (no export/filename/send-to controls), since those already live in the Download File section above Edit Bank.
+
 ## [2.10.0] - 2026-09-20
 ### Added
 - Manage a Bank: new "Add Questions" subtab alongside "Edit Bank" — compose a question (multiple choice, true/false, or matching, including the Choice E toggle) and add it straight into the bank you're managing, without switching to the Write Questions tab

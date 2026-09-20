@@ -521,83 +521,140 @@
                 <!-- Inner Tab: Add Questions -->
                 <div id="qm-add-questions" class="qm-inner-content">
                     <section class="p-4 border border-gray-200 rounded surface">
-                        <h2 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Add Questions</h2>
-                        <form id="qmAddQuestionForm" class="space-y-3" style="max-width: 640px;">
-                            <div>
-                                <label for="qmAddCategory" class="block text-sm font-medium" style="color:var(--text);">Category</label>
-                                <input type="text" id="qmAddCategory" placeholder="e.g. Cell Biology" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
-                            </div>
-                            <div>
-                                <label for="qmAddType" class="block text-sm font-medium" style="color:var(--text);">Type</label>
-                                <select id="qmAddType" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
-                                    <option value="multiple_choice">Multiple Choice</option>
-                                    <option value="true_false">True/False</option>
-                                    <option value="matching">Matching Type</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="qmAddDifficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
-                                <select id="qmAddDifficulty" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
-                                    <option value="unset">Unset</option>
-                                    <option value="easy">Easy</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="hard">Hard</option>
-                                </select>
-                            </div>
-                            <div id="qmAddQuestionSection">
-                                <label for="qmAddQuestion" class="block text-sm font-medium" style="color:var(--text);">Question</label>
-                                <textarea id="qmAddQuestion" rows="3" placeholder="Type your question here…" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
-                            </div>
-                            <div id="qmAddChoicesSection">
-                                <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
-                                <div id="qmAddChoicesContainer" class="space-y-2 mt-1">
-                                    <div class="flex items-center gap-2 qm-add-choice-input">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                        <input type="text" placeholder="Correct answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                        <div class="grid grid-cols-2 gap-6">
+                            <!-- Left: Input -->
+                            <div class="flex flex-col">
+                                <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Add Questions</h3>
+                                <!-- Sub-tabs -->
+                                <div class="flex gap-2 mb-4">
+                                    <button type="button" id="qmAddSubTab" class="px-4 py-2 rounded bg-blue-500 text-white font-medium flex-1 hover:bg-blue-600 text-sm">Compose Question</button>
+                                    <button type="button" id="qmPasteSubTab" class="px-4 py-2 rounded bg-gray-200 text-gray-700 font-medium flex-1 hover:bg-gray-300 text-sm">Paste Text</button>
+                                </div>
+                                <!-- Compose Question panel -->
+                                <div id="qmAddPanel" class="flex flex-col flex-1">
+                                    <form id="qmAddQuestionForm" class="space-y-3">
+                                        <div>
+                                            <label for="qmAddCategory" class="block text-sm font-medium" style="color:var(--text);">Category</label>
+                                            <input type="text" id="qmAddCategory" placeholder="e.g. Cell Biology" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                        </div>
+                                        <div>
+                                            <label for="qmAddType" class="block text-sm font-medium" style="color:var(--text);">Type</label>
+                                            <select id="qmAddType" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                                <option value="multiple_choice">Multiple Choice</option>
+                                                <option value="true_false">True/False</option>
+                                                <option value="matching">Matching Type</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="qmAddDifficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
+                                            <select id="qmAddDifficulty" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                                <option value="unset">Unset</option>
+                                                <option value="easy">Easy</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="hard">Hard</option>
+                                            </select>
+                                        </div>
+                                        <div id="qmAddQuestionSection">
+                                            <label for="qmAddQuestion" class="block text-sm font-medium" style="color:var(--text);">Question</label>
+                                            <textarea id="qmAddQuestion" rows="3" placeholder="Type your question here…" class="mt-1 block w-full rounded border text-sm px-2 py-1.5"></textarea>
+                                        </div>
+                                        <div id="qmAddChoicesSection">
+                                            <label class="block text-sm font-medium" style="color:var(--text);">Choices</label>
+                                            <div id="qmAddChoicesContainer" class="space-y-2 mt-1">
+                                                <div class="flex items-center gap-2 qm-add-choice-input">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                    <input type="text" placeholder="Correct answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                </div>
+                                                <div class="flex items-center gap-2 qm-add-choice-input">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                </div>
+                                                <div class="flex items-center gap-2 qm-add-choice-input">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                </div>
+                                                <div class="flex items-center gap-2 qm-add-choice-input">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                </div>
+                                                <div id="qmAddChoiceERow" class="flex items-center gap-2 qm-add-choice-input hidden">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                                </div>
+                                            </div>
+                                            <button type="button" id="qmAddToggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
+                                        </div>
+                                        <div id="qmAddTrueFalseSection" class="hidden">
+                                            <label class="block text-sm font-medium" style="color:var(--text);">Correct Answer</label>
+                                            <div class="space-y-1 mt-1">
+                                                <label class="inline-flex items-center text-sm"><input type="radio" name="qmAddTfCorrect" value="True" class="mr-1">True</label><br>
+                                                <label class="inline-flex items-center text-sm"><input type="radio" name="qmAddTfCorrect" value="False" class="mr-1">False</label>
+                                            </div>
+                                        </div>
+                                        <div id="qmAddMatchingSection" class="hidden">
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column A (Premises)</label>
+                                                    <div id="qmAddMatchingColumnA" class="space-y-2"></div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column B (Answers)</label>
+                                                    <div id="qmAddMatchingColumnB" class="space-y-2"></div>
+                                                </div>
+                                            </div>
+                                            <button type="button" id="qmAddMatchingPair" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium">+ Add Premise &amp; Answer</button>
+                                        </div>
+                                        <div class="flex gap-2 mt-1">
+                                            <button type="submit" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question to Bank</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- Paste Text panel -->
+                                <div id="qmPastePanel" class="hidden flex-col flex-1">
+                                    <div class="mb-3">
+                                        <label for="qmPasteCategory" class="block text-sm font-medium" style="color:var(--text);">Category</label>
+                                        <input type="text" id="qmPasteCategory" placeholder="e.g. Cell Biology" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
                                     </div>
-                                    <div class="flex items-center gap-2 qm-add-choice-input">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                    <div class="mb-3">
+                                        <label for="qmPasteDifficulty" class="block text-sm font-medium" style="color:var(--text);">Difficulty</label>
+                                        <select id="qmPasteDifficulty" class="mt-1 block w-full rounded border text-sm px-2 py-1.5">
+                                            <option value="unset">Unset</option>
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
                                     </div>
-                                    <div class="flex items-center gap-2 qm-add-choice-input">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                    </div>
-                                    <div class="flex items-center gap-2 qm-add-choice-input">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
-                                    </div>
-                                    <div id="qmAddChoiceERow" class="flex items-center gap-2 qm-add-choice-input hidden">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        <input type="text" placeholder="Wrong answer" class="flex-1 rounded border text-sm px-2 py-1.5">
+                                    <label for="qmPasteInput" class="block text-sm font-medium" style="color:var(--text);">Paste plain text here</label>
+                                    <div id="qmPasteWarning" class="hidden mb-2 p-2 rounded text-xs bg-yellow-50 border border-yellow-300 text-yellow-800"></div>
+                                    <textarea id="qmPasteInput" rows="10" class="mt-1 block w-full rounded border text-sm font-mono mb-3 px-2 py-1.5" placeholder="1. What is the fundamental unit of life?&#10;a. Gene&#10;b. Meme&#10;c. Atom&#10;=d. Cell&#10;&#10;2. The heart has four chambers.&#10;=True&#10;&#10;3. The study of plants&#10;=Botany"></textarea>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="qmPasteConvertBtn" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">Add Question(s) to Bank</button>
                                     </div>
                                 </div>
-                                <button type="button" id="qmAddToggleChoiceEBtn" class="mt-2 text-xs text-blue-500 hover:underline">+ Add Choice E</button>
                             </div>
-                            <div id="qmAddTrueFalseSection" class="hidden">
-                                <label class="block text-sm font-medium" style="color:var(--text);">Correct Answer</label>
-                                <div class="space-y-1 mt-1">
-                                    <label class="inline-flex items-center text-sm"><input type="radio" name="qmAddTfCorrect" value="True" class="mr-1">True</label><br>
-                                    <label class="inline-flex items-center text-sm"><input type="radio" name="qmAddTfCorrect" value="False" class="mr-1">False</label>
+
+                            <!-- Right: Preview -->
+                            <div class="flex flex-col">
+                                <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Preview Questions</h3>
+                                <!-- Preview format toggles -->
+                                <div class="flex gap-2 mb-2 flex-wrap">
+                                    <button type="button" id="qmPreviewJson" class="px-3 py-1 rounded bg-blue-500 text-white text-xs font-medium hover:bg-blue-600">JSON</button>
+                                    <button type="button" id="qmPreviewCsv"  class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">CSV</button>
+                                    <button type="button" id="qmPreviewGift" class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">GIFT</button>
+                                    <button type="button" id="qmPreviewTxt"  class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300">TXT</button>
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <button type="button" id="qmPreviewJumpToggle" class="bg-gray-500 hover:bg-gray-700 text-white px-3 py-1 rounded text-xs">↓ Bottom</button>
+                                </div>
+                                <div id="qmPreviewOutputContainer" class="border border-gray-300 rounded p-3 max-h-96 overflow-y-auto bg-white dark:bg-slate-800 mb-3 flex-1">
+                                    <div id="qmPreviewEmptyState" class="empty-state">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        <p>No questions yet.<br>Add questions to preview output here.</p>
+                                    </div>
+                                    <pre class="text-xs hidden"><code id="qmPreviewOutput"></code></pre>
                                 </div>
                             </div>
-                            <div id="qmAddMatchingSection" class="hidden">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column A (Premises)</label>
-                                        <div id="qmAddMatchingColumnA" class="space-y-2"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2" style="color:var(--text);">Column B (Answers)</label>
-                                        <div id="qmAddMatchingColumnB" class="space-y-2"></div>
-                                    </div>
-                                </div>
-                                <button type="button" id="qmAddMatchingPair" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium">+ Add Premise &amp; Answer</button>
-                            </div>
-                            <div class="flex gap-2 mt-1">
-                                <button type="submit" class="flex-1 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium">Add Question to Bank</button>
-                            </div>
-                        </form>
+                        </div>
                     </section>
                 </div>
 
