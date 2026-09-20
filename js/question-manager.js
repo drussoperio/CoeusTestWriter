@@ -873,6 +873,40 @@ function initializeQuestionManager() {
     renderQuestionManagerList();
 }
 
+// Jumps to a specific question in Manage a Bank's Edit Bank list (used by
+// the Bank Stats validation report's "fewer than 4 choices" links) —
+// switches to the Edit Bank tab, clears any search/filter that would hide
+// it, expands its category, scrolls to it, and briefly highlights it.
+function jumpToQuestionInBank(uid) {
+    document.querySelector('.qm-inner-tab-btn[data-qm-tab="bank-editor"]')?.click();
+
+    questionManagerState.searchText = '';
+    const searchInput = document.getElementById('qm-search-input');
+    if (searchInput) searchInput.value = '';
+    questionManagerState.filterBy = 'all';
+    const filterSelect = document.getElementById('qm-filter-select');
+    if (filterSelect) filterSelect.value = 'all';
+
+    const q = questionBank.find(qq => qq.__uid === uid);
+    if (q) {
+        if (!questionManagerState.collapsedCategories) questionManagerState.collapsedCategories = {};
+        questionManagerState.collapsedCategories[q.category] = false;
+    }
+
+    renderQuestionManagerList();
+
+    requestAnimationFrame(() => {
+        const checkbox = document.querySelector(`.qm-checkbox[data-uid="${uid}"]`);
+        const card = checkbox ? checkbox.closest('.q-card') : null;
+        if (!card) return;
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.transition = 'background-color 0.6s';
+        const prevBg = card.style.backgroundColor;
+        card.style.backgroundColor = '#fef08a';
+        setTimeout(() => { card.style.backgroundColor = prevBg; }, 1600);
+    });
+}
+
 // "Add Questions" inner tab of Manage a Bank - composes a question and
 // pushes it straight into questionBank (unlike the Write Questions tab,
 // which targets the separate examBank array).
@@ -947,14 +981,16 @@ function setupQmAddQuestionsForm() {
         if (type !== 'multiple_choice') showQmAddQuestionWarning('');
 
         let q = { subject, category: cat, type, difficulty: diff, question: qText };
+        let choiceCountWarning = null;
 
         if (type === 'multiple_choice') {
             const correctVal = (document.getElementById('qmAddCorrectChoiceInput')?.value || '').trim();
             const wrongInputs = document.querySelectorAll('#qmAddChoicesContainer .qm-add-choice-input:not(.hidden) .qm-add-wrong-choice-input');
             const wrongVals = [...wrongInputs].map(i => i.value.trim()).filter(Boolean);
-            const err = mcqChoiceValidationError(correctVal, wrongVals);
+            const err = mcqCorrectAnswerError(correctVal);
             if (err) { showQmAddQuestionWarning(err); return; }
             showQmAddQuestionWarning('');
+            choiceCountWarning = mcqChoiceCountWarning(correctVal, wrongVals);
             q.choices = [correctVal, ...wrongVals];
             q.correct = correctVal;
         } else if (type === 'true_false') {
@@ -993,7 +1029,8 @@ function setupQmAddQuestionsForm() {
         updateSections();
         if (choiceERow) { choiceERow.classList.add('hidden'); const inp = choiceERow.querySelector('input[type="text"]'); if (inp) inp.value = ''; }
         if (choiceEBtn) choiceEBtn.textContent = '+ Add Choice E';
-        showToast('✅ Question added to bank.', 'success');
+        if (choiceCountWarning) showToast(`⚠️ Question added. ${choiceCountWarning}`, 'warning');
+        else showToast('✅ Question added to bank.', 'success');
     });
 
     // Paste Text panel
@@ -1017,6 +1054,11 @@ function setupQmAddQuestionsForm() {
                 showQmPasteWarning('Format not recognized. Each question must start with a number, period, and space (e.g. "1. Question text"). See Show Tips for formatting rules.');
                 return;
             }
+            const overflowErr = plainTextChoiceOverflowError(text);
+            if (overflowErr) {
+                showQmPasteWarning(overflowErr);
+                return;
+            }
             try {
                 const qs = parsePlainTextToJson(text, subject, category);
                 if (!qs.length) {
@@ -1028,11 +1070,9 @@ function setupQmAddQuestionsForm() {
                     showQmPasteWarning(`${noCorrect.length} multiple choice question(s) have no correct answer marked. Prefix the correct choice with = or *.`);
                     return;
                 }
+                // Non-blocking heads-up for MCQ with fewer than 4 choices — some are
+                // legitimately 2-choice (true/false-style), so this never blocks adding.
                 const tooFewChoices = qs.filter(q => q.type === 'multiple_choice' && (q.choices || []).filter(c => (c || '').toString().trim()).length < 4);
-                if (tooFewChoices.length) {
-                    showQmPasteWarning(`${tooFewChoices.length} multiple choice question(s) have fewer than 4 choices. MCQ requires 4 to 5 choices (a., b., c., d., optionally e.).`);
-                    return;
-                }
                 qs.forEach(q => { q.difficulty = diff; });
                 questionBank.push(...qs);
                 assignQuestionUids(questionBank);
@@ -1042,7 +1082,11 @@ function setupQmAddQuestionsForm() {
                 document.getElementById('qmPasteSubject').value = '';
                 document.getElementById('qmPasteCategory').value = '';
                 document.getElementById('qmPasteDifficulty').value = 'unset';
-                showToast(`✅ Added ${qs.length} question(s).`, 'success');
+                if (tooFewChoices.length) {
+                    showToast(`⚠️ Added ${qs.length} question(s). ${tooFewChoices.length} have fewer than 4 choices — verify if unintended.`, 'warning');
+                } else {
+                    showToast(`✅ Added ${qs.length} question(s).`, 'success');
+                }
             } catch (err) {
                 showQmPasteWarning(err.message);
                 showToast('❌ ' + err.message, 'error');
