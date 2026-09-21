@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.3] - 2026-09-21
+### Fixed
+- Updated stale in-app tips: Manage a Bank's tab intro and the Welcome modal's quick-start list didn't mention the Add Questions subtab or Bank Stats' clickable validation report; Write Questions' plain-text formatting tip still said MCQ "only accepts four to five choices" even though fewer than 4 is now just a warning, not an error; Design a Test's tips didn't mention Reshuffle Test, the Construct New Test confirmation popup, or the DOCX Answer Key section.
+
 ## [2.18.2] - 2026-09-20
 ### Fixed
 - Design a Test's "DOCX format details" panel was stale: it still described the old ~3.25"-fit heuristic and Philippine-specific paper wording from before the 2.17.x column-layout changes. Updated to match the current flat 48-character 2-column threshold and general wording.

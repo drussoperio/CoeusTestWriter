@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.2';
+const APP_VERSION = '2.18.3';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.3': [
+        'Fixed: Updated stale in-app tips: Manage a Bank\'s tab intro and the Welcome modal\'s quick-start list didn\'t mention the Add Questions subtab or Bank Stats\' clickable validation report; Write Questions\' plain-text formatting tip still said MCQ "only accepts four to five choices" even though fewer than 4 is now just a warning, not an error; Design a Test\'s tips didn\'t mention Reshuffle Test, the Construct New Test confirmation popup, or the DOCX Answer Key section.',
+    ],
     '2.18.2': [
         'Fixed: Design a Test\'s "DOCX format details" panel was stale: it still described the old ~3.25"-fit heuristic and Philippine-specific paper wording from before the 2.17.x column-layout changes. Updated to match the current flat 48-character 2-column threshold and general wording.',
     ],
