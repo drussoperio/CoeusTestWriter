@@ -171,6 +171,46 @@ function findDuplicateQuestions(questions) {
     return [...groups.values()].filter(group => group.length > 1);
 }
 
+// Matches a bare capital letter A-E as a standalone token (word-bounded).
+const MC_COMBO_LETTER_TOKEN_RE = /\b[A-E]\b/g;
+
+// A choice counts as a "combination reference" only if it names 2+ DISTINCT
+// letters (e.g. "A and B", "Neither A nor B") — a lone letter ("Vitamin A")
+// is deliberately not enough, to avoid false positives.
+function isComboReferenceChoiceText(text) {
+    const matches = (text || '').toString().match(MC_COMBO_LETTER_TOKEN_RE);
+    if (!matches) return false;
+    return new Set(matches).size >= 2;
+}
+
+// Flags a question if ANY of its choices (not just the correct one) is a
+// combination reference. Such questions have their choice order fully
+// pinned at generation time so referenced letters stay accurate.
+function isMCComboReferenceQuestion(q) {
+    if (!q || q.type !== 'multiple_choice' || !Array.isArray(q.choices)) return false;
+    return q.choices.some(isComboReferenceChoiceText);
+}
+
+// Matches "All of the above" / "None of the above" / "all of the choices" /
+// "none of the choices" (case-insensitive), allowing trailing wording like
+// "All of the above are correct".
+const MC_ALL_NONE_ABOVE_RE = /^(all|none)\s+of\s+the\s+(above|choices)\b/i;
+
+function isAllNoneAboveChoiceText(text) {
+    return MC_ALL_NONE_ABOVE_RE.test((text || '').toString().trim());
+}
+
+// Returns the index of the "all/none of the above"-style choice in a
+// question, or -1 if none. Only the first match is used.
+function mcReservedLastChoiceIndex(q) {
+    if (!q || q.type !== 'multiple_choice' || !Array.isArray(q.choices)) return -1;
+    return q.choices.findIndex(isAllNoneAboveChoiceText);
+}
+
+function isMCReservedLastQuestion(q) {
+    return mcReservedLastChoiceIndex(q) !== -1;
+}
+
 // Runs every bank-health check and returns categorized results.
 function validateQuestionBank(questions) {
     const list = questions || [];
@@ -201,7 +241,12 @@ function validateQuestionBank(questions) {
         (!(q.question || '').toString().trim() || !(q.correct || '').toString().trim())
     );
 
-    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqShortChoices, matchingIssues };
+    // Informational only — these questions are automatically pinned at
+    // generation time, not broken, so they're never counted as issues.
+    const mcqComboReference = list.filter(isMCComboReferenceQuestion);
+    const mcqReservedLastAnswer = list.filter(q => !isMCComboReferenceQuestion(q) && isMCReservedLastQuestion(q));
+
+    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqShortChoices, matchingIssues, mcqComboReference, mcqReservedLastAnswer };
 }
 
 function bankValidationIssueCount(report) {
@@ -253,7 +298,7 @@ function renderBankValidationReport(containerId, questions) {
     const report = validateQuestionBank(list);
     const totalIssues = bankValidationIssueCount(report);
 
-    if (totalIssues === 0) {
+    if (totalIssues === 0 && report.mcqComboReference.length === 0 && report.mcqReservedLastAnswer.length === 0) {
         container.innerHTML = `<div class="p-3 rounded border border-green-200 bg-green-50 text-sm text-green-700">✅ No issues found in ${list.length} question(s).</div>`;
         return;
     }
@@ -284,6 +329,20 @@ function renderBankValidationReport(containerId, questions) {
         html += `<div class="p-3 rounded border border-blue-200 bg-blue-50 ${majorIssueCount > 0 ? 'mt-2' : ''}">
             <p class="text-sm font-semibold text-blue-800">ℹ️ ${report.mcqShortChoices.length} multiple choice question(s) have fewer than 4 choices — often fine (e.g. true/false-style), but worth a quick check:</p>
             ${renderValidationDetail('Fewer than 4 choices', report.mcqShortChoices, q => questionJumpLink(q))}
+        </div>`;
+    }
+
+    if (report.mcqComboReference.length > 0) {
+        html += `<div class="p-3 rounded border border-gray-200 bg-gray-50 ${html ? 'mt-2' : ''}">
+            <p class="text-sm font-semibold text-gray-700">📌 ${report.mcqComboReference.length} multiple choice question(s) reference another choice by letter (e.g. "A and B") — their choice order is automatically pinned so the letters stay correct:</p>
+            ${renderValidationDetail('Auto-pinned (combination reference)', report.mcqComboReference, q => questionJumpLink(q))}
+        </div>`;
+    }
+
+    if (report.mcqReservedLastAnswer.length > 0) {
+        html += `<div class="p-3 rounded border border-gray-200 bg-gray-50 ${html ? 'mt-2' : ''}">
+            <p class="text-sm font-semibold text-gray-700">📌 ${report.mcqReservedLastAnswer.length} multiple choice question(s) have an "All/None of the above"-style choice — it is automatically pinned to the last letter:</p>
+            ${renderValidationDetail('Auto-pinned (reserved last position)', report.mcqReservedLastAnswer, q => questionJumpLink(q))}
         </div>`;
     }
 

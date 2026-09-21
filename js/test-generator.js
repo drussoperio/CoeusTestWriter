@@ -167,9 +167,13 @@ function applyAnswerDistribution(questions, options) {
     const otherQuestions = questions.filter(q => q.type !== 'multiple_choice' && q.type !== 'true_false');
 
     // --- Multiple choice ---
+    // Questions pinned at prepare-time (combination-reference or
+    // "all/none of the above" choices) must keep the letter buildAndDisplayTestVersion
+    // already gave them — excluded from the distribution pool entirely.
     let balancedMcqs = mcqs;
-    if (mcqs.length > 0) {
-        const targetCounts = computeMCTargetCounts(mcqs, tolerance);
+    const shuffleableMcqs = mcqs.filter(q => !q.displayPinned);
+    if (shuffleableMcqs.length > 0) {
+        const targetCounts = computeMCTargetCounts(shuffleableMcqs, tolerance);
         const mcMaxRun = allowConsecutiveMC;
 
         if (!isRunConstraintFeasible(targetCounts, mcMaxRun)) {
@@ -183,13 +187,16 @@ function applyAnswerDistribution(questions, options) {
             }
         }
 
-        const { assignedLetters, forcedRepeats } = assignMCAnswerLetters(mcqs, targetCounts, mcMaxRun);
+        const { assignedLetters, forcedRepeats } = assignMCAnswerLetters(shuffleableMcqs, targetCounts, mcMaxRun);
         if (forcedRepeats > 0) {
             console.warn(`MCQ distribution: ${forcedRepeats} unavoidable repeat(s) allowed.`);
         }
 
-        balancedMcqs = mcqs.map((q, idx) => {
-            const letter = assignedLetters[idx];
+        let shuffleableIdx = 0;
+        balancedMcqs = mcqs.map(q => {
+            if (q.displayPinned) return q;
+
+            const letter = assignedLetters[shuffleableIdx++];
             const choices = q.displayChoices || q.choices || [];
             const correctText = q.displayCorrectText || q.correct;
             const shuffledChoices = [...choices];
@@ -406,7 +413,24 @@ function buildAndDisplayTestVersion(selectedQuestions) {
     // Create "display" versions with shuffled choices and computed correct letter
     const prepared = selectedQuestions.map((q, idx) => {
         if (q.type === 'multiple_choice' && Array.isArray(q.choices)) {
-            const shuffledChoices = shuffleArray([...q.choices]);
+            // Some choices' wording breaks if choice order changes: a
+            // "Both A and B" style choice references other letters, and an
+            // "All/None of the above" choice only reads correctly last.
+            // Both are pinned here so the app never emits a broken exam.
+            const fullyPinned = isMCComboReferenceQuestion(q);
+            const reservedIndex = !fullyPinned ? mcReservedLastChoiceIndex(q) : -1;
+
+            let shuffledChoices;
+            if (fullyPinned) {
+                shuffledChoices = [...q.choices];
+            } else if (reservedIndex !== -1) {
+                const reservedChoice = q.choices[reservedIndex];
+                const rest = q.choices.filter((_, i) => i !== reservedIndex);
+                shuffledChoices = [...shuffleArray(rest), reservedChoice];
+            } else {
+                shuffledChoices = shuffleArray([...q.choices]);
+            }
+
             const correctIndex = shuffledChoices.indexOf(q.correct);
             const correctLetter = String.fromCharCode(65 + correctIndex);
             return {
@@ -414,7 +438,8 @@ function buildAndDisplayTestVersion(selectedQuestions) {
                 displayChoices: shuffledChoices,
                 displayCorrectLetter: correctLetter,
                 displayCorrectText: q.correct,
-                displayNumber: idx + 1
+                displayNumber: idx + 1,
+                displayPinned: fullyPinned || reservedIndex !== -1
             };
         } else if (q.type === 'true_false') {
             const correctLetter = q.correct === "True" ? "A" : "B";
