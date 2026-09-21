@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.18.6] - 2026-09-21
 ### Added
 - Manage a Bank's Bank Stats now warns about multiple choice questions with a blank choice mixed in among real ones (e.g. Choice E was added but never filled in and never removed) — previously invisible, but shows up as a real answer option on generated exams.
+### Fixed
+- Tab intro spacing was inconsistent: Write Questions and Merge JSONs used looser line spacing (`space-y-2`) than the other three tabs (`space-y-1`). All five now use the same tight spacing.
 
 ## [2.18.5] - 2026-09-21
 ### Added

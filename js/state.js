@@ -27,6 +27,7 @@ const APP_VERSION = '2.18.6';
 const CHANGELOG = {
     '2.18.6': [
         'Added: Manage a Bank\'s Bank Stats now warns about multiple choice questions with a blank choice mixed in among real ones (e.g. Choice E was added but never filled in and never removed) — previously invisible, but shows up as a real answer option on generated exams.',
+        'Fixed: Tab intro spacing was inconsistent: Write Questions and Merge JSONs used looser line spacing (`space-y-2`) than the other three tabs (`space-y-1`). All five now use the same tight spacing.',
     ],
     '2.18.5': [
         'Added: Automatic choice-order pinning for MCQ answers whose wording breaks if choices are shuffled: a choice referencing 2+ other choices by letter (e.g. "Both A and B", "Neither A nor B") now keeps its whole question\'s choice order fixed, and an "All of the above" / "None of the above" / "all of the choices" / "none of the choices" choice is now always pinned to the last letter (D for 4 choices, E for 5). Both apply on every Construct New Test and Reshuffle Test. Bank Stats now shows a notice listing which questions were auto-pinned and why, with jump-to-question links.',
