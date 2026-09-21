@@ -594,11 +594,16 @@ function saveQuestionEdit(idx, filtered) {
 
     if (type === 'multiple_choice') {
         const choiceInputs = document.querySelectorAll(`.qm-edit-choice[data-filtered-idx="${idx}"]`);
-        choices = [];
+        const rawChoices = [];
         choiceInputs.forEach(input => {
             const choiceIdx = parseInt(input.dataset.choiceIdx);
-            choices[choiceIdx] = input.value;
+            rawChoices[choiceIdx] = input.value;
         });
+        // Drop blank wrong-answer slots (e.g. Choice E was added but left
+        // empty instead of being removed) — keep the correct-answer slot
+        // (index 0) even if blank, so it isn't silently replaced by a
+        // wrong answer shifting into its place.
+        choices = rawChoices.filter((c, i) => i === 0 || (c || '').toString().trim());
 
         // The first choice slot is always the correct answer (see allChoices
         // reordering in renderQuestionManagerList / markChoiceCorrect).

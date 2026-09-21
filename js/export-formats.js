@@ -71,7 +71,7 @@ function exportQuestionsAsPlainText() {
 
     const plainText = questionsToPlainText(questionBank);
 
-    const fileName = (document.getElementById('outputFilename')?.value.trim() || 'questionBank') + '.txt';
+    const fileName = (document.getElementById('questionBankFilename')?.value.trim() || 'questionBank') + '.txt';
     const blob = new Blob([plainText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -457,6 +457,10 @@ function loadFile(fileInput, isTxt, bankType) {
             if (bankType === 'testBank') {
                 testBank = normalizedData;
                 saveTestBankToStorage();
+                // A newly loaded bank means any next Construct New Test is
+                // building from scratch, not replacing a test the user was
+                // warned about — let the confirm popup show again.
+                localStorage.removeItem('coeus-skip-construct-test-warning');
                 const categories = [...new Set(testBank.map(q => q.category))].sort();
                 updateCategoryInputs(categories);
                 const bankStatus = document.getElementById('bankStatus');

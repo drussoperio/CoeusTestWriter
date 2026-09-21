@@ -387,10 +387,34 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        // Warn before Construct New Test replaces an already-generated test
+        // (Reshuffle Test is the non-destructive way to get another version
+        // of the same test) — skippable via a "don't ask me again" checkbox.
+        const constructTestConfirmModal = document.getElementById('constructTestConfirmModal');
+        function closeConstructTestConfirm() {
+            constructTestConfirmModal?.classList.add('hidden');
+            constructTestConfirmModal?.classList.remove('flex');
+        }
+        document.getElementById('constructTestCancelBtn')?.addEventListener('click', closeConstructTestConfirm);
+        document.getElementById('constructTestConfirmBtn')?.addEventListener('click', () => {
+            if (document.getElementById('constructTestDontAskAgain')?.checked) {
+                localStorage.setItem('coeus-skip-construct-test-warning', 'true');
+            }
+            closeConstructTestConfirm();
+            generateTest();
+        });
+
         if (testForm) {
             testForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                generateTest();
+                const hasExistingTest = (typeof lastSelectionQuestions !== 'undefined') && lastSelectionQuestions.length > 0;
+                const skipWarning = localStorage.getItem('coeus-skip-construct-test-warning') === 'true';
+                if (hasExistingTest && !skipWarning && constructTestConfirmModal) {
+                    constructTestConfirmModal.classList.remove('hidden');
+                    constructTestConfirmModal.classList.add('flex');
+                } else {
+                    generateTest();
+                }
             });
         }
 
@@ -1394,46 +1418,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize export dropdown
     initializeExportDropdown();
     
-    // Setup export as plain text with filename (button renamed to Export TXT, ID updated)
-    const exportPlainTextBtn = document.getElementById('exportQuestionsPlainBtn');
-    if (exportPlainTextBtn) {
-        exportPlainTextBtn.addEventListener('click', () => {
-            if (questionBank.length === 0) {
-                showToast('⚠️ No questions to export.', 'warning');
-                return;
-            }
-            const filenameInput = document.getElementById('questionBankFilename');
-            let filename = filenameInput ? filenameInput.value.trim() : 'questions';
-            if (!filename) filename = 'questions';
-            if (!filename.endsWith('.txt')) filename += '.txt';
-            
-            let plainText = '';
-            questionBank.forEach((q, i) => {
-                plainText += `${i + 1}. ${q.question}\n`;
-                if (q.type === 'true_false') {
-                    plainText += `=${q.correct}\n\n`;
-                } else if (q.type === 'matching') {
-                    plainText += `=${q.correct}\n\n`;
-                } else if (q.type === 'multiple_choice' && q.choices && Array.isArray(q.choices)) {
-                    q.choices.forEach((c, idx) => {
-                        const letter = String.fromCharCode(97 + idx);
-                        const marker = c === q.correct ? '=' : '';
-                        plainText += `${marker}${letter}. ${c}\n`;
-                    });
-                    plainText += '\n';
-                }
-            });
-            const blob = new Blob([plainText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('✅ Exported as plain text', 'success');
-        });
-    }
-
     // Export as GIFT
     const exportGiftBtn = document.getElementById('exportQuestionsGiftBtn');
     if (exportGiftBtn) {

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.2] - 2026-09-20
+### Fixed
+- Design a Test's "DOCX format details" panel was stale: it still described the old ~3.25"-fit heuristic and Philippine-specific paper wording from before the 2.17.x column-layout changes. Updated to match the current flat 48-character 2-column threshold and general wording.
+
+## [2.18.1] - 2026-09-20
+### Changed
+- Design a Test's "Don't ask me again" opt-out for the Construct New Test confirmation popup is now reset whenever a new test bank is loaded (Upload File) or arrives via Send to Design a Test — so the warning is live again for the new bank instead of staying silenced from a previous one.
+
+## [2.18.0] - 2026-09-20
+### Added
+- Design a Test's DOCX export now includes an Answer Key section (starting on a new page), listing each question's number, correct letter, and correct answer text — matching the on-screen Answer Key. Previously only TXT export had one; DOCX had none at all.
+### Fixed
+- Manage a Bank's Export as TXT button had two separate click handlers attached (one in export-formats.js, a leftover duplicate in ui-init.js), so every click downloaded the file twice and showed two toasts. Removed the duplicate, and fixed the remaining handler's filename field, which was pulling from Design a Test's filename input instead of Manage a Bank's.
+
+## [2.17.3] - 2026-09-20
+### Changed
+- DOCX export: reverted the 2-column MCQ layout from 2.17.1's table-based approach back to the original tab-stop paragraphs. The 1-vs-2-column length check is now a flat 48-character limit (down from the original 55), replacing 2.17.2's computed-geometry estimate.
+
+## [2.17.2] - 2026-09-20
+### Changed
+- DOCX export: the 1-column vs. 2-column MCQ choice check is now based on the actual column geometry (page width, margins, font size) instead of a flat "55 characters" guess — a choice is only put in a 2-column table cell if it's estimated to actually fit on one line at that width. The question 89 case from 2.17.1 (49-char choice, previously under the flat limit) now correctly goes 1-column instead of relying solely on the table cell wrapping it.
+
+## [2.17.1] - 2026-09-20
+### Fixed
+- DOCX export: a two-column MCQ layout used a tab stop to fake the second column, so a choice near (but under) the length threshold for 2-column mode could still render wide enough to overflow past the tab stop and push into where the next column's text should start. The two-column layout now uses a real (borderless) table, so a longer choice wraps within its own cell instead of overlapping the other column.
+
+## [2.17.0] - 2026-09-20
+### Added
+- Design a Test: clicking Construct New Test after a test was already generated now shows a confirmation popup first (it discards the current test and starts over), with a "Don't ask me again" checkbox for anyone who really does mean to replace it every time. The button's subtitle also now says this outright.
+### Fixed
+- Manage a Bank's Edit Bank question editor: saving a question no longer includes blank wrong-answer choices (e.g. Choice E was added but left empty instead of being removed) — they're now dropped, matching how Compose Question already behaves.
+
 ## [2.16.0] - 2026-09-20
 ### Changed
 - Manage a Bank's Bank Stats "jump to question" highlight now stays visible for 3 seconds (was 1.6s), giving more time to actually spot the question before it fades.
