@@ -5,8 +5,8 @@ A browser-based toolkit for writing, organizing, and generating exam questions. 
 ## Features
 
 - **Write questions** — type questions one at a time or paste plain numbered text; preview in JSON, CSV, GIFT, or TXT instantly.
-- **Manage a bank** — load, search, filter, sort, bulk-rename, set difficulty, and bulk-delete from a JSON question bank.
-- **Design a test** — generate randomized, versioned tests with answer-distribution balancing, difficulty ratios, and per-category quotas.
+- **Manage a bank** — load, search, filter, sort, bulk-rename, set difficulty, and bulk-delete from a JSON question bank, or add new questions to it directly without leaving the tab.
+- **Design a test** — generate randomized, versioned tests with answer-distribution balancing, difficulty ratios, and per-category quotas; reshuffle a generated test into another version without re-picking questions.
 - **Convert a file** — upload any supported format (JSON, CSV, GIFT TXT, plain TXT) and export to any other format.
 - **Merge JSONs** — combine multiple JSON question banks into one file.
 - **Send between tabs** — push a bank directly from one tab to another (e.g. Manage a Bank → Design a Test) without exporting and re-uploading a file.
@@ -79,12 +79,12 @@ Write and accumulate questions into a local exam bank, then export the whole ban
 
 **Compose Question** (sub-tab) — One-question-at-a-time form:
 - Set **Subject**, **Category**, **Type** (Multiple Choice / True/False / Matching), and **Difficulty**.
-- Multiple Choice: the first choice is always the correct answer (✓); choices 2–5 are wrong answers (✗). Use **+ Add Choice E** to show a fifth option.
+- Multiple Choice: the first choice is always the correct answer (✓); choices 2–5 are wrong answers (✗). Use **+ Add Choice E** to show a fifth option. Leaving Correct Answer blank is blocked; fewer than 4 total choices shows a warning but is still allowed.
 - True/False: select True or False.
 - Matching: click **+ Add Premise & Answer** to add premise/answer pairs in two columns.
 - **Add Question** appends to the bank. **Delete All Questions** clears the entire saved bank.
 
-**Paste Text** (sub-tab) — Bulk-add via plain numbered text (same format as Convert a File → JSON). Set Subject, Category, and Difficulty first, then paste and click **Add Question**.
+**Paste Text** (sub-tab) — Bulk-add via plain numbered text (same format as Convert a File → JSON; see the formatting rules there). Set Subject, Category, and Difficulty first, then paste and click **Add Question**.
 
 **Download File** panel — preview the current bank as JSON, CSV, GIFT, or TXT. Export using **Export as JSON / CSV / TXT / GIFT**, or use **Send to Manage a Bank** / **Send to Design a Test** to load the bank directly into another tab without exporting a file.
 
@@ -96,9 +96,13 @@ Load and curate an existing JSON question bank.
 
 **Upload File** — Drag-and-drop or browse for a `.json` file. **Clear Bank** removes it from memory without affecting `localStorage`.
 
-**Download File** — Export the current bank as **JSON**, **CSV**, **TXT**, or **GIFT**, or use **Send to Design a Test** to load it directly into the test generator.
+**Download File** — Export the current bank as **JSON**, **CSV**, **TXT**, or **GIFT**, or use **Send to Design a Test** to load it directly into the test generator. Sending or receiving a bank via Send to X shows the source filename in the destination tab's Upload File drop zone.
 
-**Bank Stats** — a standalone section showing total question count, breakdown by type/difficulty/category, and a validation report that flags duplicate questions, missing correct answers, empty question text, and malformed multiple-choice or matching entries.
+**Bank Stats** — a standalone section showing total question count, breakdown by type/difficulty/category, and a validation report split into two parts:
+- **Issues** (amber) — duplicate questions, missing or invalid correct answers (including a correct answer that no longer matches any of its choices — catches hand-edited JSON), empty question text, and malformed multiple-choice or matching entries.
+- **Minor** (blue) — multiple choice questions with fewer than 4 choices; often fine (e.g. a true/false-style question saved as multiple choice), but worth a look. Every listed question is a clickable link that jumps to it in Edit Bank, expands its category, and briefly highlights it.
+
+Sits alongside two inner tabs:
 
 **Edit Bank** — Search, sort, and filter the loaded bank:
 - **Search** — matches question text, answers, or category.
@@ -109,6 +113,12 @@ Load and curate an existing JSON question bank.
 - **Set Difficulty** — bulk-sets the difficulty of selected questions.
 - **Select All Visible** — selects all questions matching the current search/filter.
 - **Delete (N)** — removes selected questions permanently.
+- **Edit** a question inline — click a choice's check/✗ icon to mark it correct (the first choice slot is always the correct one). Blank wrong choices (e.g. an unused Choice E left empty) are dropped automatically instead of being saved as an empty choice.
+
+**Add Questions** — compose or paste new questions straight into the bank being managed, without switching to Write Questions. Only available once a bank is loaded.
+- **Compose Question** — same one-question-at-a-time form as Write Questions (see below), including the Correct Answer / Wrong Answer fields and Choice E toggle. Leaving Correct Answer blank is blocked; a choice count under 4 shows a warning but doesn't block adding.
+- **Paste Text** — same plain-text bulk format as Write Questions. Blocks if a question has more than 5 choices (only `a.`–`e.` are recognized); warns (without blocking) if fewer than 4.
+- **Preview Questions** — read-only live preview of the bank in JSON/CSV/GIFT/TXT, with format toggles and a scroll jump button.
 
 ---
 
@@ -118,10 +128,10 @@ Generate a randomized, versioned test from a loaded JSON bank.
 
 **Upload File** — Load a `.json` bank. A warning appears if any questions lack a `correct` field.
 
-**Download File** — Set a filename (a version letter is appended automatically, e.g. `exam_A.docx`). DOCX format details are expandable: 8.5"×13" long bond paper, 0.5" margins, Arial 11pt, auto two-column MCQ choices (override with **Force single column**). Export as **DOCX**, **JSON**, **GIFT**, **CSV**, or **TXT**, or use **Send to Manage a Bank** to load the current test bank directly into the bank editor.
+**Download File** — Set a filename (a version letter is appended automatically, e.g. `exam_A.docx`). DOCX format details are expandable: 8.5"×13" long bond paper, 0.5" margins, Arial 11pt, two-column MCQ choices when every choice is 48 characters or less (otherwise single column; override with **Force single column**). DOCX export includes a full Answer Key section on its own page. Export as **DOCX**, **JSON**, **GIFT**, **CSV**, or **TXT**, or use **Send to Manage a Bank** to load the current test bank directly into the bank editor.
 
 **Generate Test** — Configure per-category question counts:
-- Enter MCQ, T/F, and Matching counts for each category row.
+- Enter MCQ, T/F, and Matching counts for each category row (listed alphabetically).
 - **Select All Available** — fills in the maximum available for every category.
 - **Clear All** — resets all inputs to zero.
 - **Smart Selection** — enter total target counts for MCQ, T/F, and Matching; the engine distributes them as evenly as possible across all categories, respecting each category's supply. Shortfalls are reported.
@@ -129,8 +139,10 @@ Generate a randomized, versioned test from a loaded JSON bank.
 - **Max Consecutive MC / T/F Answers** — prevents the same answer from repeating more than N times in a row.
 - **Difficulty Ratio** — set the ⚪ Unset / 🟢 Easy / 🟡 Medium / 🔴 Hard mix. Unset questions are used as fallback when a tier runs short.
 - **Exclude Already-Used Questions** — upload a previous test's JSON to prevent repeats.
+- **Construct New Test** — picks a fresh set of questions from the bank. If a test was already generated, a confirmation popup warns that this replaces it (with a "don't ask again" option); the popup resets whenever a new bank is loaded or sent in.
+- **Reshuffle Test** — generates another version (labeled A, B, C…) using the *same* questions as the last Construct New Test, with freshly shuffled order and choices. Disabled until a test exists.
 
-**Preview Test and Answer Key** — shows the generated test with a collapsible answer key, once **Construct Test** has been run.
+**Preview Test and Answer Key** — shows the generated test with a collapsible answer key, once a test has been generated.
 
 **Review Generation Report** — appears after generating a test:
 - **Summary** — total questions requested, selected, and any shortfall.
@@ -160,7 +172,7 @@ Upload any supported file and convert it to any other format in one step.
 
 **Plain-text formatting rules** (for TXT → JSON/CSV):
 - Number each question: `1. `, `2. `, … (numbers can repeat and don't need to be in order).
-- Multiple choice: label choices `a.`–`e.` Prefix the correct choice with `=` or `*`. Requires 4–5 choices; an error appears if none is marked correct.
+- Multiple choice: label choices `a.`–`e.` (up to 5; more than that is blocked — anything past `e.` isn't recognized). Prefix the correct choice with `=` or `*`; an error appears if none is marked correct. Fewer than 4 choices is allowed but shows a heads-up (some questions, like true/false-style ones, are legitimately 2-choice).
 - True/False: put `=True` or `=False` on the line immediately below the question.
 - Matching: write a premise line followed by `=Answer`; consecutive pairs are grouped into one matching question automatically.
 
@@ -212,10 +224,10 @@ Combine multiple Coeus JSON question banks into a single file.
 ├── update.bat                # Windows double-click updater (git pull origin main)
 ├── update.sh                 # Mac/Linux double-click updater
 ├── Changelog.md              # Source of truth for the in-app changelog
-├── LICENSE                   # AGPL-3.0
+├── LICENSE                   # GPL-3.0
 └── README.md
 ```
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. See [LICENSE](LICENSE) for details. This project and any derivatives must remain free and open source, including when run as a network service.
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)**. See [LICENSE](LICENSE) for details. This project and any derivatives must remain free and open source.

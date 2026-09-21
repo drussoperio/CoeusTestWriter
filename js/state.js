@@ -3,28 +3,32 @@
  * Copyright (C) 2026 Druss Operio
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
+ * it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
+ * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.3';
+const APP_VERSION = '2.18.4';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.4': [
+        'Changed: README rewritten to match current behavior: Manage a Bank\'s Add Questions subtab (Compose/Paste/Preview) and split Bank Stats validation report, Design a Test\'s Construct New Test confirmation popup and Reshuffle Test, the DOCX Answer Key section and updated 48-character 2-column threshold, and the corrected MCQ choice-count rules (blocks only above 5, warns without blocking below 4) across Write Questions, Manage a Bank, and Convert a File.',
+        'Fixed: The project is licensed under plain GPL-3.0, not AGPL-3.0 as the README, footer badge, and js/state.js license header all incorrectly stated (the actual LICENSE file has always been GPL-3.0). Corrected all three to match.',
+    ],
     '2.18.3': [
         'Fixed: Updated stale in-app tips: Manage a Bank\'s tab intro and the Welcome modal\'s quick-start list didn\'t mention the Add Questions subtab or Bank Stats\' clickable validation report; Write Questions\' plain-text formatting tip still said MCQ "only accepts four to five choices" even though fewer than 4 is now just a warning, not an error; Design a Test\'s tips didn\'t mention Reshuffle Test, the Construct New Test confirmation popup, or the DOCX Answer Key section.',
     ],
