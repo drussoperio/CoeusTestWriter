@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.5] - 2026-09-21
+### Added
+- Automatic choice-order pinning for MCQ answers whose wording breaks if choices are shuffled: a choice referencing 2+ other choices by letter (e.g. "Both A and B", "Neither A nor B") now keeps its whole question's choice order fixed, and an "All of the above" / "None of the above" / "all of the choices" / "none of the choices" choice is now always pinned to the last letter (D for 4 choices, E for 5). Both apply on every Construct New Test and Reshuffle Test. Bank Stats now shows a notice listing which questions were auto-pinned and why, with jump-to-question links.
+
 ## [2.18.4] - 2026-09-21
 ### Changed
 - README rewritten to match current behavior: Manage a Bank's Add Questions subtab (Compose/Paste/Preview) and split Bank Stats validation report, Design a Test's Construct New Test confirmation popup and Reshuffle Test, the DOCX Answer Key section and updated 48-character 2-column threshold, and the corrected MCQ choice-count rules (blocks only above 5, warns without blocking below 4) across Write Questions, Manage a Bank, and Convert a File.

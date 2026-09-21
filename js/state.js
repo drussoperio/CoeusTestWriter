@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.4';
+const APP_VERSION = '2.18.5';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.5': [
+        'Added: Automatic choice-order pinning for MCQ answers whose wording breaks if choices are shuffled: a choice referencing 2+ other choices by letter (e.g. "Both A and B", "Neither A nor B") now keeps its whole question\'s choice order fixed, and an "All of the above" / "None of the above" / "all of the choices" / "none of the choices" choice is now always pinned to the last letter (D for 4 choices, E for 5). Both apply on every Construct New Test and Reshuffle Test. Bank Stats now shows a notice listing which questions were auto-pinned and why, with jump-to-question links.',
+    ],
     '2.18.4': [
         'Changed: README rewritten to match current behavior: Manage a Bank\'s Add Questions subtab (Compose/Paste/Preview) and split Bank Stats validation report, Design a Test\'s Construct New Test confirmation popup and Reshuffle Test, the DOCX Answer Key section and updated 48-character 2-column threshold, and the corrected MCQ choice-count rules (blocks only above 5, warns without blocking below 4) across Write Questions, Manage a Bank, and Convert a File.',
         'Fixed: The project is licensed under plain GPL-3.0, not AGPL-3.0 as the README, footer badge, and js/state.js license header all incorrectly stated (the actual LICENSE file has always been GPL-3.0). Corrected all three to match.',
