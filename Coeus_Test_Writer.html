@@ -456,7 +456,9 @@
                     <p class="text-sm text-gray-700">Load a question bank, add new questions manually, edit, and export your bank in multiple formats.</p>
                     <div class="tab-intro hidden mt-3 pt-3 border-t border-blue-200 text-sm text-gray-600 space-y-1">
                         <p>▸ Load an existing <strong>.json</strong> bank file via drag-and-drop or the file picker to continue a previous session.</p>
-                        <p>▸ You can search, filter, sort, bulk-rename, set difficulty, or delete questions.</p>
+                        <p>▸ <strong>Edit Bank</strong> — search, filter, sort, bulk-rename, set difficulty, or delete questions.</p>
+                        <p>▸ <strong>Add Questions</strong> — compose questions one by one, paste plain numbered text, or preview the bank in JSON/CSV/GIFT/TXT, right alongside Edit Bank without switching tabs. Requires a loaded bank first.</p>
+                        <p>▸ <strong>Bank Stats</strong> flags real issues (missing/invalid correct answers, duplicates, empty questions) and minor notices (fewer than 4 choices) — click a flagged question to jump straight to it in Edit Bank.</p>
                         <p>▸ Export your bank as JSON (for reloading), CSV (for spreadsheet editing), plain TXT, or GIFT (for Moodle) when you're ready.</p>
                         <p>▸ Your bank persists in localStorage across sessions — no login or save button needed.</p>
                     </div>
@@ -782,8 +784,9 @@
                         <p>▸ Set MCQ, T/F, and Matching counts per category, or use <strong>Smart Selection</strong> to distribute a target total evenly across categories. You can also select all available questions.</p>
                         <p>▸ <strong>Difficulty Ratio</strong> lets you control the Easy/Medium/Hard mix. If there are not enough questions, unset questions will be picked.</p>
                         <p>▸ <strong>Exclude Already-Used Questions</strong> prevents repeats across test versions — upload a previous test's JSON.</p>
+                        <p>▸ <strong>Reshuffle Test</strong> keeps the exact same questions as your last Construct New Test, just in a new order with shuffled choices — handy for a second/third version of the same test. Constructing a brand-new test asks for confirmation once one already exists.</p>
                         <p>▸ The <strong>Generation Report</strong> tab shows a full breakdown including difficulty shortfalls.</p>
-                        <p>▸ Export as TXT, DOCX, or JSON.</p>
+                        <p>▸ Export as TXT, DOCX, or JSON. DOCX includes a full Answer Key section on its own page.</p>
                     </div>
                 </div>
 
@@ -1051,7 +1054,7 @@
                         <p>▸ Export as JSON, CSV, TXT, or GIFT.</p>
                         <p class="font-semibold mt-2" style="color:var(--text);">Plain-Text Formatting Rules (Paste Text)</p>
                         <p>▸ Number each question (<code class="bg-gray-100 px-1 rounded">1. </code>, <code class="bg-gray-100 px-1 rounded">2. </code>, …). A question is only recognized if it has a number, period, and space before the question itself. Numbers can repeat and don't need to be in order.</p>
-                        <p>▸ <strong>Multiple choice:</strong> label choices with letters <code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>. A choice is only recognized if it has a letter, period, and space before it. MCQ only accepts four to five choices. Prefix the correct choice with <code class="bg-gray-100 px-1 rounded">=</code> or <code class="bg-gray-100 px-1 rounded">*</code>. An error appears if no choice is marked correct.</p>
+                        <p>▸ <strong>Multiple choice:</strong> label choices with letters <code class="bg-gray-100 px-1 rounded">a.</code>–<code class="bg-gray-100 px-1 rounded">e.</code>. A choice is only recognized if it has a letter, period, and space before it. Up to 5 choices are supported (a.–e.) — more than that is blocked; fewer than 4 is allowed but shows a heads-up, since some questions (e.g. true/false-style) are legitimately 2-choice. Prefix the correct choice with <code class="bg-gray-100 px-1 rounded">=</code> or <code class="bg-gray-100 px-1 rounded">*</code>. An error appears if no choice is marked correct.</p>
                         <p>▸ <strong>True/False:</strong> put <code class="bg-gray-100 px-1 rounded">=True</code> or <code class="bg-gray-100 px-1 rounded">=False</code> on the line below the question.</p>
                         <p>▸ <strong>Matching:</strong> consecutive premise/answer pairs (premise line, then <code class="bg-gray-100 px-1 rounded">=Answer</code> line) are grouped into one matching question automatically.</p>
                     </div>
@@ -1417,7 +1420,7 @@
         <h3 class="font-semibold mb-2" style="color:var(--text);">Quick Start</h3>
         <ol class="text-sm space-y-2 mb-6 list-decimal list-inside" style="color:var(--text-muted);">
             <li><strong style="color:var(--text);">Write Questions</strong> — type questions one by one using the form, or paste plain numbered text. Your questions are saved automatically and can be exported as JSON, CSV, GIFT, or TXT.</li>
-            <li><strong style="color:var(--text);">Manage a Bank</strong> — load an existing JSON question bank, then search, filter, sort, bulk-rename, or bulk-delete questions in the Edit Bank panel. Export the updated bank in any format.</li>
+            <li><strong style="color:var(--text);">Manage a Bank</strong> — load an existing JSON question bank, then search, filter, sort, bulk-rename, or bulk-delete questions in the <strong style="color:var(--text);">Edit Bank</strong> panel, or compose/paste new questions straight into it via <strong style="color:var(--text);">Add Questions</strong>. Export the updated bank in any format.</li>
             <li><strong style="color:var(--text);">Design a Test</strong> — load a bank, set how many MCQ, T/F, and Matching questions to pull per category, then click <strong style="color:var(--text);">Construct New Test</strong>. Use <strong style="color:var(--text);">Reshuffle Test</strong> to make another version with the same questions, freshly shuffled. Export as TXT, DOCX, or JSON.</li>
             <li><strong style="color:var(--text);">Convert a File</strong> — upload any supported file (JSON, CSV, GIFT TXT, plain TXT) and export it directly to any other format.</li>
             <li><strong style="color:var(--text);">Merge JSONs</strong> — combine multiple Coeus JSON banks into one unified file.</li>
