@@ -381,7 +381,7 @@ function renderBankValidationReport(containerId, questions) {
 const BANK_STATS_TYPE_LABELS = { multiple_choice: 'Multiple Choice', true_false: 'True/False', matching: 'Matching' };
 const BANK_STATS_DIFFICULTY_ORDER = ['easy', 'medium', 'hard', 'unset'];
 const BANK_STATS_DIFFICULTY_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard', unset: 'Unset' };
-const BANK_STATS_MAX_CATEGORIES = 8;
+const BANK_STATS_MAX_CATEGORIES = 24;
 
 function statsCountBy(list, keyFn) {
     const counts = new Map();
@@ -398,6 +398,24 @@ function statsMiniTable(rows) {
             <tr>
                 <td class="py-0.5" style="color:var(--text);">${label}</td>
                 <td class="py-0.5 text-right font-medium" style="color:var(--text);">${count}</td>
+            </tr>`).join('')}
+    </table>`;
+}
+
+// Same idea as statsMiniTable, but packs label/count pairs several-per-row
+// (columns pairs = columns*2 <td>s) instead of one per row — used for
+// category counts, where a single-column list runs too tall.
+function statsMultiColumnTable(rows, columns, formatLabel) {
+    const rowChunks = [];
+    for (let i = 0; i < rows.length; i += columns) {
+        rowChunks.push(rows.slice(i, i + columns));
+    }
+    return `<table class="w-full text-xs">
+        ${rowChunks.map(chunk => `
+            <tr>
+                ${chunk.map(([label, count]) => `
+                    <td class="py-0.5 pr-1">${formatLabel(label)}</td>
+                    <td class="py-0.5 pr-3 text-right font-medium" style="color:var(--text);">${count}</td>`).join('')}
             </tr>`).join('')}
     </table>`;
 }
@@ -428,12 +446,6 @@ function renderBankStats(containerId, questions) {
     const shownCategories = sortedCategories.slice(0, BANK_STATS_MAX_CATEGORIES);
     const moreCategories = sortedCategories.length - shownCategories.length;
 
-    const categoryRows = shownCategories.map(([cat, count]) => `
-        <tr>
-            <td class="py-0.5">${catBadge(cat)}</td>
-            <td class="py-0.5 text-right font-medium" style="color:var(--text);">${count}</td>
-        </tr>`).join('');
-
     container.innerHTML = `
         <p class="text-sm font-semibold mb-3" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -447,7 +459,7 @@ function renderBankStats(containerId, questions) {
             </div>
             <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Category</p>
-                <table class="w-full text-xs">${categoryRows}</table>
+                ${statsMultiColumnTable(shownCategories, 3, catBadge)}
                 ${moreCategories > 0 ? `<p class="text-xs mt-1" style="color:var(--text-muted);">+${moreCategories} more categor${moreCategories === 1 ? 'y' : 'ies'}</p>` : ''}
             </div>
         </div>`;
