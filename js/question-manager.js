@@ -7,6 +7,12 @@ function renderQuestionManagerList() {
     const container = document.getElementById('sidebarQuestionList');
     if (!container) return;
 
+    const blankChoicesFixed = stripBlankMCChoices(questionBank);
+    if (blankChoicesFixed > 0) {
+        saveQBankToStorage();
+        showToast(`Removed blank choice(s) from ${blankChoicesFixed} question(s)`, 'success');
+    }
+
     renderBankValidationReport('qm-validation-report', questionBank);
     renderBankStats('qm-bank-stats', questionBank);
 

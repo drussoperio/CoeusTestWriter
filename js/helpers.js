@@ -211,6 +211,25 @@ function isMCReservedLastQuestion(q) {
     return mcReservedLastChoiceIndex(q) !== -1;
 }
 
+// Silently strips blank choices from multiple_choice questions in place —
+// e.g. Choice E was added but never filled in, and never removed. Previously
+// this only got fixed once a question was opened and re-saved in Edit Bank;
+// now it's fixed automatically wherever the bank is rendered, no manual
+// edit+save required. Idempotent: a bank with no blanks is untouched.
+// Returns the number of questions actually changed, for an optional toast.
+function stripBlankMCChoices(list) {
+    let affected = 0;
+    (list || []).forEach(q => {
+        if (q.type !== 'multiple_choice' || !Array.isArray(q.choices)) return;
+        const cleaned = q.choices.filter(c => (c || '').toString().trim() !== '');
+        if (cleaned.length !== q.choices.length) {
+            q.choices = cleaned;
+            affected++;
+        }
+    });
+    return affected;
+}
+
 // Runs every bank-health check and returns categorized results.
 function validateQuestionBank(questions) {
     const list = questions || [];
@@ -225,15 +244,6 @@ function validateQuestionBank(questions) {
         if (choices.length < 2) return true;
         const uniqueChoices = new Set(choices.map(c => c.toLowerCase()));
         return uniqueChoices.size !== choices.length;
-    });
-
-    // A blank choice mixed in among real ones (e.g. Choice E was added but
-    // never filled in, and never removed) — it gets displayed/shuffled as a
-    // real answer option, so this is a real issue, not just informational.
-    const mcqBlankChoices = list.filter(q => {
-        if (q.type !== 'multiple_choice' || !Array.isArray(q.choices)) return false;
-        const raw = q.choices.map(c => (c || '').toString().trim());
-        return raw.some(c => c === '') && raw.some(c => c !== '');
     });
 
     // Minor/informational only — 2-3 choices is valid (e.g. a true/false-style
@@ -255,7 +265,7 @@ function validateQuestionBank(questions) {
     const mcqComboReference = list.filter(isMCComboReferenceQuestion);
     const mcqReservedLastAnswer = list.filter(q => !isMCComboReferenceQuestion(q) && isMCReservedLastQuestion(q));
 
-    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqBlankChoices, mcqShortChoices, matchingIssues, mcqComboReference, mcqReservedLastAnswer };
+    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqShortChoices, matchingIssues, mcqComboReference, mcqReservedLastAnswer };
 }
 
 function bankValidationIssueCount(report) {
@@ -263,7 +273,6 @@ function bankValidationIssueCount(report) {
         + report.duplicateGroups.reduce((sum, g) => sum + g.length, 0)
         + report.emptyQuestion.length
         + report.mcqIssues.length
-        + report.mcqBlankChoices.length
         + report.mcqShortChoices.length
         + report.matchingIssues.length;
 }
@@ -322,15 +331,19 @@ function renderBankValidationReport(containerId, questions) {
 
         html += renderValidationDetail('Missing or invalid correct answer', report.missingCorrect, q => questionJumpLink(q));
 
-        html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group =>
-            `${group.length}× "${escapeHtml((group[0].question || '').toString().trim().slice(0, 70))}" — categories: ${escapeHtml([...new Set(group.map(q => q.category || 'Uncategorized'))].join(', '))}`
-        );
+        html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group => {
+            const preview = escapeHtml((group[0].question || '').toString().trim().slice(0, 70));
+            const links = group.map(q => {
+                const label = escapeHtml(q.category || 'Uncategorized');
+                if (q.__uid == null) return label;
+                return `<button type="button" class="underline decoration-dotted hover:text-blue-700" style="color:inherit;" onclick="jumpToQuestionInBank(${q.__uid})">${label}</button>`;
+            }).join(', ');
+            return `${group.length}× "${preview}" — categories: ${links}`;
+        });
 
         html += renderValidationDetail('Empty question text', report.emptyQuestion, q => `[${escapeHtml(q.category || 'Uncategorized')}] (no question text)`);
 
         html += renderValidationDetail('Multiple choice with too few or duplicate choices', report.mcqIssues, q => questionPreviewLabel(q));
-
-        html += renderValidationDetail('Multiple choice with a blank choice', report.mcqBlankChoices, q => questionJumpLink(q));
 
         html += renderValidationDetail('Matching pair missing premise or answer', report.matchingIssues, q => questionPreviewLabel(q));
 
@@ -368,7 +381,7 @@ function renderBankValidationReport(containerId, questions) {
 const BANK_STATS_TYPE_LABELS = { multiple_choice: 'Multiple Choice', true_false: 'True/False', matching: 'Matching' };
 const BANK_STATS_DIFFICULTY_ORDER = ['easy', 'medium', 'hard', 'unset'];
 const BANK_STATS_DIFFICULTY_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard', unset: 'Unset' };
-const BANK_STATS_MAX_CATEGORIES = 8;
+const BANK_STATS_MAX_CATEGORIES = 24;
 
 function statsCountBy(list, keyFn) {
     const counts = new Map();
@@ -385,6 +398,24 @@ function statsMiniTable(rows) {
             <tr>
                 <td class="py-0.5" style="color:var(--text);">${label}</td>
                 <td class="py-0.5 text-right font-medium" style="color:var(--text);">${count}</td>
+            </tr>`).join('')}
+    </table>`;
+}
+
+// Same idea as statsMiniTable, but packs label/count pairs several-per-row
+// (columns pairs = columns*2 <td>s) instead of one per row — used for
+// category counts, where a single-column list runs too tall.
+function statsMultiColumnTable(rows, columns, formatLabel) {
+    const rowChunks = [];
+    for (let i = 0; i < rows.length; i += columns) {
+        rowChunks.push(rows.slice(i, i + columns));
+    }
+    return `<table class="w-full text-xs">
+        ${rowChunks.map(chunk => `
+            <tr>
+                ${chunk.map(([label, count]) => `
+                    <td class="py-0.5 pr-1">${formatLabel(label)}</td>
+                    <td class="py-0.5 pr-3 text-right font-medium" style="color:var(--text);">${count}</td>`).join('')}
             </tr>`).join('')}
     </table>`;
 }
@@ -415,12 +446,6 @@ function renderBankStats(containerId, questions) {
     const shownCategories = sortedCategories.slice(0, BANK_STATS_MAX_CATEGORIES);
     const moreCategories = sortedCategories.length - shownCategories.length;
 
-    const categoryRows = shownCategories.map(([cat, count]) => `
-        <tr>
-            <td class="py-0.5">${catBadge(cat)}</td>
-            <td class="py-0.5 text-right font-medium" style="color:var(--text);">${count}</td>
-        </tr>`).join('');
-
     container.innerHTML = `
         <p class="text-sm font-semibold mb-3" style="color:var(--text);">📊 ${list.length} question${list.length === 1 ? '' : 's'}</p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -434,7 +459,7 @@ function renderBankStats(containerId, questions) {
             </div>
             <div class="p-3 rounded border border-gray-200 surface">
                 <p class="text-xs font-semibold uppercase mb-1" style="color:var(--text-muted);">By Category</p>
-                <table class="w-full text-xs">${categoryRows}</table>
+                ${statsMultiColumnTable(shownCategories, 3, catBadge)}
                 ${moreCategories > 0 ? `<p class="text-xs mt-1" style="color:var(--text-muted);">+${moreCategories} more categor${moreCategories === 1 ? 'y' : 'ies'}</p>` : ''}
             </div>
         </div>`;

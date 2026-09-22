@@ -19,12 +19,17 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.6';
+const APP_VERSION = '2.18.7';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.7': [
+        'Changed: Manage a Bank now silently strips blank multiple-choice choices (e.g. Choice E added but never filled in, and never removed) whenever the bank list renders — previously this only got fixed once a question was individually opened and re-saved in Edit Bank. A one-time toast confirms how many questions were fixed; the old "Multiple choice with a blank choice" Bank Stats warning is gone since there\'s no longer anything to warn about.',
+        'Changed: Bank Stats\' "By Category" box now shows 3 category/count pairs per row (6 columns) instead of 1 per row, so it takes far less vertical space — the category cap shown before "+N more" also went from 8 to 24 to make use of the extra density.',
+        'Fixed: Manage a Bank\'s Bank Stats "Duplicate questions" entries had no jump-to-question link, unlike every other validation category — each duplicate group now shows a clickable category label per occurrence, jumping straight to that instance in Edit Bank.',
+    ],
     '2.18.6': [
         'Added: Manage a Bank\'s Bank Stats now warns about multiple choice questions with a blank choice mixed in among real ones (e.g. Choice E was added but never filled in and never removed) — previously invisible, but shows up as a real answer option on generated exams.',
         'Fixed: Tab intro spacing was inconsistent: Write Questions and Merge JSONs used looser line spacing (`space-y-2`) than the other three tabs (`space-y-1`). All five now use the same tight spacing.',
