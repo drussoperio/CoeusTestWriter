@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.6';
+const APP_VERSION = '2.18.7';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.7': [
+        'Fixed: Manage a Bank\'s Bank Stats "Duplicate questions" entries had no jump-to-question link, unlike every other validation category — each duplicate group now shows a clickable category label per occurrence, jumping straight to that instance in Edit Bank.',
+    ],
     '2.18.6': [
         'Added: Manage a Bank\'s Bank Stats now warns about multiple choice questions with a blank choice mixed in among real ones (e.g. Choice E was added but never filled in and never removed) — previously invisible, but shows up as a real answer option on generated exams.',
         'Fixed: Tab intro spacing was inconsistent: Write Questions and Merge JSONs used looser line spacing (`space-y-2`) than the other three tabs (`space-y-1`). All five now use the same tight spacing.',

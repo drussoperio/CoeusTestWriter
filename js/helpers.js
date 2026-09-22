@@ -322,9 +322,15 @@ function renderBankValidationReport(containerId, questions) {
 
         html += renderValidationDetail('Missing or invalid correct answer', report.missingCorrect, q => questionJumpLink(q));
 
-        html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group =>
-            `${group.length}× "${escapeHtml((group[0].question || '').toString().trim().slice(0, 70))}" — categories: ${escapeHtml([...new Set(group.map(q => q.category || 'Uncategorized'))].join(', '))}`
-        );
+        html += renderValidationDetail('Duplicate questions', report.duplicateGroups, group => {
+            const preview = escapeHtml((group[0].question || '').toString().trim().slice(0, 70));
+            const links = group.map(q => {
+                const label = escapeHtml(q.category || 'Uncategorized');
+                if (q.__uid == null) return label;
+                return `<button type="button" class="underline decoration-dotted hover:text-blue-700" style="color:inherit;" onclick="jumpToQuestionInBank(${q.__uid})">${label}</button>`;
+            }).join(', ');
+            return `${group.length}× "${preview}" — categories: ${links}`;
+        });
 
         html += renderValidationDetail('Empty question text', report.emptyQuestion, q => `[${escapeHtml(q.category || 'Uncategorized')}] (no question text)`);
 

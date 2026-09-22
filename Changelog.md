@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.7] - 2026-09-22
+### Fixed
+- Manage a Bank's Bank Stats "Duplicate questions" entries had no jump-to-question link, unlike every other validation category — each duplicate group now shows a clickable category label per occurrence, jumping straight to that instance in Edit Bank.
+
 ## [2.18.6] - 2026-09-21
 ### Added
 - Manage a Bank's Bank Stats now warns about multiple choice questions with a blank choice mixed in among real ones (e.g. Choice E was added but never filled in and never removed) — previously invisible, but shows up as a real answer option on generated exams.
