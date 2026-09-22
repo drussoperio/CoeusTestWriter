@@ -211,6 +211,25 @@ function isMCReservedLastQuestion(q) {
     return mcReservedLastChoiceIndex(q) !== -1;
 }
 
+// Silently strips blank choices from multiple_choice questions in place —
+// e.g. Choice E was added but never filled in, and never removed. Previously
+// this only got fixed once a question was opened and re-saved in Edit Bank;
+// now it's fixed automatically wherever the bank is rendered, no manual
+// edit+save required. Idempotent: a bank with no blanks is untouched.
+// Returns the number of questions actually changed, for an optional toast.
+function stripBlankMCChoices(list) {
+    let affected = 0;
+    (list || []).forEach(q => {
+        if (q.type !== 'multiple_choice' || !Array.isArray(q.choices)) return;
+        const cleaned = q.choices.filter(c => (c || '').toString().trim() !== '');
+        if (cleaned.length !== q.choices.length) {
+            q.choices = cleaned;
+            affected++;
+        }
+    });
+    return affected;
+}
+
 // Runs every bank-health check and returns categorized results.
 function validateQuestionBank(questions) {
     const list = questions || [];
@@ -225,15 +244,6 @@ function validateQuestionBank(questions) {
         if (choices.length < 2) return true;
         const uniqueChoices = new Set(choices.map(c => c.toLowerCase()));
         return uniqueChoices.size !== choices.length;
-    });
-
-    // A blank choice mixed in among real ones (e.g. Choice E was added but
-    // never filled in, and never removed) — it gets displayed/shuffled as a
-    // real answer option, so this is a real issue, not just informational.
-    const mcqBlankChoices = list.filter(q => {
-        if (q.type !== 'multiple_choice' || !Array.isArray(q.choices)) return false;
-        const raw = q.choices.map(c => (c || '').toString().trim());
-        return raw.some(c => c === '') && raw.some(c => c !== '');
     });
 
     // Minor/informational only — 2-3 choices is valid (e.g. a true/false-style
@@ -255,7 +265,7 @@ function validateQuestionBank(questions) {
     const mcqComboReference = list.filter(isMCComboReferenceQuestion);
     const mcqReservedLastAnswer = list.filter(q => !isMCComboReferenceQuestion(q) && isMCReservedLastQuestion(q));
 
-    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqBlankChoices, mcqShortChoices, matchingIssues, mcqComboReference, mcqReservedLastAnswer };
+    return { missingCorrect, duplicateGroups, emptyQuestion, mcqIssues, mcqShortChoices, matchingIssues, mcqComboReference, mcqReservedLastAnswer };
 }
 
 function bankValidationIssueCount(report) {
@@ -263,7 +273,6 @@ function bankValidationIssueCount(report) {
         + report.duplicateGroups.reduce((sum, g) => sum + g.length, 0)
         + report.emptyQuestion.length
         + report.mcqIssues.length
-        + report.mcqBlankChoices.length
         + report.mcqShortChoices.length
         + report.matchingIssues.length;
 }
@@ -335,8 +344,6 @@ function renderBankValidationReport(containerId, questions) {
         html += renderValidationDetail('Empty question text', report.emptyQuestion, q => `[${escapeHtml(q.category || 'Uncategorized')}] (no question text)`);
 
         html += renderValidationDetail('Multiple choice with too few or duplicate choices', report.mcqIssues, q => questionPreviewLabel(q));
-
-        html += renderValidationDetail('Multiple choice with a blank choice', report.mcqBlankChoices, q => questionJumpLink(q));
 
         html += renderValidationDetail('Matching pair missing premise or answer', report.matchingIssues, q => questionPreviewLabel(q));
 

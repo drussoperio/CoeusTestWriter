@@ -26,6 +26,7 @@ const APP_VERSION = '2.18.7';
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
     '2.18.7': [
+        'Changed: Manage a Bank now silently strips blank multiple-choice choices (e.g. Choice E added but never filled in, and never removed) whenever the bank list renders — previously this only got fixed once a question was individually opened and re-saved in Edit Bank. A one-time toast confirms how many questions were fixed; the old "Multiple choice with a blank choice" Bank Stats warning is gone since there\'s no longer anything to warn about.',
         'Fixed: Manage a Bank\'s Bank Stats "Duplicate questions" entries had no jump-to-question link, unlike every other validation category — each duplicate group now shows a clickable category label per occurrence, jumping straight to that instance in Edit Bank.',
     ],
     '2.18.6': [
