@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.7] - 2026-09-22
+### Added
+- Matching-type questions in a generated test are now grouped by category into separate Column A/B tables instead of one pooled table — previously, matching pairs selected from different categories had their answers shuffled together into a single shared pool, so a student could narrow an answer down just by noticing it belonged to a different topic than the premise. Applies to the Test Preview, TXT export, and DOCX export.
+### Changed
+- Manage a Bank now silently strips blank multiple-choice choices (e.g. Choice E added but never filled in, and never removed) whenever the bank list renders — previously this only got fixed once a question was individually opened and re-saved in Edit Bank. A one-time toast confirms how many questions were fixed; the old "Multiple choice with a blank choice" Bank Stats warning is gone since there's no longer anything to warn about.
+- Bank Stats' "By Category" box now shows 3 category/count pairs per row (6 columns) instead of 1 per row, so it takes far less vertical space — the category cap shown before "+N more" also went from 8 to 24 to make use of the extra density.
+- Write Questions and Manage a Bank's Add Questions: the redundant "Question" text box no longer shows for Matching-type questions (Column A's premises already serve as each question). Matching questions also now start with 3 blank premise/answer row pairs instead of 0, since most matching sets have at least that many; blank pairs are still silently ignored on submit, same as before.
+### Fixed
+- Manage a Bank's Bank Stats "Duplicate questions" entries had no jump-to-question link, unlike every other validation category — each duplicate group now shows a clickable category label per occurrence, jumping straight to that instance in Edit Bank.
+
 ## [2.18.6] - 2026-09-21
 ### Added
 - Manage a Bank's Bank Stats now warns about multiple choice questions with a blank choice mixed in among real ones (e.g. Choice E was added but never filled in and never removed) — previously invisible, but shows up as a real answer option on generated exams.
