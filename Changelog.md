@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.8] - 2026-09-30
+### Fixed
+- DOCX export: Matching-type question premises were numbered with frozen plain text instead of Word's real auto-numbering, unlike MCQ and True/False questions (which already use a real numbered list). Now uses the same numbered-list reference, so it renumbers automatically like the rest of the test if the document is edited afterward.
+
 ## [2.18.7] - 2026-09-22
 ### Added
 - Matching-type questions in a generated test are now grouped by category into separate Column A/B tables instead of one pooled table — previously, matching pairs selected from different categories had their answers shuffled together into a single shared pool, so a student could narrow an answer down just by noticing it belonged to a different topic than the premise. Applies to the Test Preview, TXT export, and DOCX export.

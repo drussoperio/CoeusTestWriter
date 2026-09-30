@@ -19,12 +19,15 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.7';
+const APP_VERSION = '2.18.8';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.8': [
+        'Fixed: DOCX export: Matching-type question premises were numbered with frozen plain text instead of Word\'s real auto-numbering, unlike MCQ and True/False questions (which already use a real numbered list). Now uses the same numbered-list reference, so it renumbers automatically like the rest of the test if the document is edited afterward.',
+    ],
     '2.18.7': [
         'Added: Matching-type questions in a generated test are now grouped by category into separate Column A/B tables instead of one pooled table — previously, matching pairs selected from different categories had their answers shuffled together into a single shared pool, so a student could narrow an answer down just by noticing it belonged to a different topic than the premise. Applies to the Test Preview, TXT export, and DOCX export.',
         'Changed: Manage a Bank now silently strips blank multiple-choice choices (e.g. Choice E added but never filled in, and never removed) whenever the bank list renders — previously this only got fixed once a question was individually opened and re-saved in Edit Bank. A one-time toast confirms how many questions were fixed; the old "Multiple choice with a blank choice" Bank Stats warning is gone since there\'s no longer anything to warn about.',

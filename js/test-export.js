@@ -203,7 +203,6 @@ function exportTestAsDocx() {
             `${mtRomanDocx}. Matching Type. Match Column A with Column B.`
         ));
 
-        let mtQNum = mcqs.length + tfs.length + 1;
         matchingGroups.forEach(group => {
             if (multiGroupDocx) {
                 allChildren.push(new Paragraph({ children: [bold(group.category)], spacing: sp }));
@@ -213,15 +212,19 @@ function exportTestAsDocx() {
             const maxRows = Math.max(group.premises.length, group.answers.length);
 
             for (let i = 0; i < maxRows; i++) {
-                const premiseText = i < group.premises.length
-                    ? `${mtQNum + i}. ${group.premises[i].question}` : '';
+                // Same numbered-list reference as qPara() (MCQ/T-F), so
+                // numbering continues automatically instead of being frozen
+                // text — matches how MCQ/T-F questions are already numbered.
+                const premisePara = i < group.premises.length
+                    ? new Paragraph({ children: [run(group.premises[i].question)], numbering: { reference: 'q-num', level: 0 }, spacing: sp })
+                    : new Paragraph({ children: [run('')], spacing: sp });
                 const answerText = i < group.answers.length
                     ? `${group.answers[i].letter}. ${group.answers[i].text}` : '';
 
                 tableRows.push(new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph({ children: [run(premiseText)], spacing: sp })],
+                            children: [premisePara],
                             borders: noBorders,
                             width: { size: 50, type: WidthType.PERCENTAGE }
                         }),
@@ -238,8 +241,6 @@ function exportTestAsDocx() {
                 rows: tableRows,
                 width: { size: 100, type: WidthType.PERCENTAGE }
             }));
-
-            mtQNum += group.premises.length;
         });
     }
 
