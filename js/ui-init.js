@@ -996,13 +996,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const typeSelect = document.getElementById('wqType');
         function updateWqFormSections() {
             const v = typeSelect ? typeSelect.value : 'multiple_choice';
+            const qs = document.getElementById('wqQuestionSection');
             const mc = document.getElementById('wqChoicesSection');
             const tf = document.getElementById('wqTrueFalseSection');
             const mt = document.getElementById('wqMatchingSection');
+            if (qs) qs.classList.toggle('hidden', v === 'matching');
             if (mc) mc.classList.toggle('hidden', v !== 'multiple_choice');
             if (tf) tf.classList.toggle('hidden', v !== 'true_false');
             if (mt) mt.classList.toggle('hidden', v !== 'matching');
             if (v !== 'multiple_choice') document.getElementById('wqQuestionWarning')?.classList.add('hidden');
+            if (v === 'matching') ensureWqMatchingMinRows();
         }
         if (typeSelect) typeSelect.addEventListener('change', updateWqFormSections);
         updateWqFormSections();
@@ -1018,18 +1021,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Matching pairs
-        const addPairBtn = document.getElementById('wqAddMatchingPair');
-        if (addPairBtn) {
-            addPairBtn.addEventListener('click', () => {
-                const colA = document.getElementById('wqMatchingColumnA');
-                const colB = document.getElementById('wqMatchingColumnB');
-                if (!colA || !colB) return;
-                const idx = colA.children.length + 1;
-                const inp = () => `<input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="`;
-                colA.insertAdjacentHTML('beforeend', `<div>${inp()}Premise ${idx}"></div></div>`);
-                colB.insertAdjacentHTML('beforeend', `<div>${inp()}Answer ${idx}"></div></div>`);
-            });
+        function addWqMatchingPairRow() {
+            const colA = document.getElementById('wqMatchingColumnA');
+            const colB = document.getElementById('wqMatchingColumnB');
+            if (!colA || !colB) return;
+            const idx = colA.children.length + 1;
+            colA.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Premise ${idx}"></div>`);
+            colB.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Answer ${idx}"></div>`);
         }
+        // Matching questions start with 3 blank pairs — most matching sets
+        // have at least that many, so this saves clicking "+ Add" repeatedly.
+        function ensureWqMatchingMinRows(min = 3) {
+            const colA = document.getElementById('wqMatchingColumnA');
+            if (!colA) return;
+            while (colA.children.length < min) addWqMatchingPairRow();
+        }
+        const addPairBtn = document.getElementById('wqAddMatchingPair');
+        if (addPairBtn) addPairBtn.addEventListener('click', addWqMatchingPairRow);
 
         // Add Question form submit
         function showWqQuestionWarning(msg) {

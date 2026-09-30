@@ -2,6 +2,29 @@
 // HELPER FUNCTIONS, SEND TO BANK HELPER
 // ========================================
 
+// Groups matching questions by category (preserving first-appearance order
+// in the input array), independently shuffling and lettering each group's
+// answer column. Without this, a test with matching questions from several
+// categories pooled every premise/answer into one shared table — a student
+// could narrow an answer down just by noticing it belongs to a different
+// topic than the premise being matched. Each entry: { category, premises,
+// answers } where premises[i] pairs with answers[i] by row position (same
+// shape the old single flat pool used); letters cycle A-E within each group
+// only, not across the whole test.
+function buildMatchingGroups(matchingQuestions) {
+    const groups = new Map();
+    (matchingQuestions || []).forEach(q => {
+        const cat = q.category || 'Uncategorized';
+        if (!groups.has(cat)) groups.set(cat, []);
+        groups.get(cat).push(q);
+    });
+    return [...groups.entries()].map(([category, qs]) => {
+        const shuffledAnswers = shuffleArray(qs.map(q => q.correct));
+        const answers = shuffledAnswers.map((text, idx) => ({ text, letter: String.fromCharCode(65 + (idx % 5)) }));
+        return { category, premises: qs, answers };
+    });
+}
+
 // Validates a composed multiple-choice question's correct-answer input.
 // Returns an error string to BLOCK on, or null if valid. Leaving this
 // blank used to silently promote the first non-blank wrong answer to

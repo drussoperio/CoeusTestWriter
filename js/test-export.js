@@ -191,15 +191,11 @@ function exportTestAsDocx() {
     }
 
     const matching = lastGeneratedQuestions.filter(q => q.type === 'matching');
-    // Get all answers and randomly assign them letters (cycling A-E by row position).
-    // Computed once here so the Answer Key section below refers to the same
-    // shuffled letter assignment that's printed in the test itself.
-    const allAnswerTexts = matching.map(q => q.correct);
-    const shuffledAnswerTexts = shuffleArray([...allAnswerTexts]);
-    const sortedAnswers = shuffledAnswerTexts.map((text, idx) => ({
-        text,
-        letter: String.fromCharCode(65 + (idx % 5))
-    }));
+    // Grouped per category so a matching set never mixes premises/answers
+    // from a different topic — mirrors the Test Preview's grouping so the
+    // Answer Key below stays in sync with what's printed in the test.
+    const matchingGroups = buildMatchingGroups(matching);
+    const multiGroupDocx = matchingGroups.length > 1;
 
     if (matching.length > 0) {
         allChildren.push(new Paragraph({ children: [run('')], spacing: sp }));
@@ -207,36 +203,44 @@ function exportTestAsDocx() {
             `${mtRomanDocx}. Matching Type. Match Column A with Column B.`
         ));
 
-        // Build table with two columns
-        const tableRows = [];
-        const maxRows = Math.max(matching.length, sortedAnswers.length);
-        
-        for (let i = 0; i < maxRows; i++) {
-            const premiseText = i < matching.length
-                ? `${mcqs.length + tfs.length + i + 1}. ${matching[i].question}` : '';
-            const answerText = i < sortedAnswers.length
-                ? `${sortedAnswers[i].letter}. ${sortedAnswers[i].text}` : '';
-            
-            tableRows.push(new TableRow({
-                children: [
-                    new TableCell({
-                        children: [new Paragraph({ children: [run(premiseText)], spacing: sp })],
-                        borders: noBorders,
-                        width: { size: 50, type: WidthType.PERCENTAGE }
-                    }),
-                    new TableCell({
-                        children: [new Paragraph({ children: [run(answerText)], spacing: sp })],
-                        borders: noBorders,
-                        width: { size: 50, type: WidthType.PERCENTAGE }
-                    })
-                ]
+        let mtQNum = mcqs.length + tfs.length + 1;
+        matchingGroups.forEach(group => {
+            if (multiGroupDocx) {
+                allChildren.push(new Paragraph({ children: [bold(group.category)], spacing: sp }));
+            }
+
+            const tableRows = [];
+            const maxRows = Math.max(group.premises.length, group.answers.length);
+
+            for (let i = 0; i < maxRows; i++) {
+                const premiseText = i < group.premises.length
+                    ? `${mtQNum + i}. ${group.premises[i].question}` : '';
+                const answerText = i < group.answers.length
+                    ? `${group.answers[i].letter}. ${group.answers[i].text}` : '';
+
+                tableRows.push(new TableRow({
+                    children: [
+                        new TableCell({
+                            children: [new Paragraph({ children: [run(premiseText)], spacing: sp })],
+                            borders: noBorders,
+                            width: { size: 50, type: WidthType.PERCENTAGE }
+                        }),
+                        new TableCell({
+                            children: [new Paragraph({ children: [run(answerText)], spacing: sp })],
+                            borders: noBorders,
+                            width: { size: 50, type: WidthType.PERCENTAGE }
+                        })
+                    ]
+                }));
+            }
+
+            allChildren.push(new Table({
+                rows: tableRows,
+                width: { size: 100, type: WidthType.PERCENTAGE }
             }));
-        }
-        
-        allChildren.push(new Table({
-            rows: tableRows,
-            width: { size: 100, type: WidthType.PERCENTAGE }
-        }));
+
+            mtQNum += group.premises.length;
+        });
     }
 
     // ── Answer Key ───────────────────────────────────────────────────────
@@ -264,11 +268,13 @@ function exportTestAsDocx() {
             akNum++;
         });
 
-        matching.forEach(q => {
-            const answerObj = sortedAnswers.find(a => a.text === q.correct);
-            const answerLetter = answerObj ? answerObj.letter : 'A';
-            allChildren.push(new Paragraph({ children: [run(`${akNum}. ${answerLetter} (${q.correct || ''})`)], spacing: sp }));
-            akNum++;
+        matchingGroups.forEach(group => {
+            group.premises.forEach(q => {
+                const answerObj = group.answers.find(a => a.text === q.correct);
+                const answerLetter = answerObj ? answerObj.letter : 'A';
+                allChildren.push(new Paragraph({ children: [run(`${akNum}. ${answerLetter} (${q.correct || ''})`)], spacing: sp }));
+                akNum++;
+            });
         });
     }
 

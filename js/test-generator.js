@@ -602,57 +602,51 @@ function displayTest(questions) {
     if (matching.length > 0) {
         testHtml += `<p style="font-weight:600;margin-top:0.75rem;margin-bottom:0.5rem;">${mtRoman}. Matching Type. Match Column A with Column B.</p>`;
 
-        // Get all answers and randomly assign them letters
-        const allAnswers = matching.map(q => q.correct);
-        // Shuffle the answers to randomize their order
-        const shuffledAnswers = shuffleArray([...allAnswers]);
-        
-        // Build answer list with shuffled positions (limit to A-E)
-        const answerWithLetters = shuffledAnswers.map((answer, idx) => ({
-            text: answer,
-            letter: String.fromCharCode(65 + (idx % 5))
-        }));
-        
-        // Build table with aligned columns
-        const matchingTable = `
-            <table style="width:100%;border-collapse:collapse;margin-bottom:0.75rem;">
-                <tr>
-                    <th style="width:40%;text-align:left;font-weight:600;font-size:0.85rem;padding-bottom:0.25rem;">Column A</th>
-                    <th style="width:20%;"></th>
-                    <th style="width:40%;text-align:left;font-weight:600;font-size:0.85rem;padding-bottom:0.25rem;">Column B</th>
-                </tr>
-        `;
-        
-        let tableHtml = matchingTable;
-        if (matching.length !== answerWithLetters.length) {
-            console.warn('Matching table: premise/answer count mismatch', matching.length, answerWithLetters.length);
-        }
-        const maxRows = Math.max(matching.length, answerWithLetters.length);
+        // Grouped per category so a matching set never mixes premises/answers
+        // from a different topic — each group gets its own shuffled/lettered
+        // answer column, independent of the others.
+        const matchingGroups = buildMatchingGroups(matching);
+        const multiGroup = matchingGroups.length > 1;
 
-        for (let i = 0; i < maxRows; i++) {
-            const premiseCell = i < matching.length
-                ? `${questionNumber + i}. ${escapeHtml(matching[i].question)}` : '';
-            const answerCell = i < answerWithLetters.length
-                ? `${answerWithLetters[i].letter}. ${escapeHtml(answerWithLetters[i].text)}` : '';
+        matchingGroups.forEach(group => {
+            if (multiGroup) {
+                testHtml += `<p style="font-weight:600;font-size:0.85rem;margin-top:0.5rem;margin-bottom:0.25rem;">${escapeHtml(group.category)}</p>`;
+            }
 
-            tableHtml += `<tr>
-                <td style="padding:0.1rem 0.5rem 0.1rem 0;">${premiseCell}</td>
-                <td></td>
-                <td style="padding:0.1rem 0;">${answerCell}</td>
-            </tr>`;
-        }
-        tableHtml += `</table>`;
-        testHtml += tableHtml;
+            let tableHtml = `
+                <table style="width:100%;border-collapse:collapse;margin-bottom:0.75rem;">
+                    <tr>
+                        <th style="width:40%;text-align:left;font-weight:600;font-size:0.85rem;padding-bottom:0.25rem;">Column A</th>
+                        <th style="width:20%;"></th>
+                        <th style="width:40%;text-align:left;font-weight:600;font-size:0.85rem;padding-bottom:0.25rem;">Column B</th>
+                    </tr>
+            `;
 
-        // Add answer key - find which letter each answer was assigned
-        matching.forEach((q, idx) => {
-            const answerObj = answerWithLetters.find(a => a.text === q.correct);
-            const answerLetter = answerObj ? answerObj.letter : 'A';
-            const correctText = q.correct || '';
-            answerKeyHtml += `<div class="mb-1">${questionNumber + idx}. ${escapeHtml(answerLetter)} (${escapeHtml(correctText)})</div>`;
+            const maxRows = Math.max(group.premises.length, group.answers.length);
+            for (let i = 0; i < maxRows; i++) {
+                const premiseCell = i < group.premises.length
+                    ? `${questionNumber + i}. ${escapeHtml(group.premises[i].question)}` : '';
+                const answerCell = i < group.answers.length
+                    ? `${group.answers[i].letter}. ${escapeHtml(group.answers[i].text)}` : '';
+
+                tableHtml += `<tr>
+                    <td style="padding:0.1rem 0.5rem 0.1rem 0;">${premiseCell}</td>
+                    <td></td>
+                    <td style="padding:0.1rem 0;">${answerCell}</td>
+                </tr>`;
+            }
+            tableHtml += `</table>`;
+            testHtml += tableHtml;
+
+            group.premises.forEach((q, idx) => {
+                const answerObj = group.answers.find(a => a.text === q.correct);
+                const answerLetter = answerObj ? answerObj.letter : 'A';
+                const correctText = q.correct || '';
+                answerKeyHtml += `<div class="mb-1">${questionNumber + idx}. ${escapeHtml(answerLetter)} (${escapeHtml(correctText)})</div>`;
+            });
+
+            questionNumber += group.premises.length;
         });
-        
-        questionNumber += matching.length;
     }
 
     testHtml += '</div>';

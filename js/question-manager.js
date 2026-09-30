@@ -943,10 +943,12 @@ function setupQmAddQuestionsForm() {
 
     function updateSections() {
         const v = typeSelect.value;
+        document.getElementById('qmAddQuestionSection')?.classList.toggle('hidden', v === 'matching');
         document.getElementById('qmAddChoicesSection')?.classList.toggle('hidden', v !== 'multiple_choice');
         document.getElementById('qmAddTrueFalseSection')?.classList.toggle('hidden', v !== 'true_false');
         document.getElementById('qmAddMatchingSection')?.classList.toggle('hidden', v !== 'matching');
         if (v !== 'multiple_choice') document.getElementById('qmAddQuestionWarning')?.classList.add('hidden');
+        if (v === 'matching') ensureQmMatchingMinRows();
     }
     typeSelect.addEventListener('change', updateSections);
     updateSections();
@@ -960,17 +962,23 @@ function setupQmAddQuestionsForm() {
         });
     }
 
-    const addPairBtn = document.getElementById('qmAddMatchingPair');
-    if (addPairBtn) {
-        addPairBtn.addEventListener('click', () => {
-            const colA = document.getElementById('qmAddMatchingColumnA');
-            const colB = document.getElementById('qmAddMatchingColumnB');
-            if (!colA || !colB) return;
-            const idx = colA.children.length + 1;
-            colA.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Premise ${idx}"></div>`);
-            colB.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Answer ${idx}"></div>`);
-        });
+    function addQmMatchingPairRow() {
+        const colA = document.getElementById('qmAddMatchingColumnA');
+        const colB = document.getElementById('qmAddMatchingColumnB');
+        if (!colA || !colB) return;
+        const idx = colA.children.length + 1;
+        colA.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Premise ${idx}"></div>`);
+        colB.insertAdjacentHTML('beforeend', `<div><input type="text" class="w-full rounded border text-sm px-2 py-1.5" placeholder="Answer ${idx}"></div>`);
     }
+    // Matching questions start with 3 blank pairs — most matching sets
+    // have at least that many, so this saves clicking "+ Add" repeatedly.
+    function ensureQmMatchingMinRows(min = 3) {
+        const colA = document.getElementById('qmAddMatchingColumnA');
+        if (!colA) return;
+        while (colA.children.length < min) addQmMatchingPairRow();
+    }
+    const addPairBtn = document.getElementById('qmAddMatchingPair');
+    if (addPairBtn) addPairBtn.addEventListener('click', addQmMatchingPairRow);
 
     function showQmAddQuestionWarning(msg) {
         const w = document.getElementById('qmAddQuestionWarning');
@@ -1025,9 +1033,9 @@ function setupQmAddQuestionsForm() {
             saveQBankToStorage();
             renderQuestionManagerList();
             form.reset();
-            updateSections();
             document.getElementById('qmAddMatchingColumnA').innerHTML = '';
             document.getElementById('qmAddMatchingColumnB').innerHTML = '';
+            updateSections();
             showToast(`✅ Added ${added} matching question(s).`, 'success');
             return;
         }
