@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [2.18.8] - 2026-09-30
+### Added
+- Hidden Answer Key consistency check (Alt+9, no visible button anywhere): upload a DOCX export — including one manually edited in Word to make room for images — and it verifies the Answer Key still matches each multiple choice question's printed letter/text. Catches the kind of mismatch a manual reorder can introduce. True/False and Matching entries are reported as not checked rather than silently skipped.
 ### Fixed
 - DOCX export: Matching-type question premises were numbered with frozen plain text instead of Word's real auto-numbering, unlike MCQ and True/False questions (which already use a real numbered list). Now uses the same numbered-list reference, so it renumbers automatically like the rest of the test if the document is edited afterward.
 

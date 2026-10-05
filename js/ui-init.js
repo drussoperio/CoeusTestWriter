@@ -194,6 +194,34 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === shortcutsModal) closeShortcutsModal();
     });
 
+    // Hidden feature (Alt+9 only — no visible button anywhere triggers this).
+    const answerKeyCheckModal = document.getElementById('answerKeyCheckModal');
+    function openAnswerKeyCheckModal() {
+        answerKeyCheckModal?.classList.remove('hidden');
+        answerKeyCheckModal?.classList.add('flex');
+    }
+    function closeAnswerKeyCheckModal() {
+        answerKeyCheckModal?.classList.add('hidden');
+        answerKeyCheckModal?.classList.remove('flex');
+    }
+    document.getElementById('closeAnswerKeyCheckModal')?.addEventListener('click', closeAnswerKeyCheckModal);
+    answerKeyCheckModal?.addEventListener('click', (e) => {
+        if (e.target === answerKeyCheckModal) closeAnswerKeyCheckModal();
+    });
+    document.getElementById('answerKeyCheckFile')?.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const resultsEl = document.getElementById('answerKeyCheckResults');
+        if (resultsEl) resultsEl.innerHTML = '<p style="color:var(--text-muted);">Checking…</p>';
+        try {
+            const rawText = await extractDocxRawText(file);
+            const result = checkAnswerKeyConsistency(rawText);
+            renderAnswerKeyCheckResults(result);
+        } catch (err) {
+            if (resultsEl) resultsEl.innerHTML = `<p class="text-red-600">⚠️ Could not read that file: ${escapeHtml(err.message || String(err))}</p>`;
+        }
+    });
+
     // ── Drop zone initialization helper ────────────────────────
     function initDropZone(dropZoneEl, fileInputEl, callback) {
         if (!dropZoneEl || !fileInputEl) return;
@@ -1608,6 +1636,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === '?') {
             e.preventDefault();
             openShortcutsModal();
+        }
+
+        // Alt+9 — hidden Answer Key consistency check (not in the shortcuts list)
+        if (e.altKey && e.key === '9') {
+            e.preventDefault();
+            openAnswerKeyCheckModal();
         }
     });
 
