@@ -194,6 +194,34 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === shortcutsModal) closeShortcutsModal();
     });
 
+    // Hidden feature (Alt+9 only — no visible button anywhere triggers this).
+    const answerKeyCheckModal = document.getElementById('answerKeyCheckModal');
+    function openAnswerKeyCheckModal() {
+        answerKeyCheckModal?.classList.remove('hidden');
+        answerKeyCheckModal?.classList.add('flex');
+    }
+    function closeAnswerKeyCheckModal() {
+        answerKeyCheckModal?.classList.add('hidden');
+        answerKeyCheckModal?.classList.remove('flex');
+    }
+    document.getElementById('closeAnswerKeyCheckModal')?.addEventListener('click', closeAnswerKeyCheckModal);
+    answerKeyCheckModal?.addEventListener('click', (e) => {
+        if (e.target === answerKeyCheckModal) closeAnswerKeyCheckModal();
+    });
+    document.getElementById('answerKeyCheckFile')?.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const resultsEl = document.getElementById('answerKeyCheckResults');
+        if (resultsEl) resultsEl.innerHTML = '<p style="color:var(--text-muted);">Checking…</p>';
+        try {
+            const rawText = await extractDocxRawText(file);
+            const result = checkAnswerKeyConsistency(rawText);
+            renderAnswerKeyCheckResults(result);
+        } catch (err) {
+            if (resultsEl) resultsEl.innerHTML = `<p class="text-red-600">⚠️ Could not read that file: ${escapeHtml(err.message || String(err))}</p>`;
+        }
+    });
+
     // ── Drop zone initialization helper ────────────────────────
     function initDropZone(dropZoneEl, fileInputEl, callback) {
         if (!dropZoneEl || !fileInputEl) return;
@@ -370,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const exportJsonButton = document.getElementById('exportJson');
     const exportGiftButton = document.getElementById('exportGiftBtn');
     const exportCsvButton = document.getElementById('exportCsvBtn');
+    const exportZipButton = document.getElementById('exportZip');
 
     // ── Form event listeners ───────────────────────────────────
     function setupFormListeners() {
@@ -496,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (exportJsonButton) exportJsonButton.addEventListener('click', () => exportTestAsJson());
         if (exportGiftButton) exportGiftButton.addEventListener('click', () => exportTestAsGift());
         if (exportCsvButton) exportCsvButton.addEventListener('click', () => exportTestAsCsv());
+        if (exportZipButton) exportZipButton.addEventListener('click', () => exportTestAsZip());
         document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage', filenameFromInput('outputFilename')));
     }
 
@@ -616,6 +646,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lastFileName = file.name.replace(/\.[^/.]+$/, '');
                     if (filenameInput) filenameInput.value = lastFileName;
                     format = formatFromFileName(file.name);
+                    if (format === 'docx') {
+                        extractDocxRawText(file).then(rawText => {
+                            try {
+                                const questions = parseQuestionsByFormat(rawText, format);
+                                finishConvert(questions);
+                            } catch (error) {
+                                output.textContent = 'Error: ' + error.message;
+                                showToast('❌ Error: ' + error.message, 'error');
+                            }
+                        }).catch(error => {
+                            output.textContent = 'Error: ' + error.message;
+                            showToast('❌ Error: ' + error.message, 'error');
+                        });
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.onload = function (event) {
                         try {
@@ -698,6 +743,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
             showToast('✅ Conversion complete', 'success');
+            if (questions.skippedCount > 0) {
+                showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (Matching — not supported from DOCX).`, 'warning');
+            }
         }
 
         // Convert is now triggered by each export button
@@ -837,11 +885,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const baseName = file.name.replace(/\.[^/.]+$/, '');
             if (filenameIn) filenameIn.value = baseName;
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
+            function handleParsedText(text, format) {
                 try {
-                    const format = formatFromFileName(file.name);
-                    const questions = parseQuestionsByFormat(e.target.result, format);
+                    const questions = parseQuestionsByFormat(text, format);
                     cfStoredQuestions = questions;
                     renderMissingCorrectWarning('convertFileMissingCorrectWarning', questions);
                     let resultStr;
@@ -853,12 +899,29 @@ document.addEventListener('DOMContentLoaded', function () {
                     lastFmt = fmt;
                     renderOutput(fmt, resultStr);
                     showToast('✅ Converted to ' + fmt.toUpperCase(), 'success');
+                    if (questions.skippedCount > 0) {
+                        showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (Matching — not supported from DOCX).`, 'warning');
+                    }
                     if (convertFilePendingDownload) { convertFilePendingDownload = null; downloadConvertResult(); }
                 } catch (err) {
                     if (output) output.textContent = 'Error: ' + err.message;
                     showToast('❌ ' + err.message, 'error');
                     convertFilePendingDownload = null;
                 }
+            }
+
+            const format = formatFromFileName(file.name);
+            if (format === 'docx') {
+                extractDocxRawText(file).then(rawText => handleParsedText(rawText, format)).catch(err => {
+                    if (output) output.textContent = 'Error: ' + err.message;
+                    showToast('❌ ' + err.message, 'error');
+                    convertFilePendingDownload = null;
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                handleParsedText(e.target.result, format);
             };
             reader.readAsText(file);
         }
@@ -1608,6 +1671,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === '?') {
             e.preventDefault();
             openShortcutsModal();
+        }
+
+        // Alt+9 — hidden Answer Key consistency check (not in the shortcuts list)
+        if (e.altKey && e.key === '9') {
+            e.preventDefault();
+            openAnswerKeyCheckModal();
         }
     });
 

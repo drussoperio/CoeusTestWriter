@@ -19,12 +19,19 @@
 // ========================================
 // VERSION
 // ========================================
-const APP_VERSION = '2.18.7';
+const APP_VERSION = '2.18.8';
 
 // Changelog entries, generated from Changelog.md by scripts/sync-changelog.js.
 // Do not hand-edit — update Changelog.md and run: node scripts/sync-changelog.js
 // SYNC-CHANGELOG:START
 const CHANGELOG = {
+    '2.18.8': [
+        'Added: Hidden Answer Key consistency check (Alt+9, no visible button anywhere): upload a DOCX export — including one manually edited in Word to make room for images — and it verifies the Answer Key still matches each multiple choice question\'s printed letter/text. Catches the kind of mismatch a manual reorder can introduce. True/False and Matching entries are reported as not checked rather than silently skipped.',
+        'Added: Design a Test\'s DOCX export now includes a Category Key section after the Answer Key, listing each question\'s category in the same order/numbering — makes category recoverable when converting the DOCX back to JSON.',
+        'Added: Convert a File now accepts a Design a Test DOCX export and reconstructs its multiple choice and true/false questions as JSON, correctly handling the 2-column choice layout and the Answer Key\'s parenthesized correct-answer text (true/false recovered directly from the Answer Key\'s A/B letter convention). Category comes from the new Category Key section (falls back to "Uncategorized" for DOCX files exported before this feature existed); difficulty/subject default since the DOCX never prints them. Matching questions aren\'t supported from DOCX (their Column A/B table doesn\'t survive text extraction) and are reported as skipped rather than silently dropped or misparsed.',
+        'Added: Design a Test has a new "Export All (ZIP)" button that bundles DOCX, JSON, GIFT, CSV, and TXT into one ZIP download — all five generated straight from the current test data in one click, instead of exporting each format separately.',
+        'Fixed: DOCX export: Matching-type question premises were numbered with frozen plain text instead of Word\'s real auto-numbering, unlike MCQ and True/False questions (which already use a real numbered list). Now uses the same numbered-list reference, so it renumbers automatically like the rest of the test if the document is edited afterward.',
+    ],
     '2.18.7': [
         'Added: Matching-type questions in a generated test are now grouped by category into separate Column A/B tables instead of one pooled table — previously, matching pairs selected from different categories had their answers shuffled together into a single shared pool, so a student could narrow an answer down just by noticing it belonged to a different topic than the premise. Applies to the Test Preview, TXT export, and DOCX export.',
         'Changed: Manage a Bank now silently strips blank multiple-choice choices (e.g. Choice E added but never filled in, and never removed) whenever the bank list renders — previously this only got fixed once a question was individually opened and re-saved in Edit Bank. A one-time toast confirms how many questions were fixed; the old "Multiple choice with a blank choice" Bank Stats warning is gone since there\'s no longer anything to warn about.',

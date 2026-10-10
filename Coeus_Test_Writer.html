@@ -841,6 +841,7 @@
                                 <button id="exportGiftBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as GIFT</button>
                                 <button id="exportCsvBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as CSV</button>
                                 <button id="exportTxt" class="bg-purple-500 hover:bg-purple-700 text-white px-4 py-1.5 rounded text-sm flex-1">Export as TXT</button>
+                                <button id="exportZip" class="bg-purple-700 hover:bg-purple-900 text-white px-4 py-1.5 rounded text-sm flex-1" title="Bundles DOCX, JSON, GIFT, CSV, and TXT into one ZIP">Export All (ZIP)</button>
                             </div>
                             <div class="flex gap-2 mt-2">
                                 <button id="tgSendToManageBtn" style="background:#f97316;color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;border:none;cursor:pointer;flex:1;" onmouseover="this.style.background='#ea6c00'" onmouseout="this.style.background='#f97316'">Send to Manage a Bank</button>
@@ -1245,7 +1246,7 @@
                             <h3 class="text-base font-semibold mb-3 flex items-center gap-2" style="color:var(--text);"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Upload File</h3>
                             <label for="convertFileInput" class="block text-sm font-medium mb-2" style="color:var(--text);">Select File (JSON, CSV, GIFT TXT, or plain TXT):</label>
                             <div class="drop-zone mb-4">
-                                <input type="file" id="convertFileInput" accept=".json,.csv,.txt" class="hidden">
+                                <input type="file" id="convertFileInput" accept=".json,.csv,.txt,.docx" class="hidden">
                                 <p class="text-sm text-gray-600">Drag &amp; drop file or click to browse</p>
                             </div>
                             <div class="flex gap-2 mt-auto">
@@ -1408,6 +1409,17 @@
     </div>
 </div>
 
+<!-- ── Answer Key Consistency Check (hidden; Alt+9 only) ───────────────── -->
+<div id="answerKeyCheckModal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.5);">
+    <div class="rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6" style="background:var(--surface);color:var(--text);border:1px solid var(--border);max-height:80vh;overflow-y:auto;">
+        <h3 class="font-semibold mb-2" style="color:var(--text);">Answer Key Consistency Check</h3>
+        <p class="text-xs mb-3" style="color:var(--text-muted);">Upload a DOCX export — including one you've manually edited in Word to fit images — to verify its Answer Key still matches the printed choices. Multiple choice questions only; True/False and Matching entries are not checked.</p>
+        <input type="file" id="answerKeyCheckFile" accept=".docx" class="text-sm">
+        <div id="answerKeyCheckResults" class="mt-3 text-sm"></div>
+        <button type="button" id="closeAnswerKeyCheckModal" class="mt-4 text-xs" style="color:var(--text-muted);">Close</button>
+    </div>
+</div>
+
 <!-- ── Tooltip Popover ───────────────────────────────────────────────── -->
 <div id="tipPopover" class="fixed z-[9999] hidden max-w-xs text-sm rounded-lg shadow-lg p-3 pointer-events-none" style="background:var(--surface);color:var(--text);border:1px solid var(--border);line-height:1.5;"></div>
 
@@ -1486,6 +1498,9 @@
 <script src="js/test-generator.js"></script>
 <script src="js/test-export.js"></script>
 <script src="js/convert-merge.js"></script>
+<script src="js/vendor/mammoth.browser.min.js"></script>
+<script src="js/vendor/jszip.min.js"></script>
+<script src="js/answer-key-check.js"></script>
 <script src="js/helpers.js"></script>
 <script src="js/ui-init.js"></script>
 </body>

@@ -748,6 +748,11 @@ function parseQuestionsByFormat(text, format) {
         return parsePlainTextToJson(text, '', '');
     }
     if (format === 'text') return parsePlainTextToJson(text, '', '');
+    if (format === 'docx') {
+        const { questions, skippedCount } = buildMcqJsonFromDocx(text);
+        Object.defineProperty(questions, 'skippedCount', { value: skippedCount, enumerable: false });
+        return questions;
+    }
     throw new Error('Unknown format: ' + format);
 }
 
@@ -770,5 +775,6 @@ function formatFromFileName(name) {
     const ext = (name.split('.').pop() || '').toLowerCase();
     if (ext === 'csv') return 'csv';
     if (ext === 'json') return 'json';
+    if (ext === 'docx') return 'docx';
     return 'gift';
 }
