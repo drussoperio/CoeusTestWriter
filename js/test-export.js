@@ -279,6 +279,34 @@ function exportTestAsDocx() {
         });
     }
 
+    // ── Category Key (mirrors the Answer Key's order/numbering) ────────────
+    if (lastGeneratedQuestions.length > 0) {
+        allChildren.push(new Paragraph({
+            children: [bold('Category Key')],
+            spacing:  sp,
+            pageBreakBefore: true
+        }));
+
+        let ckNum = 1;
+
+        mcqs.forEach(q => {
+            allChildren.push(new Paragraph({ children: [run(`${ckNum}. ${q.category || 'Uncategorized'}`)], spacing: sp }));
+            ckNum++;
+        });
+
+        tfs.forEach(q => {
+            allChildren.push(new Paragraph({ children: [run(`${ckNum}. ${q.category || 'Uncategorized'}`)], spacing: sp }));
+            ckNum++;
+        });
+
+        matchingGroups.forEach(group => {
+            group.premises.forEach(q => {
+                allChildren.push(new Paragraph({ children: [run(`${ckNum}. ${q.category || 'Uncategorized'}`)], spacing: sp }));
+                ckNum++;
+            });
+        });
+    }
+
     // ── Build document ────────────────────────────────────────────────────
     let doc;
     try {

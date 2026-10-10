@@ -644,6 +644,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     lastFileName = file.name.replace(/\.[^/.]+$/, '');
                     if (filenameInput) filenameInput.value = lastFileName;
                     format = formatFromFileName(file.name);
+                    if (format === 'docx') {
+                        extractDocxRawText(file).then(rawText => {
+                            try {
+                                const questions = parseQuestionsByFormat(rawText, format);
+                                finishConvert(questions);
+                            } catch (error) {
+                                output.textContent = 'Error: ' + error.message;
+                                showToast('❌ Error: ' + error.message, 'error');
+                            }
+                        }).catch(error => {
+                            output.textContent = 'Error: ' + error.message;
+                            showToast('❌ Error: ' + error.message, 'error');
+                        });
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.onload = function (event) {
                         try {
@@ -726,6 +741,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
             showToast('✅ Conversion complete', 'success');
+            if (questions.skippedCount > 0) {
+                showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (True/False or Matching — not supported from DOCX).`, 'warning');
+            }
         }
 
         // Convert is now triggered by each export button
@@ -865,11 +883,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const baseName = file.name.replace(/\.[^/.]+$/, '');
             if (filenameIn) filenameIn.value = baseName;
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
+            function handleParsedText(text, format) {
                 try {
-                    const format = formatFromFileName(file.name);
-                    const questions = parseQuestionsByFormat(e.target.result, format);
+                    const questions = parseQuestionsByFormat(text, format);
                     cfStoredQuestions = questions;
                     renderMissingCorrectWarning('convertFileMissingCorrectWarning', questions);
                     let resultStr;
@@ -881,12 +897,29 @@ document.addEventListener('DOMContentLoaded', function () {
                     lastFmt = fmt;
                     renderOutput(fmt, resultStr);
                     showToast('✅ Converted to ' + fmt.toUpperCase(), 'success');
+                    if (questions.skippedCount > 0) {
+                        showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (True/False or Matching — not supported from DOCX).`, 'warning');
+                    }
                     if (convertFilePendingDownload) { convertFilePendingDownload = null; downloadConvertResult(); }
                 } catch (err) {
                     if (output) output.textContent = 'Error: ' + err.message;
                     showToast('❌ ' + err.message, 'error');
                     convertFilePendingDownload = null;
                 }
+            }
+
+            const format = formatFromFileName(file.name);
+            if (format === 'docx') {
+                extractDocxRawText(file).then(rawText => handleParsedText(rawText, format)).catch(err => {
+                    if (output) output.textContent = 'Error: ' + err.message;
+                    showToast('❌ ' + err.message, 'error');
+                    convertFilePendingDownload = null;
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                handleParsedText(e.target.result, format);
             };
             reader.readAsText(file);
         }

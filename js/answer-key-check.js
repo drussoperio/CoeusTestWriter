@@ -115,6 +115,100 @@ function checkAnswerKeyConsistency(rawText) {
     };
 }
 
+// ========================================
+// DOCX → JSON CONVERTER (Convert a File, MCQ only)
+// ========================================
+//
+// Reuses the extraction/parsing building blocks above to reconstruct MCQ
+// question objects from a Design a Test DOCX export. True/False and
+// Matching questions are skipped (see file header for why) and reported
+// via skippedCount rather than silently dropped.
+
+// Matches each [A-E]. <text> run within a line, 1 or 2 per line depending
+// on whether the DOCX used 1-column or 2-column choice layout (2-column
+// packs two choices into one paragraph, tab-separated — see
+// buildChoiceParas in js/test-export.js). Splitting on this regex handles
+// both without needing to know which layout was used.
+const CHOICE_RUN_RE = /([A-E])\.\s+([^\t]+?)(?=\t[A-E]\.|\t*$)/g;
+
+function extractChoiceRunsFromLine(line) {
+    return [...line.matchAll(CHOICE_RUN_RE)].map(m => ({ letter: m[1], text: m[2].trim() }));
+}
+
+// Like parseMcqSectionFromDocxText, but also keeps each block's premise
+// (question) text and uses extractChoiceRunsFromLine so it handles both
+// 1-column and 2-column choice layouts.
+function parseMcqQuestionsFromDocxText(rawText) {
+    const section = extractMcqSectionText(rawText);
+    const lines = section.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // Non-choice lines preceding a block's first choice line accumulate as
+    // that block's premise (question) text.
+    const finalBlocks = [];
+    let pendingPremise = [];
+    let blockIdx = 0;
+    let inBlock = false;
+    lines.forEach(line => {
+        const runs = extractChoiceRunsFromLine(line);
+        if (runs.length > 0) {
+            if (!inBlock) {
+                finalBlocks.push({ question: pendingPremise.join(' ').trim(), choices: [] });
+                pendingPremise = [];
+                inBlock = true;
+            }
+            finalBlocks[finalBlocks.length - 1].choices.push(...runs);
+        } else {
+            inBlock = false;
+            pendingPremise.push(line);
+        }
+    });
+
+    return finalBlocks.filter(b => b.choices.length > 0);
+}
+
+// Parses the Category Key section: lines matching "N. CategoryName" after
+// a "Category Key" header. Returns [] when the section doesn't exist
+// (DOCX exported before this feature was added) so callers can fall back
+// gracefully instead of erroring.
+function parseCategoryKeySection(rawText) {
+    const ckIdx = rawText.search(/category key/i);
+    if (ckIdx === -1) return [];
+    const ckText = rawText.slice(ckIdx);
+    const lines = ckText.split('\n').map(l => l.trim()).filter(Boolean);
+    const entries = [];
+    lines.forEach(line => {
+        const m = line.match(/^(\d+)\.\s+(.+)$/);
+        if (m) entries.push({ num: parseInt(m[1], 10), category: m[2].trim() });
+    });
+    return entries;
+}
+
+// Builds MCQ question objects from a DOCX export's raw text. Pairs MCQ
+// block i with Answer Key entry i and Category Key entry i by position
+// (Word's own numbering doesn't survive extraction — see file header).
+function buildMcqJsonFromDocx(rawText) {
+    const blocks = parseMcqQuestionsFromDocxText(rawText);
+    const answerKeyEntries = parseAnswerKeySection(rawText);
+    const categoryEntries = parseCategoryKeySection(rawText);
+
+    const questions = blocks.map((block, i) => {
+        const entry = answerKeyEntries[i];
+        const sortedChoices = [...block.choices].sort((a, b) => a.letter.localeCompare(b.letter));
+        return {
+            subject: '',
+            category: (categoryEntries[i] && categoryEntries[i].category) || 'Uncategorized',
+            difficulty: 'unset',
+            type: 'multiple_choice',
+            question: block.question,
+            choices: sortedChoices.map(c => c.text),
+            correct: entry ? entry.text : (sortedChoices[0] ? sortedChoices[0].text : '')
+        };
+    });
+
+    const skippedCount = Math.max(0, answerKeyEntries.length - blocks.length);
+    return { questions, skippedCount };
+}
+
 function renderAnswerKeyCheckResults(result) {
     const container = document.getElementById('answerKeyCheckResults');
     if (!container) return;
