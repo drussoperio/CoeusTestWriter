@@ -398,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const exportJsonButton = document.getElementById('exportJson');
     const exportGiftButton = document.getElementById('exportGiftBtn');
     const exportCsvButton = document.getElementById('exportCsvBtn');
+    const exportZipButton = document.getElementById('exportZip');
 
     // ── Form event listeners ───────────────────────────────────
     function setupFormListeners() {
@@ -524,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (exportJsonButton) exportJsonButton.addEventListener('click', () => exportTestAsJson());
         if (exportGiftButton) exportGiftButton.addEventListener('click', () => exportTestAsGift());
         if (exportCsvButton) exportCsvButton.addEventListener('click', () => exportTestAsCsv());
+        if (exportZipButton) exportZipButton.addEventListener('click', () => exportTestAsZip());
         document.getElementById('tgSendToManageBtn')?.addEventListener('click', () => sendToBank(testBank, 'manage', filenameFromInput('outputFilename')));
     }
 
@@ -742,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             showToast('✅ Conversion complete', 'success');
             if (questions.skippedCount > 0) {
-                showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (True/False or Matching — not supported from DOCX).`, 'warning');
+                showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (Matching — not supported from DOCX).`, 'warning');
             }
         }
 
@@ -898,7 +900,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     renderOutput(fmt, resultStr);
                     showToast('✅ Converted to ' + fmt.toUpperCase(), 'success');
                     if (questions.skippedCount > 0) {
-                        showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (True/False or Matching — not supported from DOCX).`, 'warning');
+                        showToast(`ℹ️ ${questions.skippedCount} question(s) skipped (Matching — not supported from DOCX).`, 'warning');
                     }
                     if (convertFilePendingDownload) { convertFilePendingDownload = null; downloadConvertResult(); }
                 } catch (err) {

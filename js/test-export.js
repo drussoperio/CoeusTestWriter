@@ -9,18 +9,25 @@ function getFilename(ext) {
     return `${base}_${version}.${ext}`;
 }
 
-// Export test as TXT
-function exportTestAsTxt() {
+// Builds the TXT export's content string (shared by exportTestAsTxt and
+// exportTestAsZip) by scraping the already-rendered Test/Answer Key
+// preview DOM. Returns null if the preview isn't rendered.
+function buildTxtContent() {
     const testPreview = document.getElementById('testPreview');
     const answerKeyPreview = document.getElementById('answerKeyPreview');
+    if (!testPreview || !answerKeyPreview) return null;
     const stripEmptyLines = (text) => text.split('\n').filter(line => line.trim() !== '').join('\n');
     const testContent = stripEmptyLines(testPreview.innerText);
     const akEntries = Array.from(answerKeyPreview.querySelectorAll('.mb-1')).map(el => el.innerText.trim());
     const distDiv = answerKeyPreview.querySelector('.mt-6');
     let answerKeyContent = 'Answer Key\n' + akEntries.join('\n');
     if (distDiv) answerKeyContent += '\n\n' + stripEmptyLines(distDiv.innerText);
-    const output = `${testContent}\n\n${answerKeyContent}`;
+    return `${testContent}\n\n${answerKeyContent}`;
+}
 
+// Export test as TXT
+function exportTestAsTxt() {
+    const output = buildTxtContent();
     const blob = new Blob([output], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -33,16 +40,18 @@ function exportTestAsTxt() {
     showToast(`📄 TXT exported as ${getFilename('txt')}`, 'success');
 }
 
-// Export test as DOCX
-function exportTestAsDocx() {
+// Builds the DOCX Document object (shared by exportTestAsDocx and
+// exportTestAsZip) without packing or downloading it. Returns
+// { doc, Packer } on success, or null on failure (toast already shown).
+function buildDocxDocument() {
     if (!lastGeneratedQuestions || lastGeneratedQuestions.length === 0) {
         showToast('⚠️ Please generate a test first.', 'warning');
-        return;
+        return null;
     }
 
     if (!window.docx) {
         showToast('❌ DOCX library not loaded. Please refresh the page.', 'error');
-        return;
+        return null;
     }
 
     let Document, Packer, Paragraph, TextRun, AlignmentType, LevelFormat, LineRuleType, Table, TableRow, TableCell, WidthType, BorderStyle, SectionType;
@@ -51,7 +60,7 @@ function exportTestAsDocx() {
            AlignmentType, LevelFormat, LineRuleType, Table, TableRow, TableCell, WidthType, BorderStyle, SectionType } = window.docx);
     } catch (err) {
         showToast('❌ Failed to load DOCX components: ' + err.message, 'error');
-        return;
+        return null;
     }
 
     const TWIP          = 1440;
@@ -325,10 +334,18 @@ function exportTestAsDocx() {
     } catch (err) {
         console.error('DOCX build error:', err);
         showToast('❌ Failed to build document: ' + err.message, 'error');
-        return;
+        return null;
     }
 
-    // ── Download ──────────────────────────────────────────────────────────
+    return { doc, Packer };
+}
+
+// Export test as DOCX
+function exportTestAsDocx() {
+    const built = buildDocxDocument();
+    if (!built) return;
+    const { doc, Packer } = built;
+
     const docxFilename = getFilename('docx');
     Packer.toBlob(doc)
         .then(blob => {
@@ -460,4 +477,64 @@ function exportTestAsCsv() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast(`📄 CSV exported as ${csvFilename}`, 'success');
+}
+
+// Export the currently generated test as every supported format at once
+// (DOCX, JSON, GIFT, CSV, TXT), bundled into one ZIP — avoids 5 separate
+// clicks, and unlike a DOCX re-import, every format here is built straight
+// from lastGeneratedQuestions, so none of them are lossy relative to each other.
+async function exportTestAsZip() {
+    if (!lastGeneratedQuestions || lastGeneratedQuestions.length === 0) {
+        showToast('⚠️ Please generate a test first.', 'warning');
+        return;
+    }
+    if (!window.JSZip) {
+        showToast('❌ ZIP library not loaded. Please refresh the page.', 'error');
+        return;
+    }
+
+    showToast('⏳ Zipping…', 'info');
+
+    const built = buildDocxDocument();
+    if (!built) return;
+    const { doc, Packer } = built;
+
+    let docxBlob;
+    try {
+        docxBlob = await Packer.toBlob(doc);
+    } catch (err) {
+        console.error('DOCX pack error:', err);
+        showToast('❌ Failed to generate DOCX: ' + err.message, 'error');
+        return;
+    }
+
+    const exportData = getTestExportData();
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const giftStr = questionsToGift(exportData);
+    const csvStr  = convertJsonToCsv(exportData);
+    const txtStr  = buildTxtContent();
+
+    const zip = new window.JSZip();
+    zip.file(getFilename('docx'), docxBlob);
+    zip.file(getFilename('json'), jsonStr);
+    zip.file(getFilename('txt').replace(/\.txt$/, '_gift.txt'), giftStr);
+    zip.file(getFilename('csv'), csvStr);
+    if (txtStr !== null) zip.file(getFilename('txt'), txtStr);
+
+    try {
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipFilename = getFilename('zip');
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = zipFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`📦 ZIP exported as ${zipFilename}`, 'success');
+    } catch (err) {
+        console.error('ZIP generation error:', err);
+        showToast('❌ Failed to generate ZIP: ' + err.message, 'error');
+    }
 }

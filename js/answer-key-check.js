@@ -205,7 +205,29 @@ function buildMcqJsonFromDocx(rawText) {
         };
     });
 
-    const skippedCount = Math.max(0, answerKeyEntries.length - blocks.length);
+    // True/False always prints "True"/"False" as its Answer Key text
+    // (js/test-export.js's tfs loop), and always comes right after MCQ and
+    // before Matching in this app's own generation order — so consume
+    // consecutive True/False entries positionally, then stop (whatever
+    // follows is Matching, which this converter can't recover; see
+    // js/answer-key-check.js file header).
+    let tfRecoveredCount = 0;
+    for (let i = blocks.length; i < answerKeyEntries.length; i++) {
+        const entry = answerKeyEntries[i];
+        if (entry.text !== 'True' && entry.text !== 'False') break;
+        questions.push({
+            subject: '',
+            category: (categoryEntries[i] && categoryEntries[i].category) || 'Uncategorized',
+            difficulty: 'unset',
+            type: 'true_false',
+            question: '',
+            choices: ['True', 'False'],
+            correct: entry.text
+        });
+        tfRecoveredCount++;
+    }
+
+    const skippedCount = Math.max(0, answerKeyEntries.length - blocks.length - tfRecoveredCount);
     return { questions, skippedCount };
 }
 
